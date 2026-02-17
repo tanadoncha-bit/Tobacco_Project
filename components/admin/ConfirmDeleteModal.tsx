@@ -19,13 +19,13 @@ export default function ConfirmDeleteModal({
           Are you sure you want to delete this product?
         </p>
 
-        <div className="flex justify-end gap-3">
-          <button onClick={onClose}>
+        <div className="flex justify-end gap-4">
+          <button onClick={onClose} className="cursor-pointer">
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="bg-red-600 text-white px-4 py-2 rounded"
+            className="bg-red-600 text-white px-4 py-2 rounded-sm cursor-pointer"
           >
             Delete
           </button>

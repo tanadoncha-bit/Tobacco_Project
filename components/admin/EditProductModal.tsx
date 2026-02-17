@@ -2,6 +2,7 @@
 
 import { ImagePlus } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
+import ConfirmDeleteModal from "./ConfirmDeleteModal"
 
 type StockItem = {
   productCode: string
@@ -325,7 +326,7 @@ export default function EditProductModal({
         {/* ================= BUTTONS ================= */}
         <div className="flex justify-between pt-4 border-t">
           <button
-            onClick={handleDelete}
+            onClick={() => setConfirmDelete(true)}
             className="bg-red-600 text-white px-4 py-2 rounded-md text-sm cursor-pointer"
           >
             Delete
@@ -349,6 +350,16 @@ export default function EditProductModal({
           </div>
         </div>
       </div>
+
+      <ConfirmDeleteModal
+        open={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        onConfirm={async () => {
+          await handleDelete()
+          setConfirmDelete(false)
+        }}
+      />
+      
     </div>
   )
 }
