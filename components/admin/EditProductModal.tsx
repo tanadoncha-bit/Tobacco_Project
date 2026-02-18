@@ -87,6 +87,8 @@ export default function EditProductModal({
 
   // ================= DELETE PRODUCT =================
   const handleDelete = async () => {
+    onClose() // ปิด modal ก่อน
+
     await fetch("/api/products/delete", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -94,8 +96,8 @@ export default function EditProductModal({
     })
 
     onSuccess()
-    onClose()
   }
+
 
   // ================= IMAGE =================
   const removeImage = (index: number) => {
@@ -359,7 +361,7 @@ export default function EditProductModal({
           setConfirmDelete(false)
         }}
       />
-      
+
     </div>
   )
 }

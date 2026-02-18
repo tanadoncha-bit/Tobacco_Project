@@ -19,10 +19,11 @@ export default async function StockPage() {
     )
 
     return {
+      Pid: product.Pid,
       productCode: product.productCode ?? "-",
       name: product.Pname,
       stock: totalStock,
-      imageUrl: product.images[0]?.url ?? null, // 👈 ใช้รูปแรก
+      imageUrl: product.images[0]?.url ?? null,
     }
   })
 

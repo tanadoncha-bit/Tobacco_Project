@@ -34,6 +34,7 @@ model Product {
   images        ProductImage[]
   Option        ProductOption[]
   variants      ProductVariant[]
+  Slip          ProductSlip[]
 }
 
 model ProductImage {
@@ -85,3 +86,15 @@ model ProductVariantValue {
 
   @@unique([variantId, optionValueId])
 }
+
+model ProductSlip {
+  id          Int      @id @default(autoincrement())
+  Pid         Int
+  product     Product  @relation(fields: [Pid], references: [Pid], onDelete: Cascade)
+
+  action      String   // "CREATE" | "UPDATE"
+  snapshot    Json     // เก็บข้อมูลตอนนั้น (ราคา/stock/options)
+  createdBy   String?  // ชื่อ user (ถ้ามี)
+  createdAt   DateTime @default(now())
+}
+

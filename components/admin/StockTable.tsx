@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation"
 import AddProductModal from "./AddProductModal"
 import SearchAndSortBar from "./SearchAndSortBar"
 import EditProductModal from "./EditProductModal"
+import ProductSlipModal from "./ProductSlipModal"
 
 type StockItem = {
+  Pid: number
   productCode: string
   name: string
   stock: number
@@ -21,6 +23,7 @@ export default function StockTable({
   const [search, setSearch] = useState("")
   const [open, setOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
+  const [slipOpen, setSlipOpen] = useState(false)
   const [selected, setSelected] =
     useState<StockItem | null>(null)
 
@@ -96,7 +99,7 @@ export default function StockTable({
         <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b">
             <tr className="text-left">
-              <th className="px-6 py-3 font-semibold">Product</th> 
+              <th className="px-6 py-3 font-semibold">Product</th>
               <th className="px-6 py-3 font-semibold">Product Code</th>
               <th className="px-6 py-3 font-semibold">Product name</th>
               <th className="px-6 py-3 font-semibold">In stock</th>
@@ -138,7 +141,7 @@ export default function StockTable({
                 <td className="px-6 py-4 text-gray-700 font-medium">
                   {item.stock}
                 </td>
-                <td className="px-6 py-4 text-right">
+                <td className="px-6 py-4 text-right flex gap-2 justify-end">
                   <button
                     onClick={() => {
                       setSelected(item)
@@ -148,7 +151,18 @@ export default function StockTable({
                   >
                     Edit
                   </button>
+
+                  <button
+                    onClick={() => {
+                      setSelected(item)
+                      setSlipOpen(true)
+                    }}
+                    className="border px-4 py-2 rounded-md text-xs font-medium cursor-pointer"
+                  >
+                    Slip
+                  </button>
                 </td>
+
               </tr>
             ))}
 
@@ -180,8 +194,17 @@ export default function StockTable({
         onClose={() => setOpen(false)}
         onSuccess={() => router.refresh()}
       />
+
+      <ProductSlipModal
+        open={slipOpen}
+        Pid={selected?.Pid ?? null}
+        onClose={() => setSlipOpen(false)}
+      />
+
     </div>
   )
 }
+
+
 
 
