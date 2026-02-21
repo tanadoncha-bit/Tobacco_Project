@@ -3,115 +3,173 @@ import { NextResponse } from "next/server"
 
 export async function PUT(req: Request) {
   try {
-    const { Pid, name, images, variants, options } = await req.json()
+    const {
+      Pid,
+      name,
+      images = [],
+      variants = [],
+      options = [],
+    } = await req.json()
 
-    await prisma.$transaction(async (tx) => {
-      // 1️⃣ Update product
-      await tx.product.update({
+    if (!Pid || !name) {
+      return NextResponse.json(
+        { message: "Invalid payload" },
+        { status: 400 }
+      )
+    }
+
+    /* =======================================================
+       1️⃣ Update Product
+    ======================================================= */
+
+    const operations: any[] = []
+
+    operations.push(
+      prisma.product.update({
         where: { Pid },
         data: { Pname: name },
       })
+    )
 
-      // 2️⃣ Replace images
-      await tx.productImage.deleteMany({ where: { Pid } })
-      if (images?.length) {
-        await tx.productImage.createMany({
-          data: images.map((url: string) => ({ Pid, url })),
+    /* =======================================================
+       2️⃣ Replace Images
+    ======================================================= */
+
+    operations.push(
+      prisma.productImage.deleteMany({ where: { Pid } })
+    )
+
+    if (images.length > 0) {
+      operations.push(
+        prisma.productImage.createMany({
+          data: images.map((url: string) => ({
+            Pid,
+            url,
+          })),
         })
-      }
+      )
+    }
 
-      // 3️⃣ Existing variants
-      const existingVariants = await tx.productVariant.findMany({
-        where: { Pid },
-        select: { id: true },
-      })
+    /* =======================================================
+       3️⃣ Replace Options
+    ======================================================= */
 
-      const incomingIds = variants
-        .filter((v: any) => typeof v.id === "number")
-        .map((v: any) => v.id)
+    operations.push(
+      prisma.productOption.deleteMany({ where: { Pid } })
+    )
 
-      const toDelete = existingVariants
-        .filter(v => !incomingIds.includes(v.id))
-        .map(v => v.id)
+    // Run basic ops first
+    await prisma.$transaction(operations)
 
-      if (toDelete.length) {
-        await tx.productVariantValue.deleteMany({
-          where: { variantId: { in: toDelete } },
-        })
+    /* =======================================================
+       4️⃣ Create Options + Map
+    ======================================================= */
 
-        await tx.productVariant.deleteMany({
-          where: { id: { in: toDelete } },
-        })
-      }
+    const valueIdMap = new Map<string, number>()
 
-      // 4️⃣ Create / Update variants
-      for (const v of variants) {
-        // CREATE
-        if (!v.id) {
-          const newVariant = await tx.productVariant.create({
-            data: {
-              Pid,
-              price: Number(v.price),
-              stock: Number(v.stock),
-            },
-          })
-
-          for (const val of v.values) {
-            const optionValue = await tx.productOptionValue.create({
-              data: {
-                value: val.optionValue.value,
-                optionId: val.optionId,
-              },
-            })
-
-            await tx.productVariantValue.create({
-              data: {
-                variantId: newVariant.id,
-                optionValueId: optionValue.id,
-              },
-            })
-          }
-        }
-
-        // UPDATE
-        else {
-          await tx.productVariant.update({
-            where: { id: v.id },
-            data: {
-              price: Number(v.price),
-              stock: Number(v.stock),
-            },
-          })
-        }
-      }
-
-      // 5️⃣ Clean orphan optionValues
-      await tx.productOptionValue.deleteMany({
-        where: {
-          variantValues: { none: {} },
-          option: { product: { Pid } },
-        },
-      })
-
-      // 6️⃣ Slip
-      await tx.productSlip.create({
-        data: {
-          Pid,
-          action: "UPDATE",
-          snapshot: {
-            name,
-            images,
-            options,
-            variants,
+    for (const opt of options) {
+      const createdOption =
+        await prisma.productOption.create({
+          data: {
+            name: opt.name,
+            Pid,
           },
-          createdBy: "Product Staff",
+        })
+
+      for (const val of opt.values ?? []) {
+        const createdValue =
+          await prisma.productOptionValue.create({
+            data: {
+              value: val.value,
+              optionId: createdOption.id,
+            },
+          })
+
+        valueIdMap.set(val.value, createdValue.id)
+      }
+    }
+
+    /* =======================================================
+       5️⃣ Replace Variants
+    ======================================================= */
+
+    await prisma.productVariant.deleteMany({
+      where: { Pid },
+    })
+
+    for (const v of variants) {
+      const createdVariant =
+        await prisma.productVariant.create({
+          data: {
+            Pid,
+            price: Number(v.price),
+            stock: Number(v.stock),
+          },
+        })
+
+      for (const val of v.values ?? []) {
+        const valueString =
+          val?.optionValue?.value
+
+        const optionValueId =
+          valueIdMap.get(valueString)
+
+        if (!optionValueId) {
+          throw new Error(
+            `OptionValue not found for ${valueString}`
+          )
+        }
+
+        await prisma.productVariantValue.create({
+          data: {
+            variantId: createdVariant.id,
+            optionValueId,
+          },
+        })
+      }
+    }
+
+    /* =======================================================
+       6️⃣ Slip Log
+    ======================================================= */
+
+    const fullProduct =
+      await prisma.product.findUnique({
+        where: { Pid },
+        include: {
+          variants: {
+            include: {
+              values: {
+                include: {
+                  optionValue: {
+                    include: {
+                      option: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       })
+
+    await prisma.productSlip.create({
+      data: {
+        Pid,
+        action: "UPDATE",
+        snapshot: {
+          name: fullProduct?.Pname,
+          images,
+          variants: fullProduct?.variants,
+        },
+        createdBy: "Product Staff",
+      },
     })
 
     return NextResponse.json({ success: true })
   } catch (err: any) {
     console.error("UPDATE PRODUCT ERROR:", err)
+
     return NextResponse.json(
       { message: err.message },
       { status: 500 }

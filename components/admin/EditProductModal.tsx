@@ -1,6 +1,6 @@
 "use client"
 
-import { ImagePlus } from "lucide-react"
+import { ImagePlus, Trash2 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import ConfirmDeleteModal from "./ConfirmDeleteModal"
 
@@ -9,6 +9,14 @@ type StockItem = {
   name: string
   stock: number
 }
+
+type Variant = {
+  key: string
+  combination: string[]
+  price: number
+  stock: number
+}
+
 
 export default function EditProductModal({
   open,
@@ -23,13 +31,20 @@ export default function EditProductModal({
 }) {
   const [product, setProduct] = useState<any>(null)
   const [name, setName] = useState("")
-  const [variants, setVariants] = useState<any[]>([])
+  const [variants, setVariants] = useState<Variant[]>([])
   const [images, setImages] = useState<string[]>([])
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   // ================= FETCH =================
+
+  useEffect(() => {
+    if (!product?.Option) return
+    regenerateVariants(product.Option)
+  }, [product?.Option])
+
+
   useEffect(() => {
     if (!open || !stockItem) return
 
@@ -43,10 +58,14 @@ export default function EditProductModal({
       // เพิ่ม clientId ให้ทุก variant (แก้ปัญหา key ไม่ stable)
       setVariants(
         (data.variants || []).map((v: any) => ({
-          ...v,
-          clientId: crypto.randomUUID(),
+          key: v.values.map((val: any) => val.optionValue.value).join("|"),
+          combination: v.values.map((val: any) => val.optionValue.value),
+          price: v.price ?? 0,
+          stock: v.stock ?? 0,
         }))
       )
+
+
 
       setImages(data.images?.map((i: any) => i.url) || [])
     }
@@ -56,17 +75,65 @@ export default function EditProductModal({
 
   if (!open || !product) return null
 
+
+  const regenerateVariants = (options: any[]) => {
+    if (!options?.length) {
+      setVariants([])
+      return
+    }
+
+    const cartesian = (arr: any[][]): any[][] =>
+      arr.reduce(
+        (a, b) =>
+          a.flatMap((d: any) => b.map((e: any) => [...d, e])),
+        [[]]
+      )
+
+    const valueArrays = options.map((opt) =>
+      opt.values.map((v: any) => v.value)
+    )
+
+    const combinations = cartesian(valueArrays)
+
+    setVariants((prev) =>
+      combinations.map((combo) => {
+        const key = combo.join("|")
+
+        const oldVariant = prev.find((v) => v.key === key)
+
+        if (oldVariant) {
+          return oldVariant
+        }
+
+        return {
+          key,
+          combination: combo,
+          price: 0,
+          stock: 0,
+        }
+      })
+    )
+  }
+
+
+
   // ================= SAVE =================
   const handleSave = async () => {
     const cleanVariants = variants.map((v) => ({
-      id: v.id,
       price: v.price,
       stock: v.stock,
-      values: v.values.map((val: any) => ({
-        optionValueId: val.optionValueId,
-        optionId: val.optionId,
-        optionValue: val.optionValue,
-      })),
+      values: v.combination.map((value, index) => {
+        const option = product.Option[index]
+        const optionValue = option.values.find(
+          (val: any) => val.value === value
+        )
+
+        return {
+          optionId: option.id,
+          optionValueId: optionValue?.id ?? null,
+          optionValue: { value },
+        }
+      }),
     }))
 
     await fetch("/api/products/update", {
@@ -76,6 +143,7 @@ export default function EditProductModal({
         Pid: product.Pid,
         name,
         images,
+        options: product.Option,
         variants: cleanVariants,
       }),
     })
@@ -83,6 +151,7 @@ export default function EditProductModal({
     onSuccess()
     onClose()
   }
+
 
 
   // ================= DELETE PRODUCT =================
@@ -105,66 +174,11 @@ export default function EditProductModal({
   }
 
   // ================= VARIANT UPDATE =================
-  const updateVariant = (clientId: string, field: string, value: any) => {
+  const updateVariant = (key: string, field: string, value: any) => {
     setVariants((prev) =>
       prev.map((v) =>
-        v.clientId === clientId ? { ...v, [field]: value } : v
+        v.key === key ? { ...v, [field]: value } : v
       )
-    )
-  }
-
-  const updateVariantValue = (
-    clientId: string,
-    index: number,
-    newValue: string
-  ) => {
-    setVariants((prev) =>
-      prev.map((v) =>
-        v.clientId === clientId
-          ? {
-            ...v,
-            values: v.values.map((val: any, i: number) =>
-              i === index
-                ? {
-                  ...val,
-                  optionValue: {
-                    ...val.optionValue,
-                    value: newValue,
-                  },
-                }
-                : val
-            ),
-          }
-          : v
-      )
-    )
-  }
-
-  const addVariant = () => {
-    const option = product.Option[0] // สมมติ 1 option ก่อน
-
-    setVariants((prev) => [
-      ...prev,
-      {
-        id: null,
-        clientId: crypto.randomUUID(),
-        price: 0,
-        stock: 0,
-        values: [
-          {
-            optionId: option.id, // ⭐ ต้องมี
-            optionValueId: null, // ใหม่ = null
-            optionValue: { value: "" },
-          },
-        ],
-      },
-    ])
-  }
-
-
-  const removeVariant = (clientId: string) => {
-    setVariants((prev) =>
-      prev.filter((v) => v.clientId !== clientId)
     )
   }
 
@@ -246,84 +260,218 @@ export default function EditProductModal({
             onChange={(e) => setName(e.target.value)}
           />
         </div>
-
-        {/* ================= VARIANTS ================= */}
+        {/* ================= OPTIONS ================= */}
         <div>
-          <label className="block text-sm font-medium mb-2">
-            Variants
+          <label className="block text-sm font-semibold mb-3">
+            Options
           </label>
 
-          <div className="space-y-3">
-            {variants.map((v) => {
-              const optionValue =
-                v.values?.[0]?.optionValue?.value ?? ""
+          <div className="space-y-4">
+            {product.Option.map((opt: any, optionIndex: number) => (
+              <div
+                key={opt.id || optionIndex}
+                className="border rounded-lg p-4 bg-gray-50 relative"
+              >
 
-              return (
-                <div
-                  key={v.clientId}
-                  className="flex items-center gap-3 border p-3 rounded-md"
-                >
+                <div className="flex items-center gap-2 mb-4">
+                  {/* Option Name */}
                   <input
-                    value={optionValue}
-                    onChange={(e) =>
-                      updateVariantValue(
-                        v.clientId,
-                        0,
-                        e.target.value
-                      )
-                    }
-                    className="flex-1 border px-3 py-2 rounded-md"
-                    placeholder="Option Value"
+                    type="text"
+                    placeholder="Option name"
+                    value={opt.name}
+                    onChange={(e) => {
+                      const updated = [...product.Option]
+                      updated[optionIndex].name = e.target.value
+                      setProduct({ ...product, Option: updated })
+                    }}
+                    className="flex-1 border px-3 py-2 rounded text-sm"
                   />
-
-                  <input
-                    type="number"
-                    value={v.price}
-                    onChange={(e) =>
-                      updateVariant(
-                        v.clientId,
-                        "price",
-                        Number(e.target.value)
-                      )
-                    }
-                    className="w-28 border px-2 py-1 rounded"
-                    placeholder="Price"
-                  />
-
-                  <input
-                    type="number"
-                    value={v.stock}
-                    onChange={(e) =>
-                      updateVariant(
-                        v.clientId,
-                        "stock",
-                        Number(e.target.value)
-                      )
-                    }
-                    className="w-24 border px-2 py-1 rounded"
-                    placeholder="Stock"
-                  />
-
+                  {/* ลบ Option */}
                   <button
-                    onClick={() =>
-                      removeVariant(v.clientId)
-                    }
-                    className="ml-auto text-red-500 text-sm cursor-pointer"
+                    type="button"
+                    onClick={() => {
+                      const updated = product.Option.filter(
+                        (_: any, i: number) => i !== optionIndex
+                      )
+
+                      setProduct({ ...product, Option: updated })
+
+                      if (updated.length === 0) {
+                        setVariants([])
+                      }
+                    }}
+
+                    className="cursor-pointer text-gray-500 hover:text-black"
                   >
-                    Remove
+                    <Trash2 className="size-6" />
                   </button>
                 </div>
-              )
-            })}
+
+                {/* Option Values */}
+                <div className="space-y-2">
+                  {opt.values?.map((val: any, valueIndex: number) => (
+                    <div
+                      key={val.id || valueIndex}
+                      className="flex items-center gap-2"
+                    >
+                      <input
+                        type="text"
+                        placeholder="ค่า เช่น Red"
+                        value={val.value}
+                        onChange={(e) => {
+                          const updated = [...product.Option]
+                          updated[optionIndex].values[valueIndex].value =
+                            e.target.value
+                          setProduct({ ...product, Option: updated })
+                        }}
+                        className="flex-1 border px-3 py-2 rounded text-sm"
+                      />
+
+
+                      {/* ลบค่า */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = [...product.Option]
+
+                          updated[optionIndex].values =
+                            updated[optionIndex].values.filter(
+                              (_: any, i: number) => i !== valueIndex
+                            )
+
+                          setProduct({ ...product, Option: updated })
+                        }}
+
+
+                        className="cursor-pointer text-gray-500 hover:text-black"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+
+                  {/* เพิ่มค่า */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const updated = [...product.Option]
+                      updated[optionIndex].values.push({
+                        id: null,
+                        value: "",
+                      })
+                      setProduct({ ...product, Option: updated })
+                    }}
+                    className="text-blue-600 text-sm mt-1 cursor-pointer"
+                  >
+                    + เพิ่มค่า
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
 
+          {/* เพิ่ม Option */}
           <button
-            onClick={addVariant}
-            className="mt-3 text-purple-600 text-sm cursor-pointer"
+            type="button"
+            onClick={() =>
+              setProduct((prev: any) => ({
+                ...prev,
+                Option: [
+                  ...prev.Option,
+                  {
+                    id: null,
+                    name: "",
+                    values: [],
+                  },
+                ],
+              }))
+            }
+            className="text-purple-600 text-sm mt-4 cursor-pointer"
           >
-            + Add Variant
+            + เพิ่มตัวเลือก
           </button>
         </div>
+        {/* ================= VARIANTS ================= */}
+        {variants.length > 0 && (
+          <div className="mb-6">
+            <h3 className="font-semibold mb-3">รายการ Variant</h3>
+
+            <div className="overflow-hidden rounded-sm border border-gray-200">
+              <table className="w-full text-sm border-collapse">
+                <thead className="bg-gray-100">
+                  <tr>
+                    {product.Option.map((opt: any, i: number) => (
+                      <th key={i} className="border-b p-3 text-left">
+                        {opt.name}
+                      </th>
+                    ))}
+                    <th className="border-b p-3 text-left">ราคา</th>
+                    <th className="border-b p-3 text-left">คลัง</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {variants.map((variant, rowIndex) => (
+                    <tr key={`variant-${rowIndex}`} className="border-t">
+                      {variant.combination.map((value, colIndex) => {
+                        const span = getRowSpan(
+                          variants,
+                          rowIndex,
+                          colIndex
+                        )
+
+                        if (!span) return null
+
+                        return (
+                          <td
+                            key={`${variant.key}-${colIndex}`}
+                            rowSpan={span}
+                            className="border-r p-3 align-middle bg-white"
+                          >
+                            {value}
+                          </td>
+                        )
+                      })}
+
+                      <td className="border-r p-3">
+                        <input
+                          type="number"
+                          value={variant.price}
+                          onChange={(e) =>
+                            updateVariant(
+                              variant.key,
+                              "price",
+                              Number(e.target.value)
+                            )
+                          }
+                          className="w-full border rounded-sm px-2 py-1"
+                        />
+                      </td>
+
+                      <td className="p-3">
+                        <input
+                          type="number"
+                          value={variant.stock}
+                          onChange={(e) =>
+                            updateVariant(
+                              variant.key,
+                              "stock",
+                              Number(e.target.value)
+                            )
+                          }
+                          className="w-full border rounded-sm px-2 py-1"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+
+
 
         {/* ================= BUTTONS ================= */}
         <div className="flex justify-between pt-4 border-t">
@@ -365,3 +513,29 @@ export default function EditProductModal({
     </div>
   )
 }
+
+function getRowSpan(
+  variants: Variant[],
+  rowIndex: number,
+  colIndex: number
+) {
+  const value = variants[rowIndex].combination[colIndex]
+
+  if (
+    rowIndex > 0 &&
+    variants[rowIndex - 1].combination[colIndex] === value
+  ) {
+    return 0
+  }
+
+  let span = 1
+  for (let i = rowIndex + 1; i < variants.length; i++) {
+    if (variants[i].combination[colIndex] === value) {
+      span++
+    } else {
+      break
+    }
+  }
+  return span
+}
+

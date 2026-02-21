@@ -77,16 +77,35 @@ export async function POST(req: Request) {
       },
     })
 
+    const fullProduct =
+        await prisma.product.findUnique({
+          where: { Pid: product.Pid },
+          include: {
+            variants: {
+              include: {
+                values: {
+                  include: {
+                    optionValue: {
+                      include: {
+                        option: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        })
+
     // 6️⃣ Create Slip
     await prisma.productSlip.create({
       data: {
         Pid: product.Pid,
         action: "CREATE",
         snapshot: {
-          name,
+          name: fullProduct?.Pname,
           images: imageUrls,
-          options,
-          variants,
+          variants: fullProduct?.variants,
         },
         createdBy: "Product Staff",
       },

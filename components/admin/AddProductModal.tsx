@@ -118,6 +118,8 @@ export default function AddProductModal({
 
 
 
+
+
   if (!open) return null
 
   const handleAddImage = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -175,23 +177,54 @@ export default function AddProductModal({
   }
 
   const handleSubmit = async () => {
-    if (!name.trim()) {
-      toast.success("กรุณากรอกชื่อสินค้า", { position: "top-center" })
-      return
-    }
+    try {
+      if (!name.trim()) {
+        toast.error("กรุณากรอกชื่อสินค้า", { position: "top-center" })
+        return
+      }
 
-    if (
-      hasOptions &&
-      variants.some(v => v.price <= 0 || v.stock < 0)
-    ) {
-      toast.success("กรุณากรอกราคาและคลังของทุกตัวเลือก", { position: "top-center" })
-      return
-    }
+      if (
+        hasOptions &&
+        variants.some(v => v.price <= 0 || v.stock < 0)
+      ) {
+        toast.error("กรุณากรอกราคาและคลังของทุกตัวเลือก" , { position: "top-center" })
+        return
+      }
 
-    const finalVariants =
-      hasOptions && variants.length > 0
-        ? variants
-        : [
+      if (!hasOptions) {
+        if (!price || !stock) {
+          toast.error("กรุณากรอกราคาและคลัง" , { position: "top-center" })
+          return
+        }
+
+        if (Number(price) <= 0) {
+          toast.error("ราคาต้องมากกว่า 0" , { position: "top-center" })
+          return
+        }
+
+        if (Number(stock) < 0) {
+          toast.error("คลังสินค้าห้ามติดลบ", { position: "top-center" })
+          return
+        }
+      }
+
+
+      let finalVariants = []
+
+      if (hasOptions) {
+        if (variants.length === 0) {
+          toast.error("กรุณาสร้างตัวเลือกสินค้า" , { position: "top-center" })
+          return
+        }
+
+        finalVariants = variants
+      } else {
+        if (!price || !stock) {
+          toast.error("กรุณากรอกราคาและคลัง", { position: "top-center" }) 
+          return
+        }
+
+        finalVariants = [
           {
             key: "default",
             combination: [],
@@ -199,39 +232,64 @@ export default function AddProductModal({
             stock: Number(stock),
           },
         ]
+      }
 
-    const imageUrls: string[] = []
-    
-    for (const file of images) {
-      const formData = new FormData()
-      formData.append("file", file)
+      const imageUrls: string[] = []
 
-      const res = await fetch("/api/upload", {
+      for (const file of images) {
+        const formData = new FormData()
+        formData.append("file", file)
+
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        })
+
+        const data = await res.json()
+
+        if (data.url) {
+          imageUrls.push(data.url)
+        }
+      }
+
+      const res = await fetch("/api/products", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          imageUrls,
+          options: hasOptions ? options : [],
+          variants: finalVariants,
+        }),
       })
 
       const data = await res.json()
 
-      if (data.url) {
-        imageUrls.push(data.url)
+      if (!res.ok) {
+        console.error("CREATE ERROR:", data)
+        toast.error("เกิดข้อผิดพลาดในการบันทึก" , { position: "top-center" })
+        return
       }
+
+      toast.success("บันทึกสำเร็จ" , { position: "top-center" })
+      onSuccess()
+      onClose()
+
+    } catch (err) {
+      console.error("SUBMIT ERROR:", err)
+      toast.error("ระบบขัดข้อง" , { position: "top-center" })
     }
-
-    await fetch("/api/products", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name,
-        imageUrls,
-        options: hasOptions ? options : [],
-        variants: finalVariants,
-      }),
-    })
-
-    onSuccess()
-    onClose()
   }
+
+
+  const sortedVariants = [...variants].sort((a, b) => {
+    for (let i = 0; i < a.combination.length; i++) {
+      if (a.combination[i] < b.combination[i]) return -1
+      if (a.combination[i] > b.combination[i]) return 1
+    }
+    return 0
+  })
+
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
@@ -408,12 +466,12 @@ export default function AddProductModal({
                 </thead>
 
                 <tbody>
-                  {variants.map((variant, rowIndex) => {
+                  {sortedVariants.map((variant, rowIndex) => {
                     return (
                       <tr key={variant.key} className="border-t">
                         {variant.combination.map((value, colIndex) => {
                           const span = getRowSpan(
-                            variants,
+                            sortedVariants,
                             rowIndex,
                             colIndex
                           )

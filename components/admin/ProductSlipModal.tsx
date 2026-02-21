@@ -80,42 +80,61 @@ export default function ProductSlipModal({
                 {slip.snapshot?.name}
               </p>
 
-              <p className="font-medium mt-2">Variants</p>
+              {(slip.snapshot?.variants || []).length > 0 && (
+                <>
+                  {slip.snapshot.variants[0]?.values?.length > 0 ? (
+                    <>
+                      <p className="font-medium mt-2">Variants</p>
 
-              <table className="w-full text-xs border mt-1">
-                <thead className="bg-gray-200">
-                  <tr>
-                    <th className="border px-2 py-1 text-left">
-                      Option
-                    </th>
-                    <th className="border px-2 py-1">
-                      Price
-                    </th>
-                    <th className="border px-2 py-1">
-                      Stock
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(slip.snapshot?.variants || []).map(
-                    (v: any, i: number) => (
-                      <tr key={i}>
-                        <td className="border px-2 py-1">
-                          {Array.isArray(v.combination)
-                            ? v.combination.join(" / ")
-                            : "-"}
-                        </td>
-                        <td className="border px-2 py-1 text-center">
-                          {v.price}
-                        </td>
-                        <td className="border px-2 py-1 text-center">
-                          {v.stock}
-                        </td>
-                      </tr>
-                    )
+                      <table className="w-full text-xs border mt-2">
+                        <thead className="bg-gray-200">
+                          <tr>
+                            <th className="border px-2 py-1">Options</th>
+                            <th className="border px-2 py-1">Price</th>
+                            <th className="border px-2 py-1">Stock</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {slip.snapshot.variants.map((v: any, i: number) => (
+                            <tr key={i}>
+                              <td className="border px-2 py-1">
+                                {v.values
+                                  ?.map(
+                                    (x: any) =>
+                                      `${x?.optionValue?.option?.name ?? ""}${x?.optionValue?.option?.name ? ": " : ""
+                                      }${x?.optionValue?.value ?? ""}`
+                                  )
+                                  .join(" | ")}
+                              </td>
+                              <td className="border px-2 py-1 text-center">
+                                {v.price}
+                              </td>
+                              <td className="border px-2 py-1 text-center">
+                                {v.stock}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </>
+                  ) : (
+                    <>
+                      {/* 🟢 สินค้าไม่มี option */}
+                      <div className="mt-3 space-y-1">
+                        <p>
+                          <span className="font-medium">Price:</span>{" "}
+                          {slip.snapshot.variants[0]?.price}
+                        </p>
+                        <p>
+                          <span className="font-medium">Stock:</span>{" "}
+                          {slip.snapshot.variants[0]?.stock}
+                        </p>
+                      </div>
+                    </>
                   )}
-                </tbody>
-              </table>
+                </>
+              )}
+
             </div>
           </div>
         ))}
