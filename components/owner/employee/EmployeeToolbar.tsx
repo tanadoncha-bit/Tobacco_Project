@@ -25,7 +25,7 @@ export default function EmployeeToolbar({
         </h1>
 
         <div className="flex items-center gap-3">
-          <SearchInput value={search} onChange={onSearchChange} />
+          <SearchInput value={search} onChange={onSearchChange} className="text-indigo-900"/>
           <button
             type="button"
             className="rounded-full bg-white/50 p-2 ring-1 ring-black/5 hover:bg-white/70"

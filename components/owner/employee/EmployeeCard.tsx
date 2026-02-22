@@ -1,13 +1,21 @@
 import React from "react";
-import { Mail, Phone, MoreHorizontal, User } from "lucide-react";
+import { Mail, Phone, User } from "lucide-react";
 import type { Employee } from "./types";
+import EmployeeCardMenu from "./EmployeeCardMenu";
 
 type Props = {
   employee: Employee;
-  onMenuClick?: (employee: Employee) => void;
+  onView?: (employee: Employee) => void;
+  onEdit?: (employee: Employee) => void;
+  onDelete?: (employee: Employee) => void;
 };
 
-export default function EmployeeCard({ employee, onMenuClick }: Props) {
+export default function EmployeeCard({
+  employee,
+  onView,
+  onEdit,
+  onDelete,
+}: Props) {
   return (
     <div className="rounded-3xl bg-white/60 p-4 shadow-sm ring-1 ring-black/5">
       <div className="flex items-start justify-between">
@@ -15,14 +23,12 @@ export default function EmployeeCard({ employee, onMenuClick }: Props) {
           <User className="h-6 w-6 text-white" />
         </div>
 
-        <button
-          type="button"
-          onClick={() => onMenuClick?.(employee)}
-          className="rounded-xl p-2 hover:bg-black/5"
-          aria-label="employee menu"
-        >
-          <MoreHorizontal className="h-5 w-5 text-slate-700" />
-        </button>
+        <EmployeeCardMenu
+          employee={employee}
+          onView={onView}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
       </div>
 
       <div className="mt-3">
