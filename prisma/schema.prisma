@@ -98,3 +98,25 @@ model ProductSlip {
   createdAt   DateTime @default(now())
 }
 
+model Employee {
+  id            Int      @id @default(autoincrement())
+  firstname     String
+  lastname      String
+  email         String   @unique
+  tel           String   @unique
+  address       String
+  gender        Gender
+  dateOfBirth   DateTime
+  ssn           String   @unique
+  position      String
+  salary        Float
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}

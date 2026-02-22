@@ -1,4 +1,4 @@
-import Sidebar from "@/components/Sidebar/Sidebar";
+import Sidebar from "@/components/owner/sidebar/Sidebar";
 
 export default function MainLayout({
   children,

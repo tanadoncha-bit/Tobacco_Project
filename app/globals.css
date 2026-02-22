@@ -135,3 +135,7 @@
 .swiper-button-prev {
   color: #ffffff !important;   /* สีลูกศร */
 }
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) !important;
+}

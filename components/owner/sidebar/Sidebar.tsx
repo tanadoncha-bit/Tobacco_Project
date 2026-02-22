@@ -2,9 +2,10 @@
 
 import {
   LayoutGrid,
-  Store,
-  Warehouse,
-  Archive,
+  Settings, 
+  Receipt, 
+  Boxes,
+  IdCardLanyard
 } from "lucide-react"
 import { usePathname } from "next/navigation"
 import clsx from "clsx"
@@ -20,17 +21,22 @@ const menu = [
   {
     label: "Inventory",
     href: "/owner/inventory",
-    icon: Store,
+    icon: Boxes,
   },
   {
     label: "Receipt",
     href: "/owner/receipt",
-    icon: Warehouse,
+    icon: Receipt,
   },
   {
-    label: "Setting",
-    href: "/owner/setting",
-    icon: Archive,
+    label: "Employee",
+    href: "/owner/employee",
+    icon: IdCardLanyard,
+  },
+  {
+    label: "Settings",
+    href: "/owner/settings",
+    icon: Settings,
   },
 ]
 
@@ -44,8 +50,8 @@ const Sidebar = () => {
         <nav className="space-y-2">
           {menu.map((item) => {
             const Icon = item.icon
-            const active = item.href === "/admin"
-                              ? pathname === "/admin"
+            const active = item.href === "/owner"
+                              ? pathname === "/owner"
                               : pathname.startsWith(item.href)
 
             return (
@@ -75,7 +81,7 @@ const Sidebar = () => {
         <div>
           <p className="text-sm font-medium">Pawarisa</p>
           <p className="text-xs text-white/70">
-            Product Staff
+            Owner
           </p>
         </div>
       </div>
