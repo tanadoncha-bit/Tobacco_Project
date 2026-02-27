@@ -1,151 +1,107 @@
 "use client"
 
+import { X, History } from "lucide-react"
 import { useEffect, useState } from "react"
 
-export default function ProductSlipModal({
-  open,
-  Pid,
-  onClose,
-}: {
+type ProductSlipModalProps = {
+  productId: number | null
+  productName: string
   open: boolean
-  Pid: number | null
   onClose: () => void
-}) {
-  const [slips, setSlips] = useState<any[]>([])
+}
+
+export default function ProductSlipModal({ productId, productName, open, onClose }: ProductSlipModalProps) {
+  const [transactions, setTransactions] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-
-    if (!open || !Pid) return
-
-    fetch(`/api/products/slip/${Pid}`)
-      .then(res => res.json())
-      .then(setSlips)
-  }, [open, Pid])
+    if (open && productId) {
+      setIsLoading(true)
+      fetch(`/api/products/transactions/${productId}`)
+        .then(async (res) => {
+          const data = await res.json()
+          if (!res.ok) throw new Error(data.message || "เกิดข้อผิดพลาด")
+          return data
+        })
+        .then((data) => {
+          setTransactions(Array.isArray(data) ? data : [])
+        })
+        .catch((err) => {
+          console.error("โหลดประวัติไม่สำเร็จ:", err)
+          setTransactions([])
+        })
+        .finally(() => setIsLoading(false))
+    } else {
+      setTransactions([]) 
+    }
+  }, [open, productId])
 
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-      <div className="bg-white w-[700px] max-h-[85vh] overflow-y-auto rounded-xl p-6">
-
-        <h2 className="text-xl font-bold mb-4">
-          Product Transaction Slip
-        </h2>
-
-        {slips.length === 0 && (
-          <p className="text-gray-500 text-sm">
-            No transaction history
-          </p>
-        )}
-
-        {slips.map((slip, index) => (
-          <div
-            key={slip.id}
-            className="border rounded-lg p-4 mb-5"
-          >
-            {/* ===== HEADER ===== */}
-            <div className="flex justify-between mb-3">
-              <div>
-                <p className="font-semibold">
-                  Slip #{slip.id}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {new Date(slip.createdAt).toLocaleString()}
-                </p>
-              </div>
-
-              <span
-                className={`px-3 py-3 text-xs rounded-lg font-medium
-                  ${slip.action === "CREATE"
-                    ? "bg-green-100 text-green-700"
-                    : "bg-blue-100 text-blue-700"
-                  }`}
-              >
-                {slip.action}
-              </span>
-            </div>
-
-            {/* ===== META ===== */}
-            <div className="text-sm mb-3">
-              <p>
-                <span className="font-medium">Action by:</span>{" "}
-                {slip.createdBy}
-              </p>
-            </div>
-
-            {/* ===== CONTENT ===== */}
-            <div className="bg-gray-50 rounded p-3 text-sm space-y-2">
-              <p>
-                <span className="font-medium">Product Name:</span>{" "}
-                {slip.snapshot?.name}
-              </p>
-
-              {(slip.snapshot?.variants || []).length > 0 && (
-                <>
-                  {slip.snapshot.variants[0]?.values?.length > 0 ? (
-                    <>
-                      <p className="font-medium mt-2">Variants</p>
-
-                      <table className="w-full text-xs border mt-2">
-                        <thead className="bg-gray-200">
-                          <tr>
-                            <th className="border px-2 py-1">Options</th>
-                            <th className="border px-2 py-1">Price</th>
-                            <th className="border px-2 py-1">Stock</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {slip.snapshot.variants.map((v: any, i: number) => (
-                            <tr key={i}>
-                              <td className="border px-2 py-1">
-                                {v.values
-                                  ?.map(
-                                    (x: any) =>
-                                      `${x?.optionValue?.option?.name ?? ""}${x?.optionValue?.option?.name ? ": " : ""
-                                      }${x?.optionValue?.value ?? ""}`
-                                  )
-                                  .join(" | ")}
-                              </td>
-                              <td className="border px-2 py-1 text-center">
-                                {v.price}
-                              </td>
-                              <td className="border px-2 py-1 text-center">
-                                {v.stock}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </>
-                  ) : (
-                    <>
-                      {/* 🟢 สินค้าไม่มี option */}
-                      <div className="mt-3 space-y-1">
-                        <p>
-                          <span className="font-medium">Price:</span>{" "}
-                          {slip.snapshot.variants[0]?.price}
-                        </p>
-                        <p>
-                          <span className="font-medium">Stock:</span>{" "}
-                          {slip.snapshot.variants[0]?.stock}
-                        </p>
-                      </div>
-                    </>
-                  )}
-                </>
-              )}
-
-            </div>
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div className="bg-white w-full max-w-4xl max-h-[80vh] flex flex-col rounded-xl overflow-hidden shadow-xl">
+        
+        <div className="flex justify-between items-center p-5 border-b bg-gray-50">
+          <div className="flex items-center gap-2">
+            <History className="text-blue-600 w-6 h-6" />
+            <h2 className="text-xl font-bold">ประวัติสต๊อกสินค้า: <span className="text-blue-600">{productName}</span></h2>
           </div>
-        ))}
-
-        <div className="text-right mt-4">
-          <button
-            onClick={onClose}
-            className="border px-4 py-2 rounded-sm cursor-pointer"
-          >
-            Close
+          <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
+            <X className="w-5 h-5" />
           </button>
+        </div>
+
+        <div className="p-5 overflow-y-auto flex-1">
+          {isLoading ? (
+            <div className="text-center py-10 text-gray-500">กำลังโหลดข้อมูล...</div>
+          ) : transactions.length === 0 ? (
+            <div className="text-center py-10 text-gray-500 bg-gray-50 rounded-lg">ยังไม่มีประวัติการเข้า-ออกของสต๊อก</div>
+          ) : (
+            <div className="border rounded-lg overflow-hidden">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-gray-100 text-gray-700">
+                  <tr>
+                    <th className="px-4 py-3 border-b">วัน-เวลา</th>
+                    <th className="px-4 py-3 border-b">ตัวเลือกสินค้า</th>
+                    <th className="px-4 py-3 border-b">ประเภท</th>
+                    <th className="px-4 py-3 border-b text-right">จำนวน</th>
+                    <th className="px-4 py-3 border-b">หมายเหตุ</th>
+                    <th className="px-4 py-3 border-b">ผู้ทำรายการ</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {(transactions || []).map((txn, index) => {
+                    const variantName = txn.variant?.values?.map((v: any) => v.optionValue.value).join(", ") || "ไม่มีตัวเลือก"
+                    
+                    return (
+                      <tr key={txn.id || index} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                          {new Date(txn.createdAt).toLocaleString('th-TH', { 
+                            day: '2-digit', month: 'short', year: 'numeric', 
+                            hour: '2-digit', minute: '2-digit' 
+                          })}
+                        </td>
+                        <td className="px-4 py-3 font-medium text-gray-800">{variantName}</td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-1 rounded text-xs font-semibold whitespace-nowrap ${
+                            txn.type === "IN" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
+                          }`}>
+                            {txn.type === "IN" ? "รับเข้า (IN)" : "ขายออก (OUT)"}
+                          </span>
+                        </td>
+                        <td className={`px-4 py-3 text-right font-medium ${txn.type === "IN" ? "text-green-600" : "text-orange-600"}`}>
+                          {txn.type === "IN" ? "+" : "-"}{txn.amount}
+                        </td>
+                        <td className="px-4 py-3 text-gray-600">{txn.note || "-"}</td>
+                        <td className="px-4 py-3 text-gray-600">{txn.profile ? `${txn.profile.firstname} ${txn.profile.lastname}` : "System"}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>

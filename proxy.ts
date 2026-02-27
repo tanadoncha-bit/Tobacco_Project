@@ -1,20 +1,56 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { withAuth } from "next-auth/middleware"
+import { NextResponse } from "next/server"
 
-const isProtectedRoute = createRouteMatcher([
-  '/user/Profile(.*)', 
-  '/user/OrderStatue(.*)',
-  '/user/ShoppingCart(.*)'
-])
+const routePermissions = [
+  { path: "/admin/Financial", roles: ["ADMIN", "MANAGER"] },
+  { path: "/admin/history", roles: ["ADMIN", "MANAGER"] },
+  { path: "/admin/SaleItem", roles: ["ADMIN", "STAFF", "MANAGER"] },
+  { path: "/admin/Stock", roles: ["ADMIN", "STAFF", "MANAGER"] },
+  { path: "/admin/Material", roles: ["ADMIN", "STAFF", "MANAGER"] },
+  { path: "/admin/employees", roles: ["ADMIN"] },
+  { path: "/admin/settings", roles: ["ADMIN"] },
+  { path: "/admin", roles: ["ADMIN", "STAFF", "MANAGER"] },
+]
 
-export default clerkMiddleware(async (auth, req) => {
-  if (isProtectedRoute(req)) await auth.protect()
-})
+export default withAuth(
+  function middleware(req) {
+    const token = req.nextauth.token
+    const path = req.nextUrl.pathname
+    const userRole = token?.role as string
+
+    if (path.startsWith("/admin")) {
+      // ดัก "USER" ธรรมดาก่อนเลย ถ้าไม่ใช่แก๊งหลังบ้าน เตะกลับไปหน้า /user ทันที!
+      const basicAdminRoles = ["ADMIN", "STAFF", "MANAGER"]
+      if (!basicAdminRoles.includes(userRole)) {
+        return NextResponse.redirect(new URL("/user", req.url))
+      }
+
+      // ถ้าเป็นแก๊งหลังบ้าน (ADMIN, STAFF, MANAGER) ค่อยมาเช็คสิทธิ์รายหน้า
+      const matchedRoute = routePermissions
+        .sort((a, b) => b.path.length - a.path.length)
+        .find((route) => path.startsWith(route.path))
+
+      if (matchedRoute) {
+        if (!matchedRoute.roles.includes(userRole)) {
+          // ถ้าเป็น STAFF/MANAGER แต่ดันกดเข้าหน้าของ ADMIN ให้เตะกลับไป Dashboard ของหลังบ้าน
+          return NextResponse.redirect(new URL("/admin", req.url))
+        }
+      } 
+    }
+
+    return NextResponse.next()
+  },
+  {
+    callbacks: {
+      authorized: ({ token }) => !!token,
+    },
+  }
+)
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Always run for API routes
-    '/(api|trpc)(.*)',
+    "/admin/:path*",
+    "/user/OrderStatue/:path*", 
+    "/user/ShoppingCart/:path*"
   ],
-};
+}

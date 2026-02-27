@@ -1,541 +1,420 @@
 "use client"
 
-import { ImagePlus, Trash2 } from "lucide-react"
-import { useEffect, useRef, useState } from "react"
-import ConfirmDeleteModal from "./ConfirmDeleteModal"
+import { X, Plus, ImagePlus, Trash2, Upload, Columns, ArrowUpDown } from "lucide-react"
+import { useEffect, useState } from "react"
+import { toast } from "sonner"
 
-type StockItem = {
-  productCode: string
-  name: string
-  stock: number
-}
-
-type Variant = {
-  key: string
-  combination: string[]
-  price: number
-  stock: number
-}
-
-
-export default function EditProductModal({
-  open,
-  stockItem,
-  onClose,
-  onSuccess,
-}: {
+type EditProductModalProps = {
+  productId: number | null
   open: boolean
-  stockItem: StockItem | null
   onClose: () => void
   onSuccess: () => void
-}) {
-  const [product, setProduct] = useState<any>(null)
+}
+
+export default function EditProductModal({ productId, open, onClose, onSuccess }: EditProductModalProps) {
   const [name, setName] = useState("")
-  const [variants, setVariants] = useState<Variant[]>([])
-  const [images, setImages] = useState<string[]>([])
-  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [materials, setMaterials] = useState<any[]>([])
 
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  // 🌟 ส่วนสำคัญ: แยก State ของ "หัวข้อตัวเลือก" (Columns) และ "รายการย่อย" (Rows) ออกจากกัน
+  const [options, setOptions] = useState<string[]>([]) // เช่น ["ปริมาณ", "รสชาติ"]
+  const [variants, setVariants] = useState<any[]>([])
 
-  // ================= FETCH =================
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isFetching, setIsFetching] = useState(false)
 
+  // ================= 1. โหลดข้อมูล =================
   useEffect(() => {
-    if (!product?.Option) return
-    regenerateVariants(product.Option)
-  }, [product?.Option])
+    if (open && productId) {
+      setIsFetching(true)
+      setImageFile(null)
 
+      fetch("/api/materials").then(res => res.json()).then(setMaterials)
 
-  useEffect(() => {
-    if (!open || !stockItem) return
+      fetch(`/api/products/${productId}`)
+        .then(res => res.json())
+        .then(data => {
+          setName(data.Pname || "")
 
-    const fetchProduct = async () => {
-      const res = await fetch(`/api/products/get/${stockItem.productCode}`)
-      const data = await res.json()
+          // 🛠️ 1. จัดการรูปภาพ...
+          let imgUrl = null
+          if (data.images && data.images.length > 0) {
+            imgUrl = data.images[0].url
+          }
+          setPreviewImage(imgUrl)
 
-      setProduct(data)
-      setName(data.Pname)
+          // 🛠️ 2. จัดการหัวข้อตัวเลือก...
+          let fetchedOptions: string[] = []
+          if (data.Option && data.Option.length > 0) {
+            fetchedOptions = data.Option.map((opt: any) => opt.name)
+          }
+          setOptions(fetchedOptions)
 
-      // เพิ่ม clientId ให้ทุก variant (แก้ปัญหา key ไม่ stable)
-      setVariants(
-        (data.variants || []).map((v: any) => ({
-          key: v.values.map((val: any) => val.optionValue.value).join("|"),
-          combination: v.values.map((val: any) => val.optionValue.value),
-          price: v.price ?? 0,
-          stock: v.stock ?? 0,
-        }))
-      )
+          // 🛠️ 3. จัดการรายการย่อย พร้อมจัดเรียงข้อมูลทันทีตอนโหลด!
+          const formattedVariants = (data.variants || []).map((v: any) => ({
+            id: v.id,
+            values: v.values && v.values.length > 0
+              ? v.values.map((val: any) => val.optionValue?.value || "")
+              : Array(fetchedOptions.length).fill(""),
+            price: v.price || 0,
+            stock: v.stock || 0,
+            recipes: v.recipes || [],
+            isNew: false
+          })).sort((a: any, b: any) => {
+            // 🛠️ ใช้ลอจิกเดียวกันเป๊ะ แต่ใช้ความยาวของ fetchedOptions แทน
+            for (let i = 0; i < fetchedOptions.length; i++) {
+              const valA = a.values[i] || ""
+              const valB = b.values[i] || ""
+              const comparison = valA.localeCompare(valB, 'th', { numeric: true })
+              if (comparison !== 0) {
+                return comparison
+              }
+            }
+            return 0
+          })
 
-
-
-      setImages(data.images?.map((i: any) => i.url) || [])
+          setVariants(formattedVariants)
+        })
+        .finally(() => setIsFetching(false))
     }
+  }, [open, productId])
 
-    fetchProduct()
-  }, [open, stockItem])
+  // ================= 2. ฟังก์ชันจัดการตาราง (Dynamic Table) =================
 
-  if (!open || !product) return null
-
-
-  const regenerateVariants = (options: any[]) => {
-    if (!options?.length) {
-      setVariants([])
-      return
-    }
-
-    const cartesian = (arr: any[][]): any[][] =>
-      arr.reduce(
-        (a, b) =>
-          a.flatMap((d: any) => b.map((e: any) => [...d, e])),
-        [[]]
-      )
-
-    const valueArrays = options.map((opt) =>
-      opt.values.map((v: any) => v.value)
-    )
-
-    const combinations = cartesian(valueArrays)
-
-    setVariants((prev) =>
-      combinations.map((combo) => {
-        const key = combo.join("|")
-
-        const oldVariant = prev.find((v) => v.key === key)
-
-        if (oldVariant) {
-          return oldVariant
+const sortVariants = () => {
+    const sorted = [...variants].sort((a, b) => {
+      for (let i = 0; i < options.length; i++) {
+        const valA = a.values[i] || ""
+        const valB = b.values[i] || ""
+        
+        const comparison = valA.localeCompare(valB, 'th', { numeric: true })
+        if (comparison !== 0) {
+          return comparison
         }
-
-        return {
-          key,
-          combination: combo,
-          price: 0,
-          stock: 0,
-        }
-      })
-    )
+      }
+      return 0
+    })
+    setVariants(sorted)
   }
 
+  // 2.1 จัดการรูปภาพ
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setImageFile(file)
+      setPreviewImage(URL.createObjectURL(file))
+    }
+  }
 
+  // 2.2 เพิ่มหัวข้อตัวเลือกใหม่ (เช่น กดเพิ่มคอลัมน์ "สี")
+  const addOptionColumn = () => {
+    setOptions([...options, "ตัวเลือกใหม่"])
+    // ต้องเพิ่มช่องว่างในทุกๆ Variant ที่มีอยู่ด้วย เพื่อให้จำนวนคอลัมน์ตรงกัน
+    setVariants(variants.map(v => ({ ...v, values: [...v.values, ""] })))
+  }
 
-  // ================= SAVE =================
+  // 2.3 แก้ไขชื่อหัวข้อตัวเลือก (เช่น เปลี่ยน "ตัวเลือกใหม่" เป็น "สี")
+  const updateOptionName = (index: number, newName: string) => {
+    const newOptions = [...options]
+    newOptions[index] = newName
+    setOptions(newOptions)
+  }
+
+  // 2.4 ลบหัวข้อตัวเลือก (ลบคอลัมน์)
+  const removeOptionColumn = (index: number) => {
+    setOptions(prev => prev.filter((_: any, i: number) => i !== index))
+    setVariants(prev => prev.map(v => ({
+      ...v,
+      values: v.values.filter((_: any, i: number) => i !== index)
+    })))
+  }
+
+  // 2.5 เพิ่มสินค้าย่อยใหม่ (เพิ่มแถว)
+  const addNewVariantRow = () => {
+    setVariants([
+      ...variants,
+      {
+        id: `new-${Date.now()}`,
+        values: Array(options.length).fill(""), // สร้างช่องกรอกตามจำนวนคอลัมน์ที่มี
+        price: 0,
+        stock: 0,
+        recipes: [],
+        isNew: true
+      }
+    ])
+  }
+
+  // 2.6 แก้ไขข้อมูลในแถว (ค่าตัวเลือก, ราคา)
+  const updateVariantValue = (variantIndex: number, valueIndex: number, newValue: string) => {
+    const newVariants = [...variants]
+    newVariants[variantIndex].values[valueIndex] = newValue
+    setVariants(newVariants)
+  }
+
+  const updateVariantPrice = (variantIndex: number, newPrice: number) => {
+    const newVariants = [...variants]
+    newVariants[variantIndex].price = newPrice
+    setVariants(newVariants)
+  }
+
+  // 2.7 ลบแถว
+  const removeVariantRow = (index: number) => {
+    setVariants(variants.filter((_, i) => i !== index))
+  }
+
+  // ================= 3. บันทึกข้อมูล =================
   const handleSave = async () => {
-    const cleanVariants = variants.map((v) => ({
-      price: v.price,
-      stock: v.stock,
-      values: v.combination.map((value, index) => {
-        const option = product.Option[index]
-        const optionValue = option.values.find(
-          (val: any) => val.value === value
-        )
+    setIsLoading(true)
+    try {
+      let finalImageUrl = previewImage
 
-        return {
-          optionId: option.id,
-          optionValueId: optionValue?.id ?? null,
-          optionValue: { value },
+      if (imageFile) {
+        const formData = new FormData()
+        formData.append("file", imageFile)
+        const uploadRes = await fetch("/api/upload", { method: "POST", body: formData })
+        if (uploadRes.ok) {
+          const uploadData = await uploadRes.json()
+          finalImageUrl = uploadData.url
+        } else {
+          toast.error("อัปโหลดรูปภาพไม่สำเร็จ")
         }
-      }),
-    }))
+      }
 
-    await fetch("/api/products/update", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        Pid: product.Pid,
+      // โครงสร้างใหม่ที่จะส่งให้ Backend
+      const payload = {
         name,
-        images,
-        options: product.Option,
-        variants: cleanVariants,
-      }),
-    })
+        imageUrl: finalImageUrl,
+        options: options, // ส่งโครงสร้างหัวข้อไปด้วย (เช่น ["ปริมาณ", "รสชาติ", "สี"])
+        variants: variants.map(v => ({
+          id: v.isNew ? undefined : v.id,
+          values: v.values, // ค่าต่างๆ เช่น ["500ml", "องุ่น", "แดง"]
+          price: v.price
+        }))
+      }
 
-    onSuccess()
-    onClose()
+      const res = await fetch(`/api/products/${productId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) throw new Error("บันทึกการเปลี่ยนแปลงไม่สำเร็จ")
+      toast.success("อัปเดตรายละเอียดสินค้าเรียบร้อย")
+      onSuccess()
+      onClose()
+    } catch (error: any) {
+      toast.error(error.message)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-
-
-  // ================= DELETE PRODUCT =================
-  const handleDelete = async () => {
-    onClose() // ปิด modal ก่อน
-
-    await fetch("/api/products/delete", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ Pid: product.Pid }),
-    })
-
-    onSuccess()
-  }
-
-
-  // ================= IMAGE =================
-  const removeImage = (index: number) => {
-    setImages(images.filter((_, i) => i !== index))
-  }
-
-  // ================= VARIANT UPDATE =================
-  const updateVariant = (key: string, field: string, value: any) => {
-    setVariants((prev) =>
-      prev.map((v) =>
-        v.key === key ? { ...v, [field]: value } : v
-      )
-    )
-  }
+  if (!open) return null
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white w-[750px] max-h-[90vh] overflow-y-auto rounded-xl p-6 space-y-6">
-        <h2 className="text-xl font-bold">Edit Product</h2>
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+      <div className="bg-white w-full max-w-5xl max-h-[95vh] overflow-y-auto rounded-2xl shadow-2xl p-6">
+        <div className="flex justify-between items-center mb-6 border-b pb-4">
+          <h2 className="text-xl font-bold text-gray-800">รายละเอียดสินค้า & ตัวเลือกแบบละเอียด</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition"><X className="w-5 h-5 text-gray-500" /></button>
+        </div>
 
-        {/* ================= IMAGES ================= */}
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Product Images
-          </label>
-
-          <div className="flex gap-3 flex-wrap">
-            {images.map((url, index) => (
-              <div
-                key={index}
-                className="relative w-24 h-24 border rounded-md overflow-hidden group"
-              >
-                <img
-                  src={url}
-                  className="w-full h-full object-cover"
-                />
-
-                <button
-                  type="button"
-                  onClick={() => removeImage(index)}
-                  className="absolute top-1 right-1 bg-red-600 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer"
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="w-24 h-24 border-2 border-dashed rounded-md flex flex-col items-center justify-center text-gray-500 hover:bg-gray-50 cursor-pointer"
-            >
-              <ImagePlus className="w-6 h-6 mb-1" />
-              <span className="text-xs">เพิ่มรูป</span>
-            </button>
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={async (e) => {
-                if (!e.target.files?.[0]) return
-                const file = e.target.files[0]
-
-                const formData = new FormData()
-                formData.append("file", file)
-
-                const res = await fetch("/api/upload", {
-                  method: "POST",
-                  body: formData,
-                })
-
-                const data = await res.json()
-                if (data.url) {
-                  setImages((prev) => [...prev, data.url])
-                }
-              }}
-            />
+        {isFetching ? (
+          <div className="text-center py-20 text-gray-500 animate-pulse flex flex-col items-center">
+            <div className="w-10 h-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+            กำลังดึงข้อมูลสินค้า...
           </div>
-        </div>
-
-        {/* ================= NAME ================= */}
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Product Name
-          </label>
-          <input
-            className="w-full border px-3 py-2 rounded-md"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </div>
-        {/* ================= OPTIONS ================= */}
-        <div>
-          <label className="block text-sm font-semibold mb-3">
-            Options
-          </label>
-
-          <div className="space-y-4">
-            {product.Option.map((opt: any, optionIndex: number) => (
-              <div
-                key={opt.id || optionIndex}
-                className="border rounded-lg p-4 bg-gray-50 relative"
-              >
-
-                <div className="flex items-center gap-2 mb-4">
-                  {/* Option Name */}
-                  <input
-                    type="text"
-                    placeholder="Option name"
-                    value={opt.name}
-                    onChange={(e) => {
-                      const updated = [...product.Option]
-                      updated[optionIndex].name = e.target.value
-                      setProduct({ ...product, Option: updated })
-                    }}
-                    className="flex-1 border px-3 py-2 rounded text-sm"
-                  />
-                  {/* ลบ Option */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const updated = product.Option.filter(
-                        (_: any, i: number) => i !== optionIndex
-                      )
-
-                      setProduct({ ...product, Option: updated })
-
-                      if (updated.length === 0) {
-                        setVariants([])
-                      }
-                    }}
-
-                    className="cursor-pointer text-gray-500 hover:text-black"
-                  >
-                    <Trash2 className="size-6" />
-                  </button>
-                </div>
-
-                {/* Option Values */}
-                <div className="space-y-2">
-                  {opt.values?.map((val: any, valueIndex: number) => (
-                    <div
-                      key={val.id || valueIndex}
-                      className="flex items-center gap-2"
-                    >
-                      <input
-                        type="text"
-                        placeholder="ค่า เช่น Red"
-                        value={val.value}
-                        onChange={(e) => {
-                          const updated = [...product.Option]
-                          updated[optionIndex].values[valueIndex].value =
-                            e.target.value
-                          setProduct({ ...product, Option: updated })
-                        }}
-                        className="flex-1 border px-3 py-2 rounded text-sm"
-                      />
-
-
-                      {/* ลบค่า */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const updated = [...product.Option]
-
-                          updated[optionIndex].values =
-                            updated[optionIndex].values.filter(
-                              (_: any, i: number) => i !== valueIndex
-                            )
-
-                          setProduct({ ...product, Option: updated })
-                        }}
-
-
-                        className="cursor-pointer text-gray-500 hover:text-black"
-                      >
-                        ✕
-                      </button>
+        ) : (
+          <div className="space-y-8">
+            {/* ส่วนที่ 1: รูปภาพและชื่อสินค้า */}
+            <div className="flex flex-col md:flex-row gap-8 bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+              <div className="w-full md:w-auto flex flex-col items-center gap-3">
+                <div className="w-48 h-48 border-2 border-dashed border-gray-300 rounded-xl overflow-hidden flex items-center justify-center bg-white relative group shadow-sm">
+                  {previewImage ? (
+                    <img src={previewImage} alt="Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="text-gray-400 flex flex-col items-center">
+                      <ImagePlus className="w-10 h-10 mb-2" />
+                      <span className="text-sm">ไม่มีรูปภาพ</span>
                     </div>
-                  ))}
+                  )}
+                  <label className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity text-white text-sm font-medium">
+                    <Upload className="w-6 h-6 mb-2" />
+                    <span>อัปโหลดรูปใหม่</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                  </label>
+                </div>
+              </div>
 
-                  {/* เพิ่มค่า */}
+              <div className="w-full md:flex-1 flex flex-col justify-center">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">ชื่อสินค้าหลัก</label>
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 px-4 py-3 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition text-lg font-medium shadow-sm"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* ส่วนที่ 2: ตารางตัวเลือกสินค้าแบบ Excel-like */}
+            <div>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                  <Columns className="w-5 h-5 text-purple-600" />
+                  จัดการรูปแบบตัวเลือก (Variant Matrix)
+                </h3>
+                <div className="flex gap-2 flex-wrap">
                   <button
-                    type="button"
-                    onClick={() => {
-                      const updated = [...product.Option]
-                      updated[optionIndex].values.push({
-                        id: null,
-                        value: "",
-                      })
-                      setProduct({ ...product, Option: updated })
-                    }}
-                    className="text-blue-600 text-sm mt-1 cursor-pointer"
+                    onClick={sortVariants}
+                    className="text-sm bg-gray-50 text-gray-700 hover:bg-gray-100 px-3 py-2 rounded-lg flex items-center gap-1 font-medium transition border border-gray-200"
                   >
-                    + เพิ่มค่า
+                    <ArrowUpDown className="w-4 h-4" /> เรียงข้อมูล
+                  </button>
+                  <button
+                    onClick={addOptionColumn}
+                    className="text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-2 rounded-lg flex items-center gap-1 font-medium transition border border-blue-200"
+                  >
+                    <Plus className="w-4 h-4" /> เพิ่มหัวข้อตัวเลือก (คอลัมน์)
+                  </button>
+                  <button
+                    onClick={addNewVariantRow}
+                    className="text-sm bg-purple-50 text-purple-700 hover:bg-purple-100 px-3 py-2 rounded-lg flex items-center gap-1 font-medium transition border border-purple-200"
+                  >
+                    <Plus className="w-4 h-4" /> เพิ่มรายการย่อย (แถว)
                   </button>
                 </div>
               </div>
-            ))}
-          </div>
 
-          {/* เพิ่ม Option */}
-          <button
-            type="button"
-            onClick={() =>
-              setProduct((prev: any) => ({
-                ...prev,
-                Option: [
-                  ...prev.Option,
-                  {
-                    id: null,
-                    name: "",
-                    values: [],
-                  },
-                ],
-              }))
-            }
-            className="text-purple-600 text-sm mt-4 cursor-pointer"
-          >
-            + เพิ่มตัวเลือก
-          </button>
-        </div>
-        {/* ================= VARIANTS ================= */}
-        {variants.length > 0 && (
-          <div className="mb-6">
-            <h3 className="font-semibold mb-3">รายการ Variant</h3>
-
-            <div className="overflow-hidden rounded-sm border border-gray-200">
-              <table className="w-full text-sm border-collapse">
-                <thead className="bg-gray-100">
-                  <tr>
-                    {product.Option.map((opt: any, i: number) => (
-                      <th key={i} className="border-b p-3 text-left">
-                        {opt.name}
-                      </th>
-                    ))}
-                    <th className="border-b p-3 text-left">ราคา</th>
-                    <th className="border-b p-3 text-left">คลัง</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {variants.map((variant, rowIndex) => (
-                    <tr key={`variant-${rowIndex}`} className="border-t">
-                      {variant.combination.map((value, colIndex) => {
-                        const span = getRowSpan(
-                          variants,
-                          rowIndex,
-                          colIndex
-                        )
-
-                        if (!span) return null
-
-                        return (
-                          <td
-                            key={`${variant.key}-${colIndex}`}
-                            rowSpan={span}
-                            className="border-r p-3 align-middle bg-white"
-                          >
-                            {value}
-                          </td>
-                        )
-                      })}
-
-                      <td className="border-r p-3">
-                        <input
-                          type="number"
-                          value={variant.price}
-                          onChange={(e) =>
-                            updateVariant(
-                              variant.key,
-                              "price",
-                              Number(e.target.value)
-                            )
-                          }
-                          className="w-full border rounded-sm px-2 py-1"
-                        />
-                      </td>
-
-                      <td className="p-3">
-                        <input
-                          type="number"
-                          value={variant.stock}
-                          onChange={(e) =>
-                            updateVariant(
-                              variant.key,
-                              "stock",
-                              Number(e.target.value)
-                            )
-                          }
-                          className="w-full border rounded-sm px-2 py-1"
-                        />
-                      </td>
+              <div className="overflow-x-auto border border-gray-200 rounded-xl shadow-sm">
+                <table className="w-full text-sm text-left whitespace-nowrap">
+                  <thead className="bg-gray-100 text-gray-700 border-b">
+                    <tr>
+                      {options.map((opt, idx) => (
+                        <th key={idx} className="p-3 font-semibold min-w-[150px]">
+                          <div className="flex items-center gap-2 bg-white px-2 py-1 rounded-md border border-gray-200">
+                            <input
+                              type="text"
+                              value={opt}
+                              onChange={(e) => updateOptionName(idx, e.target.value)}
+                              className="w-full outline-none font-semibold text-gray-700 bg-transparent"
+                              placeholder="ระบุชื่อ (เช่น สี)"
+                            />
+                            <button type="button" onClick={() => removeOptionColumn(idx)} className="text-red-400 hover:text-red-600" title="ลบคอลัมน์นี้">
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </th>
+                      ))}
+                      <th className="p-3 font-semibold text-center w-32">ราคา (฿)</th>
+                      <th className="p-3 font-semibold text-center w-28">คงเหลือ</th>
+                      <th className="p-3 font-semibold w-64">สูตรการผลิต</th>
+                      <th className="p-3 font-semibold text-center w-12"></th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {variants.map((variant, rowIdx) => (
+                      <tr key={variant.id} className={`hover:bg-purple-50/30 transition-colors ${variant.isNew ? 'bg-green-50/20' : ''}`}>
+
+                        {/* ช่องกรอก Option ต่างๆ ตามคอลัมน์ */}
+                        {options.map((_, colIdx) => (
+                          <td key={colIdx} className="p-3">
+                            <input
+                              type="text"
+                              value={variant.values[colIdx] || ""}
+                              onChange={(e) => updateVariantValue(rowIdx, colIdx, e.target.value)}
+                              placeholder={`ค่าของ ${options[colIdx] || 'ตัวเลือก'}`}
+                              className="w-full border border-gray-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-sm bg-white"
+                            />
+                          </td>
+                        ))}
+
+                        {/* ราคา */}
+                        <td className="p-3">
+                          <input
+                            type="number"
+                            min="0"
+                            value={variant.price}
+                            onChange={(e) => updateVariantPrice(rowIdx, Number(e.target.value))}
+                            className="w-full border border-gray-300 px-2 py-2 rounded-lg text-center focus:ring-2 focus:ring-purple-500 outline-none font-medium bg-white"
+                          />
+                        </td>
+
+                        {/* คงเหลือ (แก้ไขไม่ได้จากหน้านี้) */}
+                        <td className="p-3 text-center">
+                          <span className={`inline-flex px-3 py-1 rounded-full text-xs font-bold ${variant.stock <= 0 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'}`}>
+                            {variant.stock} ชิ้น
+                          </span>
+                        </td>
+
+                        {/* สูตรผลิต */}
+                        <td className="p-3">
+                          {variant.isNew ? (
+                            <span className="text-xs text-orange-500 bg-orange-50 px-2 py-1 rounded-md border border-orange-100">ตั้งค่าสูตรหลังบันทึก</span>
+                          ) : (
+                            <div className="max-h-20 overflow-y-auto pr-2">
+                              <ul className="list-disc pl-4 text-xs space-y-1 text-gray-600">
+                                {variant.recipes && variant.recipes.length > 0 ? (
+                                  variant.recipes.map((r: any, rIdx: number) => {
+                                    const mat = materials.find(m => m.id === r.materialId)
+                                    return (
+                                      <li key={rIdx}>
+                                        <span className="font-medium text-gray-800">{mat?.name || "ไม่ทราบชื่อ"}</span> : {r.quantity} {mat?.unit || ""}
+                                      </li>
+                                    )
+                                  })
+                                ) : (
+                                  <span className="text-gray-400 list-none">- ไม่มีสูตร -</span>
+                                )}
+                              </ul>
+                            </div>
+                          )}
+                        </td>
+
+                        {/* ปุ่มลบแถว */}
+                        <td className="p-3 text-center">
+                          <button type="button" onClick={() => removeVariantRow(rowIdx)} className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition">
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+
+                    {variants.length === 0 && (
+                      <tr>
+                        <td colSpan={options.length + 4} className="text-center py-12 text-gray-500">
+                          <div className="flex flex-col items-center gap-2">
+                            <span className="text-lg">ยังไม่มีรายการย่อย</span>
+                            <button onClick={addNewVariantRow} className="text-purple-600 hover:underline text-sm font-medium">
+                              คลิกเพื่อเพิ่มรายการแรก
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* ส่วนปุ่มบันทึก */}
+            <div className="flex justify-end pt-6 border-t border-gray-200 gap-3 mt-8">
+              <button onClick={onClose} className="px-6 py-2.5 text-gray-600 hover:bg-gray-100 rounded-xl text-sm font-semibold transition">
+                ยกเลิก
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={isLoading}
+                className="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-semibold transition shadow-md shadow-purple-500/30 disabled:opacity-50 flex items-center gap-2"
+              >
+                {isLoading && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
+                {isLoading ? "กำลังบันทึก..." : "บันทึกการเปลี่ยนแปลง"}
+              </button>
             </div>
           </div>
         )}
-
-
-
-
-        {/* ================= BUTTONS ================= */}
-        <div className="flex justify-between pt-4 border-t">
-          <button
-            onClick={() => setConfirmDelete(true)}
-            className="bg-red-600 text-white px-4 py-2 rounded-md text-sm cursor-pointer"
-          >
-            Delete
-          </button>
-
-
-          <div className="flex gap-3">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 border rounded-md text-sm cursor-pointer"
-            >
-              Cancel
-            </button>
-
-            <button
-              onClick={handleSave}
-              className="bg-purple-600 text-white px-4 py-2 rounded-md text-sm cursor-pointer"
-            >
-              Save Changes
-            </button>
-          </div>
-        </div>
       </div>
-
-      <ConfirmDeleteModal
-        open={confirmDelete}
-        onClose={() => setConfirmDelete(false)}
-        onConfirm={async () => {
-          await handleDelete()
-          setConfirmDelete(false)
-        }}
-      />
-
     </div>
   )
 }
-
-function getRowSpan(
-  variants: Variant[],
-  rowIndex: number,
-  colIndex: number
-) {
-  const value = variants[rowIndex].combination[colIndex]
-
-  if (
-    rowIndex > 0 &&
-    variants[rowIndex - 1].combination[colIndex] === value
-  ) {
-    return 0
-  }
-
-  let span = 1
-  for (let i = rowIndex + 1; i < variants.length; i++) {
-    if (variants[i].combination[colIndex] === value) {
-      span++
-    } else {
-      break
-    }
-  }
-  return span
-}
-
