@@ -7,37 +7,41 @@ export async function POST(req: Request) {
   try {
     const data = await req.json()
     const { variantId, amount, type, note } = data
+    
+    // 1. ดึง session มา
     const session = await getServerSession(authOptions)
+    
+    // 2. ประกาศตัวแปร profileId โดยดึงมาจาก session user (ถ้าไม่มีให้เป็น null)
+    const profileId = session?.user?.id 
 
     // Validate ข้อมูลเบื้องต้น
     if (!variantId || !amount || amount <= 0) {
       return NextResponse.json({ message: "ข้อมูลไม่ครบถ้วน หรือจำนวนไม่ถูกต้อง" }, { status: 400 })
     }
 
-    // ใช้ Prisma Transaction เพื่อให้การทำงาน 2 อย่างนี้สำเร็จพร้อมกัน (ถ้าพังก็พังคู่)
+    // ใช้ Prisma Transaction
     await prisma.$transaction(async (tx) => {
       
-      // 1. อัปเดตจำนวนสต๊อกในตาราง ProductVariant (ใช้วิธีบวกเพิ่ม increment)
+      // อัปเดตจำนวนสต๊อก
       await tx.productVariant.update({
         where: { id: variantId },
         data: {
           stock: {
-            increment: amount // เอาจำนวนเดิม + จำนวนใหม่ (ปลอดภัยกว่าการเอาเลขไปทับตรงๆ)
+            increment: amount 
           }
         }
       })
 
-      // 2. บันทึกประวัติลงตาราง StockTransaction เพื่อให้ไปโผล่ในหน้า History
+      // บันทึกประวัติลงตาราง StockTransaction
       await tx.stockTransaction.create({
         data: {
           variantId: variantId,
-          type: type || "IN", // "IN" = รับเข้า
+          type: type || "IN", 
           amount: amount,
           note: note || "เพิ่มสต๊อกแมนนวล",
-          createdBy: session?.user?.name || "Unknown" // ถ้ามีระบบ Login ค่อยดึงชื่อ User มาใส่ตรงนี้ครับ
+          profileId: profileId,
         }
       })
-
     })
 
     return NextResponse.json({ success: true, message: "ปรับสต๊อกเรียบร้อยแล้ว" })
