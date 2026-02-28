@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { Wrench } from "lucide-react"
 import prisma from "@/utils/db"
 import { redirect } from "next/navigation"

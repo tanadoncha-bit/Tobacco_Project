@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { authOptions } from "@/utils/authOptions";
 import prisma from "@/utils/db";
 import { getServerSession } from "next-auth";

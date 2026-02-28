@@ -20,9 +20,14 @@ export default withAuth(
 
     if (path.startsWith("/admin")) {
       // ดัก "USER" ธรรมดาก่อนเลย ถ้าไม่ใช่แก๊งหลังบ้าน เตะกลับไปหน้า /user ทันที!
+      const basicUserRoles = ["USER"]
       const basicAdminRoles = ["ADMIN", "STAFF", "MANAGER"]
       if (!basicAdminRoles.includes(userRole)) {
         return NextResponse.redirect(new URL("/user", req.url))
+      }
+
+      if (!basicUserRoles.includes(userRole)) {
+        return NextResponse.redirect(new URL("/admin", req.url))
       }
 
       // ถ้าเป็นแก๊งหลังบ้าน (ADMIN, STAFF, MANAGER) ค่อยมาเช็คสิทธิ์รายหน้า
@@ -35,7 +40,7 @@ export default withAuth(
           // ถ้าเป็น STAFF/MANAGER แต่ดันกดเข้าหน้าของ ADMIN ให้เตะกลับไป Dashboard ของหลังบ้าน
           return NextResponse.redirect(new URL("/admin", req.url))
         }
-      } 
+      }
     }
 
     return NextResponse.next()
@@ -50,7 +55,7 @@ export default withAuth(
 export const config = {
   matcher: [
     "/admin/:path*",
-    "/user/OrderStatue/:path*", 
+    "/user/OrderStatue/:path*",
     "/user/ShoppingCart/:path*"
   ],
 }

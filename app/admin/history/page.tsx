@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import prisma from "@/utils/db"
 import HistoryClient from "./HistoryClient"
 import { getServerSession } from "next-auth"

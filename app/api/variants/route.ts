@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server"
 import { PrismaClient } from "@prisma/client"
 
@@ -8,7 +10,6 @@ export async function GET() {
     const variants = await prisma.productVariant.findMany({
       include: { 
         product: true,
-        // 👈 ดึงข้อมูล Option เสริมออกมาด้วย
         values: {
           include: {
             optionValue: {
@@ -19,7 +20,7 @@ export async function GET() {
           }
         }
       },
-      orderBy: { id: 'desc' } // เรียงอันใหม่ไว้บนสุด
+      orderBy: { id: 'desc' }
     })
     return NextResponse.json(variants)
   } catch (error) {

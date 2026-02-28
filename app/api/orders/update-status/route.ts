@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server"
 import prisma from "@/utils/db"
 import { getServerSession } from "next-auth"
@@ -14,7 +16,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "ข้อมูลไม่ครบถ้วน" }, { status: 400 })
     }
 
-    // 1. ดึงข้อมูลออเดอร์ พร้อมรายการสินค้า (Items)
     const existingOrder = await prisma.order.findUnique({
       where: { id: orderId },
       include: { items: true }
@@ -34,9 +35,7 @@ export async function POST(req: Request) {
       !closingStatuses.includes(status) &&
       closingStatuses.includes(existingOrder.status)
 
-    // 3. เริ่ม Transaction
     const result = await prisma.$transaction(async (tx) => {
-      // (A) อัปเดตสถานะออเดอร์
       const updatedOrder = await tx.order.update({
         where: { id: orderId },
         data: { status: status },
@@ -64,16 +63,13 @@ export async function POST(req: Request) {
       //   }
       // }
 
-      // (C) กรณีต้อง "คืนสต๊อก" (IN)
       if (shouldRestock) {
         for (const item of existingOrder.items) {
-          // เพิ่มสต๊อกกลับเข้าไป
           await tx.productVariant.update({
             where: { id: item.variantId },
             data: { stock: { increment: item.quantity } }
           })
 
-          // บันทึกประวัติเป็น IN
           await tx.stockTransaction.create({
             data: {
               variantId: item.variantId,

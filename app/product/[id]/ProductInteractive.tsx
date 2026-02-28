@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
@@ -5,13 +7,10 @@ import { PackageSearch } from "lucide-react"
 import AddToCart from "./AddToCart" // เรียกใช้ปุ่มตะกร้าของคุณ
 
 export default function ProductInteractive({ product }: { product: any }) {
-  // 1. ดึงรูปภาพแรกมาแสดง (ถ้ามี)
   const imageUrl = product.images?.[0]?.url
 
-  // 2. State เก็บค่าตัวเลือกที่ลูกค้ากด (เช่น { "รสชาติ": "ช็อกโกแลต", "ขนาด": "ใหญ่" })
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({})
 
-  // 3. ตั้งค่าเริ่มต้น ให้เลือกตัวเลือกแรกสุดอัตโนมัติตอนโหลดหน้าเว็บ
   useEffect(() => {
     if (product.Option && product.Option.length > 0) {
       const initialSelections: Record<string, string> = {}
@@ -24,7 +23,6 @@ export default function ProductInteractive({ product }: { product: any }) {
     }
   }, [product.Option])
 
-  // 4. หา Variant ที่ตรงกับตัวเลือกที่ลูกค้ากดเป๊ะๆ เพื่อเอาราคาและสต๊อกมาโชว์
   const currentVariant = useMemo(() => {
     if (!product.variants || product.variants.length === 0) return null;
     if (!product.Option || product.Option.length === 0) return product.variants[0];

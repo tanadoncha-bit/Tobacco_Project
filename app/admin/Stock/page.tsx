@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import prisma from "@/utils/db"
 import StockTable from "@/components/admin/StockTable"
 

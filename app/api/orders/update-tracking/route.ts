@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server"
 import prisma from "@/utils/db"
 
@@ -10,7 +12,6 @@ export async function PATCH(req: Request) {
       return new NextResponse("Missing orderId", { status: 400 })
     }
 
-    // อัปเดตเลขพัสดุใน Database
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
       data: { 

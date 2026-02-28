@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import prisma from "@/utils/db"
 import DashboardClient from "@/components/admin/DashboardClient"
 import { ChartColumnIncreasing } from "lucide-react"

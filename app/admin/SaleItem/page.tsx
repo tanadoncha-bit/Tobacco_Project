@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import prisma from "@/utils/db"
 import OrderTable from "@/components/admin/OrderTable"
 import { SquareChartGantt } from "lucide-react"

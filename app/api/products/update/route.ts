@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { authOptions } from "@/utils/authOptions"; // 🚀 เพิ่ม
 import prisma from "@/utils/db";
 import { getServerSession } from "next-auth"; // 🚀 เพิ่ม
