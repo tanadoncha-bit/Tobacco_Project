@@ -424,16 +424,16 @@ export default function AdminSettingsPage() {
                     setIsDeleteModalOpen(false)
                     setBannerToDelete(null)
                   }}
-                  className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition"
+                  className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition cursor-pointer"
                 >
                   ยกเลิก
                 </button>
                 <button
                   type="button"
                   onClick={confirmDelete}
-                  className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition shadow-sm shadow-red-200"
+                  className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition shadow-sm shadow-red-200 cursor-pointer"
                 >
-                  ลบเลย
+                  ยืนยัน
                 </button>
               </div>
 
