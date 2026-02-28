@@ -18,28 +18,27 @@ export default withAuth(
     const path = req.nextUrl.pathname
     const userRole = token?.role as string
 
+    const basicAdminRoles = ["ADMIN", "STAFF", "MANAGER"] 
+
     if (path.startsWith("/admin")) {
-      // ดัก "USER" ธรรมดาก่อนเลย ถ้าไม่ใช่แก๊งหลังบ้าน เตะกลับไปหน้า /user ทันที!
-      const basicUserRoles = ["USER"]
-      const basicAdminRoles = ["ADMIN", "STAFF", "MANAGER"]
       if (!basicAdminRoles.includes(userRole)) {
         return NextResponse.redirect(new URL("/user", req.url))
       }
 
-      if (!basicUserRoles.includes(userRole)) {
-        return NextResponse.redirect(new URL("/admin", req.url))
-      }
-
-      // ถ้าเป็นแก๊งหลังบ้าน (ADMIN, STAFF, MANAGER) ค่อยมาเช็คสิทธิ์รายหน้า
       const matchedRoute = routePermissions
         .sort((a, b) => b.path.length - a.path.length)
         .find((route) => path.startsWith(route.path))
 
       if (matchedRoute) {
         if (!matchedRoute.roles.includes(userRole)) {
-          // ถ้าเป็น STAFF/MANAGER แต่ดันกดเข้าหน้าของ ADMIN ให้เตะกลับไป Dashboard ของหลังบ้าน
           return NextResponse.redirect(new URL("/admin", req.url))
         }
+      }
+    }
+
+    if (path.startsWith("/user")) {
+      if (basicAdminRoles.includes(userRole)) {
+        return NextResponse.redirect(new URL("/admin", req.url))
       }
     }
 
@@ -55,7 +54,6 @@ export default withAuth(
 export const config = {
   matcher: [
     "/admin/:path*",
-    "/user/OrderStatue/:path*",
-    "/user/ShoppingCart/:path*"
+    "/user/:path*",
   ],
 }
