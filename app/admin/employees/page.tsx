@@ -99,7 +99,7 @@ export default function EmployeeManagementPage() {
         </div>
         <button
           onClick={openCreateModal}
-          className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 shadow-sm shadow-purple-200 transition-all active:scale-95"
+          className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 shadow-sm shadow-purple-200 transition-all active:scale-95 cursor-pointer"
         >
           <UserPlus size={18} /> เพิ่มพนักงานใหม่
         </button>
@@ -137,13 +137,11 @@ export default function EmployeeManagementPage() {
                         )}
                       </div>
                       <div>
-                        {/* ปรับเป็น text-sm */}
                         <div className="text-sm font-semibold text-gray-800">
                           {emp.firstname} {emp.lastname}
                         </div>
                       </div>
                     </td>
-                    {/* ปรับเป็น text-sm */}
                     <td className="px-6 py-4 text-sm text-gray-500">{emp.email}</td>
                     <td className="px-6 py-4">
                       <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide flex items-center w-fit gap-1.5
@@ -157,7 +155,7 @@ export default function EmployeeManagementPage() {
                     <td className="px-6 py-4 text-center">
                       <button
                         onClick={() => openEditModal(emp)}
-                        className="p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                        className="p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors cursor-pointer"
                         title="แก้ไขข้อมูล"
                       >
                         <Edit size={16} />
@@ -179,7 +177,7 @@ export default function EmployeeManagementPage() {
               <h2 className="text-lg font-bold text-gray-800">
                 {isEditMode ? "แก้ไขข้อมูลพนักงาน" : "เพิ่มพนักงานใหม่"}
               </h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded-lg transition-colors">
+              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded-lg transition-colors cursor-pointer">
                 <X size={20} />
               </button>
             </div>
@@ -234,7 +232,7 @@ export default function EmployeeManagementPage() {
                 <button
                   type="button"
                   onClick={() => setIsRoleOpen(!isRoleOpen)}
-                  className="w-full flex items-center justify-between border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm bg-white hover:bg-gray-50 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all outline-none"
+                  className="w-full flex items-center justify-between border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm bg-white hover:bg-gray-50 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all outline-none cursor-pointer"
                 >
                   <span className="text-gray-700 font-medium">
                     {formData.role === "ADMIN" ? "Admin (ดูแลระบบหลัก)" :
@@ -260,7 +258,7 @@ export default function EmployeeManagementPage() {
                         <button
                           key={r.id}
                           type="button"
-                          className={`w-full text-left px-4 py-2.5 text-sm hover:bg-purple-50 transition-colors flex flex-col relative z-50
+                          className={`w-full text-left px-4 py-2.5 text-sm hover:bg-purple-50 transition-colors flex flex-col relative z-50 cursor-pointer
               ${formData.role === r.id ? "bg-purple-50/50 text-purple-700" : "text-gray-700"}
             `}
                           onClick={() => {
@@ -284,11 +282,11 @@ export default function EmployeeManagementPage() {
 
               <div className="pt-5 flex gap-3">
                 <button type="button" onClick={() => setIsModalOpen(false)}
-                  className="flex-1 py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-xl text-sm font-semibold transition-colors">
+                  className="flex-1 py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-xl text-sm font-semibold transition-colors cursor-pointer">
                   ยกเลิก
                 </button>
                 <button type="submit" disabled={isLoading}
-                  className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-semibold shadow-sm shadow-purple-200 disabled:opacity-50 transition-all">
+                  className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-semibold shadow-sm shadow-purple-200 disabled:opacity-50 transition-all cursor-pointer">
                   {isLoading ? "กำลังบันทึก..." : "ยืนยันการบันทึก"}
                 </button>
               </div>

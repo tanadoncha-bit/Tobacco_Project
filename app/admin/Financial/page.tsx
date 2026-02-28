@@ -11,16 +11,12 @@ import prisma from "@/utils/db"
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
-  // ================= 1. ดึงยอดรวมรายรับ (Income) =================
-  // รวมยอดเงินจากออเดอร์ทั้งหมด ที่สถานะไม่ใช่ "CANCELLED" (ยกเลิก)
   const incomeAgg = await prisma.order.aggregate({
     _sum: { totalAmount: true },
     where: { status: { not: "CANCELLED" } }
   })
   const totalIncome = incomeAgg._sum.totalAmount || 0
 
-  // ================= 2. ดึงยอดรวมรายจ่าย (Expense) =================
-  // รวมยอดเงินจากการซื้อวัตถุดิบเข้าร้าน (type: "IN" และมีค่า totalCost)
   const expenseAgg = await prisma.materialTransaction.aggregate({
     _sum: { totalCost: true },
     where: { 
@@ -30,29 +26,24 @@ export default async function AdminDashboard() {
   })
   const totalExpense = expenseAgg._sum.totalCost || 0
 
-  // ================= 3. คำนวณกำไรสุทธิ =================
   const profit = totalIncome - totalExpense
 
-  // ================= 4. ดึงประวัติรายการล่าสุด 5 รายการ =================
-  // ดึงออเดอร์ล่าสุด 5 บิล
   const recentOrders = await prisma.order.findMany({
     where: { status: { not: "CANCELLED" } },
     orderBy: { createdAt: 'desc' },
     take: 5,
   })
 
-  // ดึงประวัติการซื้อวัตถุดิบล่าสุด 5 รายการ (ดึงชื่อวัตถุดิบมาด้วย)
   const recentMaterials = await prisma.materialTransaction.findMany({
     where: { type: "IN", totalCost: { not: null } },
     orderBy: { createdAt: 'desc' },
     take: 5,
-    include: { material: true } // ดึงข้อมูลตาราง Material มาใช้ชื่อ
+    include: { material: true }
   })
 
-  // นำรายรับและรายจ่ายมาแปลงให้อยู่ในรูปแบบเดียวกัน เพื่อจับยัดใส่ตาราง
   const combinedTransactions = [
     ...recentOrders.map(order => ({
-      id: `ORD-${order.id.substring(0, 6).toUpperCase()}`, // ตัด ID ให้สั้นลง
+      id: `ORD-${order.id.substring(0, 8).toUpperCase()}`,
       date: order.createdAt,
       description: `ขายสินค้า (ออเดอร์)`,
       type: "income",
@@ -67,7 +58,6 @@ export default async function AdminDashboard() {
     }))
   ]
 
-  // เรียงลำดับจากวันที่ล่าสุด -> เก่าสุด แล้วตัดเอาแค่ 5 รายการแรกที่ใหม่ที่สุด
   combinedTransactions.sort((a, b) => b.date.getTime() - a.date.getTime())
   const displayTransactions = combinedTransactions.slice(0, 5)
 
@@ -81,9 +71,7 @@ export default async function AdminDashboard() {
         <p className="text-gray-500 text-sm mt-1">ภาพรวมการเงินและประวัติการทำรายการล่าสุดของร้าน</p>
       </div>
 
-      {/* ================= ส่วนที่ 1: การ์ดสรุปยอด ================= */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        {/* การ์ดรายรับ */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-500 mb-1">รายรับทั้งหมด (Income)</p>
@@ -96,7 +84,6 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
-        {/* การ์ดรายจ่าย */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-500 mb-1">รายจ่ายวัตถุดิบ (Expenses)</p>
@@ -109,7 +96,6 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
-        {/* การ์ดกำไร */}
         <div className="bg-[linear-gradient(160deg,#2E4BB1_0%,#8E63CE_50%,#B07AD9_100%)] p-6 rounded-2xl shadow-md text-white flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-white/80 mb-1">กำไรสุทธิ (Net Profit)</p>
@@ -123,7 +109,6 @@ export default async function AdminDashboard() {
         </div>
       </div>
 
-      {/* ================= ส่วนที่ 2: ตารางประวัติรายการ ================= */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100 flex justify-between items-center">
           <h2 className="text-lg font-bold text-gray-800">ประวัติการเข้า-ออกของเงินล่าสุด</h2>
@@ -150,7 +135,6 @@ export default async function AdminDashboard() {
               )}
               {displayTransactions.map((trx) => (
                 <tr key={trx.id} className="hover:bg-gray-50 transition">
-                  {/* ฟอร์แมตวันที่ให้ดูง่ายๆ เป็น วัน/เดือน/ปี เวลา */}
                   <td className="px-6 py-4 text-sm text-gray-600">
                     {trx.date.toLocaleString('th-TH', { 
                       day: '2-digit', month: 'short', year: 'numeric', 

@@ -20,33 +20,28 @@ export default function CartClient({
   const [isCheckingOut, setIsCheckingOut] = useState(false)
   const [isDeleting, setIsDeleting] = useState<string | number | null>(null)
 
-  // 2. สร้างตัวแปรเช็คว่าข้อมูลครบไหม (มีทั้งที่อยู่และเบอร์โทร)
   const hasShippingInfo = Boolean(userProfile?.address && userProfile?.phonenumber)
 
-  // ถ้าตะกร้าว่างเปล่า
   if (initialItems.length === 0) {
     return (
       <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
         <ShoppingBag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
         <p className="text-gray-500 text-lg mb-6">ตะกร้าสินค้าของคุณยังว่างเปล่า</p>
-        <Link href="/user" className="px-6 py-3 bg-[#2E4BB1] text-white rounded-full font-medium hover:bg-blue-700 transition">
+        <Link href="/user" className="px-6 py-3 bg-[linear-gradient(160deg,#2E4BB1_0%,#8E63CE_50%,#B07AD9_100%)] text-white rounded-full font-medium hover:opacity-90 transition">
           กลับไปช้อปปิ้ง
         </Link>
       </div>
     )
   }
 
-  // คำนวณยอดรวม
   const totalAmount = initialItems.reduce((sum, item) => sum + (item.quantity * item.variant.price), 0)
 
   const handleRemoveItem = async (cartItemId: string) => {
     setIsDeleting(cartItemId)
     try {
-      // 1. ยิง API ไปลบข้อมูลใน Database
       const res = await fetch(`/api/cart?itemId=${cartItemId}`, { method: "DELETE" })
       if (!res.ok) throw new Error("ลบสินค้าไม่สำเร็จ")
 
-      // 2. ดึงข้อมูลตะกร้าล่าสุดมาอัปเดต Zustand (ตัวเลขจุดแดงจะได้ลดลง)
       const refreshRes = await fetch("/api/cart")
       if (refreshRes.ok) {
         const cartData = await refreshRes.json()
@@ -54,7 +49,7 @@ export default function CartClient({
       }
 
       toast.success("ลบสินค้าเรียบร้อย")
-      router.refresh() // 3. สั่งให้หน้าเว็บรีเฟรชข้อมูลใหม่ทันที
+      router.refresh()
 
     } catch (error: any) {
       toast.error(error.message)
@@ -63,7 +58,6 @@ export default function CartClient({
     }
   }
 
-  // ฟังก์ชันกดปุ่มสั่งซื้อ
   const handleCheckout = async () => {
     setIsCheckingOut(true)
     if (!userProfile?.address || !userProfile?.phonenumber) {
@@ -91,16 +85,13 @@ export default function CartClient({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      {/* ซ้าย: รายการสินค้าในตะกร้า */}
       <div className="lg:col-span-2 space-y-4">
         {initialItems.map((item) => {
-          // ดึงรูปภาพรูปแรกของสินค้า (ถ้ามี)
           const productImage = item.variant.product.images?.[0]?.url
 
           return (
             <div key={item.id} className="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100 relative group">
 
-              {/* ส่วนรูปภาพสินค้า */}
               <div className="w-20 h-20 bg-gray-50 rounded-xl flex items-center justify-center overflow-hidden shrink-0 border border-gray-100">
                 {productImage ? (
                   <img src={productImage} alt={item.variant.product.Pname} className="w-full h-full object-cover" />
@@ -109,19 +100,17 @@ export default function CartClient({
                 )}
               </div>
 
-              {/* รายละเอียดสินค้า */}
               <div className="flex-1">
                 <h3 className="font-bold text-gray-800 line-clamp-1">{item.variant.product.Pname}</h3>
                 <p className="text-sm text-gray-500 mt-1">ราคา: ฿{item.variant.price.toLocaleString()} / ชิ้น</p>
               </div>
 
-              {/* ราคาและจำนวน */}
+
               <div className="text-right mr-12">
                 <p className="text-sm text-gray-500 mb-1">จำนวน: {item.quantity}</p>
                 <p className="font-bold text-purple-700">฿{(item.variant.price * item.quantity).toLocaleString()}</p>
               </div>
 
-              {/* ปุ่มลบสินค้า (โผล่มาทางขวาสุด) */}
               <button
                 onClick={() => handleRemoveItem(item.id)}
                 disabled={isDeleting === item.id}
@@ -135,7 +124,6 @@ export default function CartClient({
         })}
       </div>
 
-      {/* ขวา: สรุปบิลค่าใช้จ่าย */}
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-fit sticky top-24">
         <h3 className="text-xl font-bold text-gray-800 mb-4 border-b pb-4">สรุปคำสั่งซื้อ</h3>
         <div className="flex justify-between items-center mb-4 text-gray-600">

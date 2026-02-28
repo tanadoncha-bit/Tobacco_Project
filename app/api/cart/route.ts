@@ -7,21 +7,26 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
-    // 1. เช็คว่าลูกค้า Login หรือยัง
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ message: "กรุณาเข้าสู่ระบบก่อนเพิ่มลงตะกร้า" }, { status: 401 })
     }
 
-    // 2. รับข้อมูลที่ส่งมาจากปุ่ม AddToCart
-    const body = await req.json()
-    const { variantId, quantity } = body
+    const { variantId, quantity } = await req.json()
+    const parsedVariantId = parseInt(variantId, 10)
 
-    if (!variantId || !quantity) {
-      return NextResponse.json({ message: "ข้อมูลไม่ครบถ้วน" }, { status: 400 })
+    const variant = await prisma.productVariant.findUnique({
+      where: { id: parsedVariantId }
+    })
+
+    if (!variant) {
+      return NextResponse.json({ message: "ไม่พบสินค้านี้ในระบบ" }, { status: 404 })
     }
 
-    // 3. หาตะกร้าของลูกค้าคนนี้ (ถ้าไม่เคยมีตะกร้าเลย ให้สร้างใหม่)
+    if (variant.stock < quantity) {
+      return NextResponse.json({ message: `สินค้ามีไม่พอ (เหลือ ${variant.stock} ชิ้น)` }, { status: 400 })
+    }
+
     let cart = await prisma.cart.findUnique({
       where: { profileId: session.user.id }
     })
@@ -32,26 +37,23 @@ export async function POST(req: Request) {
       })
     }
 
-    // 4. เช็คว่าสินค้านี้เคยอยู่ในตะกร้าแล้วหรือยัง?
     const existingItem = await prisma.cartItem.findFirst({
       where: {
         cartId: cart.id,
-        variantId: variantId
+        variantId: parsedVariantId
       }
     })
 
     if (existingItem) {
-      // ถ้ามีอยู่แล้ว -> อัปเดตจำนวน (เอาของเดิม + ของใหม่)
       await prisma.cartItem.update({
         where: { id: existingItem.id },
         data: { quantity: existingItem.quantity + quantity }
       })
     } else {
-      // ถ้ายังไม่มี -> สร้างรายการใหม่ลงในตะกร้า
       await prisma.cartItem.create({
         data: {
           cartId: cart.id,
-          variantId: variantId,
+          variantId: parsedVariantId,
           quantity: quantity
         }
       })
@@ -69,13 +71,11 @@ export async function POST(req: Request) {
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
-    
-    // ถ้ายังไม่ได้ล็อกอิน ให้ส่งตะกร้าว่างๆ กลับไป
+
     if (!session?.user?.id) {
       return NextResponse.json({ items: [] })
     }
 
-    // ดึงข้อมูลตะกร้าของ user คนนี้
     const cart = await prisma.cart.findUnique({
       where: { profileId: session.user.id },
       include: {
@@ -84,8 +84,7 @@ export async function GET() {
             variant: {
               include: {
                 product: {
-                  // สำคัญมาก: ต้อง include images มาด้วย รูปถึงจะไปโชว์ใน Popup ตะกร้า
-                  include: { images: true } 
+                  include: { images: true }
                 }
               }
             }
@@ -94,12 +93,10 @@ export async function GET() {
       }
     })
 
-    // ถ้าไม่เคยมีตะกร้าเลย
     if (!cart) {
       return NextResponse.json({ items: [] })
     }
 
-    // ส่งรายการสินค้ากลับไปให้หน้าบ้าน
     return NextResponse.json({ items: cart.items })
 
   } catch (error) {
@@ -112,29 +109,27 @@ export async function GET() {
 export async function DELETE(req: Request) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return NextResponse.json({ message: "กรุณาล็อกอิน" }, { status: 401 })
-    }
+    if (!session?.user?.id) return NextResponse.json({ message: "กรุณาล็อกอิน" }, { status: 401 })
 
-    // ดึง itemId จาก URL (เช่น /api/cart?itemId=5)
     const { searchParams } = new URL(req.url)
     const itemId = searchParams.get("itemId")
+    if (!itemId) return NextResponse.json({ message: "ไม่พบไอดีสินค้า" }, { status: 400 })
 
-    if (!itemId) {
-      return NextResponse.json({ message: "ไม่พบไอดีสินค้าที่ต้องการลบ" }, { status: 400 })
+    const cartItem = await prisma.cartItem.findUnique({
+      where: { id: itemId },
+      include: { cart: true }
+    })
+
+    if (!cartItem || cartItem.cart.profileId !== session.user.id) {
+      return NextResponse.json({ message: "ไม่มีสิทธิ์ลบสินค้านี้" }, { status: 403 })
     }
 
-    // ลบ CartItem ออกจาก Database
-    await prisma.cartItem.delete({
-      where: {
-        id: itemId
-      }
-    })
+    await prisma.cartItem.delete({ where: { id: itemId } })
 
     return NextResponse.json({ success: true, message: "ลบสินค้าสำเร็จ" })
 
   } catch (error) {
     console.error("DELETE_CART_ITEM_ERROR:", error)
-    return NextResponse.json({ message: "เกิดข้อผิดพลาดในการลบสินค้า" }, { status: 500 })
+    return NextResponse.json({ message: "เกิดข้อผิดพลาด" }, { status: 500 })
   }
 }

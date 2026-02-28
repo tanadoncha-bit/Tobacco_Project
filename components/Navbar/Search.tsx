@@ -24,7 +24,6 @@ const Search = () => {
   }
 
   return (
-    // 🚀 2. ใช้ <form> ครอบ เพื่อให้รองรับการกดปุ่ม Enter
     <form 
       onSubmit={handleSearch} 
       className="flex-1 relative w-full max-w-6xl flex justify-center"
@@ -33,15 +32,13 @@ const Search = () => {
         type="text" 
         placeholder="ค้นหาสินค้า" 
         value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)} // 🚀 เก็บค่าที่ลูกค้าพิมพ์
-        // เพิ่ม pr-12 (padding-right) เพื่อเว้นที่ว่างด้านขวาไว้ใส่ปุ่ม จะได้ไม่พิมพ์ทับปุ่มครับ
+        onChange={(e) => setSearchTerm(e.target.value)}
         className="w-full bg-white text-black rounded-full dark:bg-white pr-12"
       />
       
-      {/* 🚀 3. ปุ่มแว่นขยาย (วางไว้มุมขวาในกล่อง Input) */}
       <button 
         type="submit" 
-        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#2E4BB1] transition-colors cursor-pointer"
+        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-purple-800 transition-colors cursor-pointer"
         aria-label="ค้นหา"
       >
         <SearchIcon className="w-5 h-5" />

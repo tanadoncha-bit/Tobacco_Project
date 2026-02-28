@@ -30,12 +30,10 @@ export default function ProductInteractive({ product }: { product: any }) {
     return product.variants.find((v: any) => {
       const variantOptions = v.values.map((val: any) => val.optionValue.value)
       const selectedValues = Object.values(selectedOptions)
-      // เช็คว่าค่าที่เลือกทั้งหมด ตรงกับค่าของ Variant ตัวนี้ไหม
       return selectedValues.every(val => variantOptions.includes(val)) && selectedValues.length === variantOptions.length
     })
   }, [selectedOptions, product.variants, product.Option])
 
-  // ข้อมูลของ Variant ที่กำลังเลือกอยู่
   const price = currentVariant?.price || 0
   const stock = currentVariant?.stock || 0
   const variantId = currentVariant?.id || 0
@@ -44,7 +42,6 @@ export default function ProductInteractive({ product }: { product: any }) {
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <div className="grid grid-cols-1 md:grid-cols-2">
         
-        {/* ================= ซ้าย: รูปภาพสินค้า ================= */}
         <div className="bg-gray-100 aspect-square md:aspect-auto flex items-center justify-center relative p-4">
           {imageUrl ? (
             <img 
@@ -66,7 +63,6 @@ export default function ProductInteractive({ product }: { product: any }) {
           )}
         </div>
 
-        {/* ================= ขวา: รายละเอียด & การสั่งซื้อ ================= */}
         <div className="p-8 md:p-10 flex flex-col justify-center">
           <span className="text-sm font-semibold text-purple-600 bg-purple-50 px-3 py-1 rounded-full w-fit mb-4">
             สินค้าแนะนำ

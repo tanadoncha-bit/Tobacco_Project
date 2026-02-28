@@ -73,7 +73,7 @@ const Sidebar = () => {
   const pathname = usePathname()
   const { data: session } = useSession()
 
-  const [storeName, setStoreName] = useState("Tobacco Store")
+  const [storeName, setStoreName] = useState("Tobacco")
 
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const profileRef = useRef<HTMLDivElement>(null)
@@ -138,7 +138,6 @@ const Sidebar = () => {
       {session && (
         <div className="relative" ref={profileRef}>
 
-          {/* เมนู Pop-up (เด้งขึ้นด้านบน เพราะอยู่ขอบล่างจอ) */}
           {isProfileOpen && (
             <div className="absolute bottom-[110%] left-0 w-full bg-white text-gray-800 rounded-xl shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
               <div className="py-2">
@@ -162,7 +161,6 @@ const Sidebar = () => {
             </div>
           )}
 
-          {/* ปุ่มโปรไฟล์เดิม (เปลี่ยนเป็นปุ่มคลิกได้) */}
           <div
             onClick={() => setIsProfileOpen(!isProfileOpen)}
             className="flex items-center gap-3 p-2 -ml-2 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"

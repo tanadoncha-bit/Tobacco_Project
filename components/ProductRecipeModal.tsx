@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Plus, Trash2, BookOpen, X, ChevronDown, AlertTriangle } from "lucide-react" // 👈 เพิ่ม AlertTriangle
+import { Plus, Trash2, BookOpen, X, ChevronDown, AlertTriangle } from "lucide-react"
 import { toast } from "sonner"
 
 type Variant = {
@@ -42,16 +42,13 @@ export default function ProductRecipeModal({ open, onClose }: Props) {
   const [isLoading, setIsLoading] = useState(false)
   const [form, setForm] = useState({ materialId: "", quantity: "" })
 
-  // 🌟 State สำหรับ Custom Delete Modal
   const [recipeToDelete, setRecipeToDelete] = useState<number | null>(null)
 
-  // State & Ref สำหรับ Custom Dropdowns
   const [isVariantDropdownOpen, setIsVariantDropdownOpen] = useState(false)
   const [isMaterialDropdownOpen, setIsMaterialDropdownOpen] = useState(false)
   const variantDropdownRef = useRef<HTMLDivElement>(null)
   const materialDropdownRef = useRef<HTMLDivElement>(null)
 
-  // ปิด Dropdown เมื่อคลิกที่อื่น
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (variantDropdownRef.current && !variantDropdownRef.current.contains(event.target as Node)) {
@@ -145,7 +142,6 @@ export default function ProductRecipeModal({ open, onClose }: Props) {
     }
   }
 
-  // 🌟 ฟังก์ชันกดยืนยันการลบตัวจริง (เรียกตอนกดปุ่มใน Modal ใหม่)
   const confirmDelete = async () => {
     if (recipeToDelete === null) return
     setIsLoading(true)
@@ -157,7 +153,7 @@ export default function ProductRecipeModal({ open, onClose }: Props) {
     } catch (error) {
       toast.error("เกิดข้อผิดพลาดในการลบ")
     } finally {
-      setRecipeToDelete(null) // ปิด Modal ยืนยัน
+      setRecipeToDelete(null)
       setIsLoading(false)
     }
   }
@@ -169,7 +165,6 @@ export default function ProductRecipeModal({ open, onClose }: Props) {
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 transition-opacity duration-300">
         <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col relative overflow-hidden">
           
-          {/* Modal Header */}
           <div className="flex justify-between items-center px-6 py-5 border-b border-gray-100 bg-white">
             <div className="flex items-center gap-3">
               <div className="bg-purple-100 p-2 rounded-lg">
@@ -179,29 +174,26 @@ export default function ProductRecipeModal({ open, onClose }: Props) {
             </div>
             <button 
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-colors"
+              className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded-lg transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Modal Body */}
           <div className="p-6 overflow-y-auto bg-gray-50/30">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               
-              {/* ฝั่งซ้าย */}
               <div className="md:col-span-1">
                 <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
                   <span className="bg-purple-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs">1</span>
                   เลือกสินค้าที่จะตั้งสูตร
                 </label>
                 
-                {/* 🌟 Custom Dropdown: Variant */}
                 <div className="relative" ref={variantDropdownRef}>
                   <button
                     type="button"
                     onClick={() => setIsVariantDropdownOpen(!isVariantDropdownOpen)}
-                    className="w-full flex items-center justify-between border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 outline-none focus:ring-2 focus:ring-purple-500 bg-white shadow-sm transition-all"
+                    className="w-full flex items-center justify-between border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 outline-none focus:ring-2 focus:ring-purple-500 bg-white shadow-sm transition-all cursor-pointer"
                   >
                     <span className="truncate font-medium">{selectedVariantLabel}</span>
                     <ChevronDown className={`w-4 h-4 text-gray-400 ml-2 transition-transform duration-200 ${isVariantDropdownOpen ? 'rotate-180 text-purple-500' : ''}`} />
@@ -216,7 +208,7 @@ export default function ProductRecipeModal({ open, onClose }: Props) {
                             setSelectedVariantId(v.id.toString())
                             setIsVariantDropdownOpen(false)
                           }}
-                          className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
+                          className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer ${
                             selectedVariantId === v.id.toString()
                               ? "bg-purple-50 text-purple-700 font-bold border-l-4 border-purple-500"
                               : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent font-medium"
@@ -237,12 +229,11 @@ export default function ProductRecipeModal({ open, onClose }: Props) {
                     </label>
                     <div className="space-y-4">
                       
-                      {/* 🌟 Custom Dropdown: Material */}
                       <div className="relative" ref={materialDropdownRef}>
                         <button
                           type="button"
                           onClick={() => setIsMaterialDropdownOpen(!isMaterialDropdownOpen)}
-                          className="w-full flex items-center justify-between border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-700 outline-none focus:ring-2 focus:ring-purple-500 bg-gray-50 hover:bg-white transition-all"
+                          className="w-full flex items-center justify-between border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-700 outline-none focus:ring-2 focus:ring-purple-500 bg-gray-50 hover:bg-white transition-all cursor-pointer"
                         >
                           <span className="truncate">{selectedMaterialLabel}</span>
                           <ChevronDown className={`w-4 h-4 text-gray-400 ml-2 transition-transform duration-200 ${isMaterialDropdownOpen ? 'rotate-180' : ''}`} />
@@ -257,7 +248,7 @@ export default function ProductRecipeModal({ open, onClose }: Props) {
                                   setForm({...form, materialId: m.id.toString()})
                                   setIsMaterialDropdownOpen(false)
                                 }}
-                                className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                                className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer ${
                                   form.materialId === m.id.toString()
                                     ? "bg-purple-50 text-purple-700 font-bold"
                                     : "text-gray-600 hover:bg-gray-50"
@@ -283,7 +274,7 @@ export default function ProductRecipeModal({ open, onClose }: Props) {
                       <button 
                         onClick={handleAddRecipe}
                         disabled={isLoading}
-                        className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2.5 rounded-xl text-sm font-bold flex justify-center items-center gap-2 transition-all disabled:opacity-50 mt-4 shadow-sm hover:shadow"
+                        className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2.5 rounded-xl text-sm font-bold flex justify-center items-center gap-2 transition-all disabled:opacity-50 mt-4 shadow-sm hover:shadow cursor-pointer"
                       >
                         <Plus className="w-4 h-4" /> เพิ่มลงสูตรเลย
                       </button>
@@ -292,7 +283,6 @@ export default function ProductRecipeModal({ open, onClose }: Props) {
                 )}
               </div>
 
-              {/* ฝั่งขวา */}
               <div className="md:col-span-2">
                 {selectedVariantId ? (
                   <div className="animate-in fade-in slide-in-from-right-4 duration-300 h-full flex flex-col">
@@ -324,7 +314,6 @@ export default function ProductRecipeModal({ open, onClose }: Props) {
                                 <td className="px-6 py-4 text-right font-bold text-purple-600 text-base">{r.quantity}</td>
                                 <td className="px-6 py-4 text-gray-500 font-medium">{r.material.unit}</td>
                                 <td className="px-6 py-4 text-center">
-                                  {/* 🌟 เปลี่ยนไปเรียก State แทนการใช้ confirm() ของ Browser */}
                                   <button 
                                     onClick={() => setRecipeToDelete(r.id)}
                                     className="text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-xl transition-all opacity-50 group-hover:opacity-100"
@@ -362,7 +351,7 @@ export default function ProductRecipeModal({ open, onClose }: Props) {
         </div>
       </div>
 
-      {/* 🌟 MODAL ยืนยันการลบแบบสวยงาม (จะโชว์ก็ต่อเมื่อมี recipeToDelete) */}
+      {/* MODAL ยืนยันการลบแบบสวยงาม */}
       {recipeToDelete !== null && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center animate-in zoom-in-95 duration-200">

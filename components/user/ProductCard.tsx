@@ -7,12 +7,10 @@ import { toast } from "sonner"
 export default function ProductCard({ product }: { product: any }) {
   const addItem = useCartStore((state) => state.addItem)
   
-  // เลือก Variant เริ่มต้นเป็นอันแรก (ถ้ามี)
   const [selectedVariantId, setSelectedVariantId] = useState<number | string>(
     product.variants?.length > 0 ? product.variants[0].id : ""
   )
 
-  // ดึงข้อมูล Variant ที่กำลังเลือกอยู่
   const selectedVariant = product.variants?.find((v: any) => v.id === Number(selectedVariantId))
   const defaultImage = product.images?.[0]?.url || ""
 
@@ -27,10 +25,9 @@ export default function ProductCard({ product }: { product: any }) {
       return
     }
 
-    // ส่งข้อมูลเข้า Zustand Store
     addItem({
       variantId: selectedVariant.id,
-      name: product.Pname, // อิงจาก Schema ที่คุณใช้ Pname
+      name: product.Pname,
       variantName: `สี: ${selectedVariant.color} | ไซส์: ${selectedVariant.size}`,
       price: selectedVariant.price,
       quantity: 1,

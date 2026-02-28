@@ -28,7 +28,6 @@ export default function HistoryClient({ initialData }: { initialData: Transactio
   const [filterCategory, setFilterCategory] = useState<"ALL" | "MATERIAL" | "PRODUCT">("ALL")
   const [filterType, setFilterType] = useState<"ALL" | "IN" | "OUT">("ALL")
 
-  // กรองข้อมูลตามที่ผู้ใช้เลือก
   const filteredData = initialData.filter((tx) => {
     const matchSearch = tx.itemName.toLowerCase().includes(search.toLowerCase()) ||
       (tx.note && tx.note.toLowerCase().includes(search.toLowerCase()))
@@ -51,7 +50,6 @@ export default function HistoryClient({ initialData }: { initialData: Transactio
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        {/* ================= ตัวกรอง (Filters) ================= */}
         <div className="p-5 border-b border-gray-100 bg-gray-50/50 flex flex-wrap gap-4 items-center justify-between">
 
           <div className="relative w-full md:w-72">
@@ -69,19 +67,19 @@ export default function HistoryClient({ initialData }: { initialData: Transactio
             <div className="flex items-center gap-2 bg-white border border-gray-200 p-1 rounded-xl shadow-sm">
               <button
                 onClick={() => setFilterCategory("ALL")}
-                className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors ${filterCategory === "ALL" ? "bg-purple-100 text-purple-700" : "text-gray-500 hover:text-gray-700"}`}
+                className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer ${filterCategory === "ALL" ? "bg-purple-100 text-purple-700" : "text-gray-500 hover:text-gray-700"}`}
               >
                 ทั้งหมด
               </button>
               <button
                 onClick={() => setFilterCategory("MATERIAL")}
-                className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1 ${filterCategory === "MATERIAL" ? "bg-orange-100 text-orange-700" : "text-gray-500 hover:text-gray-700"}`}
+                className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1 cursor-pointer ${filterCategory === "MATERIAL" ? "bg-orange-100 text-orange-700" : "text-gray-500 hover:text-gray-700"}`}
               >
                 <Hammer className="w-3.5 h-3.5" /> วัตถุดิบ
               </button>
               <button
                 onClick={() => setFilterCategory("PRODUCT")}
-                className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1 ${filterCategory === "PRODUCT" ? "bg-blue-100 text-blue-700" : "text-gray-500 hover:text-gray-700"}`}
+                className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1 cursor-pointer ${filterCategory === "PRODUCT" ? "bg-blue-100 text-blue-700" : "text-gray-500 hover:text-gray-700"}`}
               >
                 <Package className="w-3.5 h-3.5" /> สินค้า
               </button>
@@ -90,19 +88,19 @@ export default function HistoryClient({ initialData }: { initialData: Transactio
             <div className="flex items-center gap-2 bg-white border border-gray-200 p-1 rounded-xl shadow-sm">
               <button
                 onClick={() => setFilterType("ALL")}
-                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${filterType === "ALL" ? "bg-gray-200 text-gray-800" : "text-gray-500 hover:text-gray-700"}`}
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer ${filterType === "ALL" ? "bg-gray-200 text-gray-800" : "text-gray-500 hover:text-gray-700"}`}
               >
                 เข้า/ออก
               </button>
               <button
                 onClick={() => setFilterType("IN")}
-                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1 ${filterType === "IN" ? "bg-green-100 text-green-700" : "text-gray-500 hover:text-gray-700"}`}
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1 cursor-pointer ${filterType === "IN" ? "bg-green-100 text-green-700" : "text-gray-500 hover:text-gray-700"}`}
               >
                 <ArrowDownToLine className="w-3.5 h-3.5" /> รับเข้า
               </button>
               <button
                 onClick={() => setFilterType("OUT")}
-                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1 ${filterType === "OUT" ? "bg-red-100 text-red-700" : "text-gray-500 hover:text-gray-700"}`}
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1 cursor-pointer ${filterType === "OUT" ? "bg-red-100 text-red-700" : "text-gray-500 hover:text-gray-700"}`}
               >
                 <ArrowUpFromLine className="w-3.5 h-3.5" /> เบิกออก
               </button>
@@ -110,7 +108,6 @@ export default function HistoryClient({ initialData }: { initialData: Transactio
           </div>
         </div>
 
-        {/* ================= ตารางข้อมูล ================= */}
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="bg-white text-gray-500 font-semibold border-b border-gray-100 uppercase tracking-wider text-xs">

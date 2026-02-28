@@ -19,7 +19,6 @@ export default async function AdminProfilePage() {
     redirect("/login")
   }
 
-  // ดึงข้อมูลโปรไฟล์ล่าสุดจาก Database
   const profile = await prisma.profile.findUnique({
     where: { id: session.user.id }
   })
@@ -38,7 +37,6 @@ export default async function AdminProfilePage() {
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-8 w-full animate-in fade-in duration-500">
       
-      {/* ปุ่มย้อนกลับ */}
       <Link 
         href="/admin" 
         className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-purple-600 transition-colors mb-6 group"
@@ -51,17 +49,13 @@ export default async function AdminProfilePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {/* ฝั่งซ้าย: Profile Card (แสดงผลอย่างเดียว) */}
         <div className="lg:col-span-4 space-y-6">
           <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-            {/* ภาพหน้าปก (Cover Photo) ใช้ Gradient เดียวกับ Sidebar */}
             <div className="h-32 w-full bg-[linear-gradient(160deg,#2E4BB1_0%,#8E63CE_50%,#B07AD9_100%)] relative"></div>
             
             <div className="px-6 pb-8 flex flex-col items-center text-center -mt-14 relative z-10">
-              {/* รูป Avatar ที่จะทับอยู่บนหน้าปก */}
                 <AvatarUploader />
-              
-              {/* ข้อมูลเบื้องต้น */}
+
               <h2 className="text-xl font-bold text-gray-900">
                 {profile.firstname} {profile.lastname}
               </h2>
@@ -71,7 +65,6 @@ export default async function AdminProfilePage() {
                 {session.user?.email || "No email provided"}
               </div>
 
-              {/* ป้ายบอก Role (เช่น Admin) */}
               <div className="mt-5 px-4 py-1.5 bg-purple-50 text-purple-700 rounded-full text-xs font-bold tracking-wide uppercase flex items-center gap-2 border border-purple-100 shadow-sm">
                 <ShieldCheck className="w-4 h-4" />
                 {session.user?.role || "Administrator"}
@@ -80,7 +73,6 @@ export default async function AdminProfilePage() {
           </div>
         </div>
 
-        {/* ฝั่งขวา: ฟอร์มแก้ไขข้อมูล (Edit Form) */}
         <div className="lg:col-span-8">
           <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 md:p-10">
             
@@ -93,7 +85,6 @@ export default async function AdminProfilePage() {
 
             <FormContainer action={updateProfileAction} className="space-y-6">
               
-              {/* ชื่อ-นามสกุล (แบ่ง 2 คอลัมน์) */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormInput 
                     name="firstname" 
@@ -109,7 +100,6 @@ export default async function AdminProfilePage() {
                 />
               </div>
 
-              {/* เบอร์โทรศัพท์ (ความกว้างครึ่งเดียวเพื่อให้ดูไม่โล่งเกินไป) */}
               <div className="w-full md:w-[calc(50%-12px)]">
                 <FormInput 
                     name="phonenumber" 
@@ -120,7 +110,6 @@ export default async function AdminProfilePage() {
                 />
               </div>
 
-              {/* ที่อยู่จัดส่ง/ติดต่อ */}
               <div className="space-y-2 pt-2">
                 <label htmlFor="address" className="text-sm font-semibold text-gray-800">
                   ที่อยู่ / ข้อมูลติดต่อเพิ่มเติม
@@ -135,7 +124,6 @@ export default async function AdminProfilePage() {
                 ></textarea>
               </div>
 
-              {/* ปุ่มบันทึก */}
               <div className="pt-8 flex justify-end">
                 <button 
                   type="submit" 

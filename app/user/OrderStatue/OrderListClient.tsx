@@ -2,32 +2,30 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Package, Truck, FileText, CheckCircle2, X, Printer, Upload, CreditCard, Clock, Ban, AlertCircle } from "lucide-react" // 👈 เพิ่มไอคอน Ban
+import { Package, Truck, FileText, CheckCircle2, X, Printer, Upload, CreditCard, Clock, Ban, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 
 export const dynamic = "force-dynamic";
 
-// 1. เพิ่ม Type สำหรับตั้งค่าธนาคาร
 type PaymentSettings = {
     bankName: string;
     accountNumber: string;
     accountName: string;
 }
 
-// 2. รับ Props paymentSettings เข้ามา
 export default function OrderListClient({
     orders,
     paymentSettings
 }: {
     orders: any[],
-    paymentSettings?: PaymentSettings // รับค่าช่องทางชำระเงินจากหน้าตั้งค่า
+    paymentSettings?: PaymentSettings
 }) {
     const router = useRouter()
     const [selectedReceipt, setSelectedReceipt] = useState<any | null>(null)
     const [slipFile, setSlipFile] = useState<File | null>(null)
     const [isUploading, setIsUploading] = useState(false)
-    const [cancellingId, setCancellingId] = useState<string | null>(null) // State สำหรับปุ่มยกเลิก
+    const [cancellingId, setCancellingId] = useState<string | null>(null)
     const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null)
 
     const getStatusBadge = (status: string) => {
@@ -53,7 +51,6 @@ export default function OrderListClient({
         window.print()
     }
 
-    // ฟังก์ชันกดยืนยันใน Modal เพื่อยิง API ยกเลิกจริง
     const executeCancelOrder = async () => {
         if (!confirmCancelId) return;
 
@@ -66,7 +63,7 @@ export default function OrderListClient({
             if (!res.ok) throw new Error("ยกเลิกออเดอร์ไม่สำเร็จ")
 
             toast.success("ยกเลิกคำสั่งซื้อเรียบร้อยแล้ว")
-            setConfirmCancelId(null) // ปิด Modal เมื่อเสร็จสิ้น
+            setConfirmCancelId(null)
             router.refresh()
         } catch (error) {
             toast.error("เกิดข้อผิดพลาดในการยกเลิกออเดอร์")
@@ -108,7 +105,7 @@ export default function OrderListClient({
                 <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500 mb-4 text-lg">คุณยังไม่มีประวัติการสั่งซื้อ</p>
                 <Link href="/user">
-                    <button className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition">
+                    <button className="bg-[linear-gradient(160deg,#2E4BB1_0%,#8E63CE_50%,#B07AD9_100%)] text-white px-6 py-2 rounded-full hover:opacity-90 transition cursor-pointer">
                         เริ่มช้อปปิ้งเลย
                     </button>
                 </Link>
@@ -118,13 +115,11 @@ export default function OrderListClient({
 
     return (
         <>
-            {/* ---------------- ส่วนแสดงรายการสั่งซื้อปกติ ---------------- */}
             <div className="space-y-6">
                 {orders.map((order) => (
                     <div key={order.id} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
 
                         <div className="bg-gray-50 px-6 py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center border-b border-gray-200 gap-4">
-                            {/* ... (ข้อมูลส่วนหัวออเดอร์เหมือนเดิม) ... */}
                             <div>
                                 <p className="text-xs text-gray-500 font-medium">รหัสคำสั่งซื้อ</p>
                                 <p className="font-bold text-gray-800">{`ORD-${order.id.substring(0, 8).toUpperCase()}`}</p>
@@ -151,7 +146,6 @@ export default function OrderListClient({
                         </div>
 
                         <div className="p-6 space-y-4">
-                            {/* ... (รายการสินค้าเหมือนเดิม) ... */}
                             {order.items.map((item: any) => {
                                 const variantText = item.variant.values.length > 0
                                     ? item.variant.values.map((v: any) => v.optionValue.value).join(" | ")
@@ -174,7 +168,6 @@ export default function OrderListClient({
                             })}
                         </div>
 
-                        {/* การ์ด Footer (เพิ่มปุ่มยกเลิก) */}
                         <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
                             <div className="flex items-center gap-4">
                                 <button
@@ -187,10 +180,9 @@ export default function OrderListClient({
                                     <FileText className="w-4 h-4" /> ดูใบเสร็จ
                                 </button>
 
-                                {/* 3. ปุ่มลูกค้ายกเลิกออเดอร์เอง (แสดงเฉพาะตอน PENDING) */}
                                 {order.status === "PENDING" && (
                                     <button
-                                        onClick={() => setConfirmCancelId(order.id)} // 👈 เปลี่ยนเป็นเซ็ต State เพื่อเปิด Modal
+                                        onClick={() => setConfirmCancelId(order.id)}
                                         disabled={cancellingId === order.id}
                                         className="flex items-center gap-1 text-sm text-red-500 hover:text-red-700 font-medium transition-colors cursor-pointer disabled:opacity-50"
                                     >
@@ -213,13 +205,9 @@ export default function OrderListClient({
             {/* ---------------- ส่วนของ MODAL ใบเสร็จ ---------------- */}
             {selectedReceipt && (
                 <>
-                    {/* ... (Style และ Modal Header เหมือนเดิม) ... */}
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 print:bg-transparent print:p-0">
                         <div id="receipt-modal" className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto print:shadow-none print:max-w-full print:max-h-none print:overflow-visible print:w-full print:rounded-none relative">
-                            {/* ... (ปุ่ม X และข้อมูลผู้ซื้อ เหมือนเดิม) ... */}
-
                             <div className="p-8">
-                                {/* หัวใบเสร็จ */}
                                 <div className="flex flex-col items-center text-center border-b pb-6 mb-6">
                                     <CheckCircle2 className="w-16 h-16 text-green-500 mb-4" />
                                     <h2 className="text-3xl font-bold text-gray-800">คำสั่งซื้อของคุณ</h2>
@@ -227,9 +215,6 @@ export default function OrderListClient({
                                         รหัสคำสั่งซื้อ: {selectedReceipt.id.split("-")[0].toUpperCase()}
                                     </p>
                                 </div>
-                                {/* ... (ข้อมูลการจัดส่ง เหมือนเดิม) ... */}
-
-                                {/* กล่องอัปโหลดสลิปและการชำระเงิน */}
                                 {selectedReceipt.status === "PENDING" && (
                                     <div className="mb-8 border border-blue-200 bg-blue-50/50 rounded-xl p-6 print:hidden">
                                         <h3 className="text-lg font-bold text-blue-900 mb-4 flex items-center gap-2">
@@ -242,7 +227,6 @@ export default function OrderListClient({
                                                     ฿
                                                 </div>
                                                 <div>
-                                                    {/* 4. ดึงข้อมูลจาก props paymentSettings ตรงนี้ */}
                                                     <p className="text-sm text-gray-500">{paymentSettings?.bankName || "ธนาคารกสิกรไทย (ค่าเริ่มต้น)"}</p>
                                                     <p className="text-lg font-mono font-bold text-gray-800 tracking-wider">
                                                         {paymentSettings?.accountNumber || "123-4-56789-0"}
@@ -252,19 +236,29 @@ export default function OrderListClient({
                                             </div>
                                         </div>
 
-                                        {/* ... (ช่องอัปโหลดไฟล์ เหมือนเดิม) ... */}
                                         <div className="space-y-3">
                                             <label className="text-sm font-medium text-gray-700">อัปโหลดหลักฐานการโอนเงิน (สลิป)</label>
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={(e) => setSlipFile(e.target.files?.[0] || null)}
-                                                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer"
-                                            />
+                                            <div className="flex items-center gap-3">
+                                                <label className="cursor-pointer bg-blue-100 text-blue-700 hover:bg-blue-200 px-4 py-2 rounded-md text-sm font-semibold transition flex items-center gap-2">
+                                                    <Upload className="w-4 h-4" />
+                                                    Choose File
+
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={(e) => setSlipFile(e.target.files?.[0] || null)}
+                                                        className="hidden"
+                                                    />
+                                                </label>
+
+                                                <span className="text-sm text-gray-500 truncate max-w-[200px] sm:max-w-xs">
+                                                    {slipFile ? slipFile.name : "ยังไม่ได้เลือกไฟล์"}
+                                                </span>
+                                            </div>
                                             <button
                                                 onClick={handleUploadSlip}
                                                 disabled={!slipFile || isUploading}
-                                                className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition"
+                                                className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition cursor-pointer"
                                             >
                                                 <Upload className="w-4 h-4" />
                                                 {isUploading ? "กำลังอัปโหลด..." : "แจ้งชำระเงิน"}
@@ -328,7 +322,6 @@ export default function OrderListClient({
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 animate-in fade-in duration-200">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 transform scale-100 animate-in zoom-in-95 duration-200">
                         <div className="flex flex-col items-center text-center">
-                            {/* ไอคอนแจ้งเตือน */}
                             <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mb-4">
                                 <AlertCircle className="w-8 h-8 text-red-500" />
                             </div>
@@ -339,7 +332,6 @@ export default function OrderListClient({
                                 <span className="text-red-500 font-medium">หากยกเลิกแล้วจะไม่สามารถย้อนกลับได้</span>
                             </p>
 
-                            {/* ปุ่มกดยืนยัน / ยกเลิก */}
                             <div className="flex gap-3 w-full">
                                 <button
                                     onClick={() => setConfirmCancelId(null)}
@@ -355,7 +347,6 @@ export default function OrderListClient({
                                 >
                                     {cancellingId ? (
                                         <>
-                                            {/* Loading Spinner แบบ CSS */}
                                             <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
                                             กำลังยกเลิก...
                                         </>

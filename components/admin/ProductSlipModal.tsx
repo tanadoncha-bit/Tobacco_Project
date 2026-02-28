@@ -47,7 +47,7 @@ export default function ProductSlipModal({ productId, productName, open, onClose
             <History className="text-blue-600 w-6 h-6" />
             <h2 className="text-xl font-bold">ประวัติสต๊อกสินค้า: <span className="text-blue-600">{productName}</span></h2>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded-lg transition-colors cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>

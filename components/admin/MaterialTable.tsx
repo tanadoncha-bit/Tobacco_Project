@@ -51,13 +51,11 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
   const [materials, setMaterials] = useState<Material[]>(initialMaterials)
   const [search, setSearch] = useState("")
 
-  // Sort State
   const [sort, setSort] = useState<SortValue>("newest")
   const [isSortOpen, setIsSortOpen] = useState(false)
   const sortRef = useRef<HTMLDivElement>(null)
 
   const [isAddOpen, setIsAddOpen] = useState(false)
-  // const [newMat, setNewMat] = useState({ code: "", name: "", unit: "กรัม", costPerUnit: 0 })
   const [newMat, setNewMat] = useState({ code: "", name: "", unit: "กรัม" })
 
   const [txModal, setTxModal] = useState<{ isOpen: boolean; mat: Material | null; type: "IN" | "OUT" }>({
@@ -84,7 +82,6 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
     }
   }, [isAddOpen, materials])
 
-  // Load Products for Production
   useEffect(() => {
     if (isProduceOpen && products.length === 0) {
       fetch("/api/products")
@@ -94,7 +91,6 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
     }
   }, [isProduceOpen, products.length])
 
-  // Click Outside Handler
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (productDropdownRef.current && !productDropdownRef.current.contains(event.target as Node)) {
@@ -108,7 +104,6 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  // Filter & Sort
   const filteredAndSorted = useMemo(() => {
     let result = [...materials]
 
@@ -131,7 +126,6 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
 
   const currentSortLabel = SORT_OPTIONS.find((opt) => opt.value === sort)?.label
 
-  // Handlers
   const handleAddMaterial = async () => {
     if (!newMat.name || !newMat.unit) return toast.error("กรุณากรอกชื่อและหน่วยนับ")
 
@@ -146,7 +140,7 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
       const savedMat = await res.json()
 
       setMaterials([savedMat, ...materials])
-      setIsAddOpen(false) // ปิด Modal อย่างเดียวพอ
+      setIsAddOpen(false)
       toast.success("เพิ่มวัตถุดิบเรียบร้อย")
     } catch (error) {
       toast.error("เกิดข้อผิดพลาดในการเพิ่มวัตถุดิบ")
@@ -240,7 +234,6 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto">
 
-      {/* ================= HEADER ================= */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -253,11 +246,9 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
 
-        {/* ================= TOP BAR (Search & Actions) ================= */}
         <div className="relative z-10 p-5 border-b border-gray-100 bg-gray-50/50 rounded-t-2xl flex flex-wrap justify-between items-center gap-4">
           <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
 
-            {/* Search Bar */}
             <div className="relative w-full sm:w-72">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
@@ -269,7 +260,6 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
               />
             </div>
 
-            {/* Custom Sort Dropdown */}
             <div className="relative" ref={sortRef}>
               <button
                 onClick={() => setIsSortOpen(!isSortOpen)}
@@ -312,14 +302,13 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
             </button>
             <button
               onClick={() => setIsAddOpen(true)}
-              className="flex-1 sm:flex-none bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2"
+              className="flex-1 sm:flex-none bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer"
             >
               <Plus className="w-4 h-4" /> เพิ่มวัตถุดิบ
             </button>
           </div>
         </div>
 
-        {/* ================= TABLE ================= */}
         <div className="overflow-x-auto rounded-b-2xl">
           <table className="w-full text-sm text-left">
             <thead className="bg-white text-gray-500 font-semibold border-b border-gray-100 uppercase tracking-wider text-xs">
@@ -353,14 +342,14 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => setTxModal({ isOpen: true, mat, type: "IN" })}
-                        className="bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
+                        className="bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
                         title="รับเข้าสต๊อกแบบแมนนวล"
                       >
                         <ArrowDownToLine className="w-3.5 h-3.5" /> รับเข้า
                       </button>
                       <button
                         onClick={() => setTxModal({ isOpen: true, mat, type: "OUT" })}
-                        className="bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
+                        className="bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
                       >
                         <ArrowUpFromLine className="w-3.5 h-3.5" /> เบิกออก
                       </button>
@@ -370,7 +359,7 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
                           setSelectedHistoryName(mat.name)
                           setHistoryModalOpen(true)
                         }}
-                        className="bg-white text-gray-600 hover:text-blue-600 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
+                        className="bg-white text-gray-600 hover:text-blue-600 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
                       >
                         <FileText className="w-3.5 h-3.5" /> ประวัติ
                       </button>
@@ -397,7 +386,6 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-gray-100">
             
-            {/* Header */}
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-purple-50 to-white">
               <div className="flex items-center gap-3 text-purple-700">
                 <div className="p-2 bg-purple-100 rounded-lg text-purple-600">
@@ -407,16 +395,14 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
               </div>
               <button 
                 onClick={() => setIsAddOpen(false)} 
-                className="text-gray-400 hover:text-gray-600 p-1 rounded-md transition-colors"
+                className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded-lg transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Body */}
             <div className="p-6 space-y-6">
               
-              {/* Field: รหัสวัตถุดิบ */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="block text-sm font-bold text-gray-700">รหัสวัตถุดิบ</label>
@@ -433,7 +419,6 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
                 />
               </div>
 
-              {/* Field: ชื่อวัตถุดิบ */}
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">
                   ชื่อวัตถุดิบ <span className="text-red-500">*</span>
@@ -447,7 +432,6 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
                 />
               </div>
 
-              {/* Field: หน่วยนับ */}
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">
                   หน่วยนับ <span className="text-red-500">*</span>
@@ -461,12 +445,11 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
                 />
               </div>
 
-              {/* Footer Actions */}
               <div className="pt-4 flex gap-3 border-t border-gray-100">
                 <button
                   type="button"
                   onClick={() => setIsAddOpen(false)}
-                  className="flex-1 py-2.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all"
+                  className="flex-1 py-2.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all cursor-pointer"
                 >
                   ยกเลิก
                 </button>
@@ -474,7 +457,7 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
                   type="button"
                   onClick={handleAddMaterial}
                   disabled={isLoading}
-                  className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-sm hover:shadow-md transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-sm hover:shadow-md transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {isLoading ? (
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -500,7 +483,7 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
                   {txModal.type === "IN" ? "รับเข้าวัตถุดิบ" : "เบิกออกวัตถุดิบ"}
                 </h2>
               </div>
-              <button onClick={() => setTxModal({ isOpen: false, mat: null, type: "IN" })} className="text-gray-400 hover:text-gray-600 p-1 rounded-md transition-colors">
+              <button onClick={() => setTxModal({ isOpen: false, mat: null, type: "IN" })} className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded-lg transition-colors cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -552,7 +535,7 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
                 <button
                   type="button"
                   onClick={() => setTxModal({ isOpen: false, mat: null, type: "IN" })}
-                  className="flex-1 py-2.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors"
+                  className="flex-1 py-2.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
                 >
                   ยกเลิก
                 </button>
@@ -560,7 +543,7 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
                   type="button"
                   onClick={handleTransaction}
                   disabled={isLoading}
-                  className={`flex-1 py-2.5 text-white font-bold rounded-xl shadow-sm hover:shadow-md transition-all disabled:opacity-50 flex items-center justify-center gap-2 ${txModal.type === "IN" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}`}
+                  className={`flex-1 py-2.5 text-white font-bold rounded-xl shadow-sm hover:shadow-md transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer ${txModal.type === "IN" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}`}
                 >
                   {isLoading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : `ยืนยัน${txModal.type === "IN" ? "รับเข้า" : "เบิกออก"}`}
                 </button>
@@ -579,7 +562,7 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
                 <Hammer className="w-5 h-5" />
                 <h2 className="text-lg font-bold">เบิกผลิตสินค้า</h2>
               </div>
-              <button onClick={() => setIsProduceOpen(false)} className="text-gray-400 hover:text-gray-600 p-1 rounded-md transition-colors">
+              <button onClick={() => setIsProduceOpen(false)} className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded-lg transition-colors cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -672,7 +655,7 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
                 <button
                   type="button"
                   onClick={() => setIsProduceOpen(false)}
-                  className="flex-1 py-2.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors"
+                  className="flex-1 py-2.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
                 >
                   ยกเลิก
                 </button>
@@ -680,7 +663,7 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
                   type="button"
                   onClick={handleProduce}
                   disabled={isLoading}
-                  className="flex-1 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl shadow-sm hover:shadow-md transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl shadow-sm hover:shadow-md transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {isLoading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "ยืนยันการผลิต"}
                 </button>

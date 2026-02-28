@@ -14,14 +14,11 @@ export default function CartButton() {
 
   useEffect(() => {
     setIsClient(true)
-
-    // สร้างฟังก์ชันแอบไปดึงตะกร้าล่าสุดมา Sync กับ Zustand
     const syncCartWithDB = async () => {
       try {
         const res = await fetch("/api/cart")
         if (res.ok) {
           const data = await res.json()
-          // อัปเดตข้อมูลใน Zustand ให้ตรงกับ Database เป๊ะๆ
           useCartStore.setState({ items: data.items || [] })
         }
       } catch (error) {
@@ -29,26 +26,22 @@ export default function CartButton() {
       }
     }
 
-    // เรียกใช้งานฟังก์ชัน
     syncCartWithDB()
-  }, []) // ทำงานแค่ครั้งเดียวตอนโหลดหน้าเว็บ
+  }, [])
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0)
   
-  // 🌟 ดึงสินค้ามาโชว์แค่ 5 ชิ้นแรกสุด จะได้ไม่ยาวทะลุจอ
   const displayItems = items.slice(0, 5) 
-  // 🌟 คำนวณว่ามีสินค้าเหลืออีกกี่ชิ้นที่ไม่ได้โชว์
   const remainingItems = items.length - displayItems.length 
 
   if (!isClient) return null
 
   return (
     <div 
-      className="relative flex items-center py-2" // เพิ่มขอบเขตให้ Hover ติดง่ายขึ้น
+      className="relative flex items-center py-2"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* ================= ปุ่มไอคอนตะกร้า ================= */}
       <button 
         onClick={() => router.push("/user/ShoppingCart")}
         className="relative p-2 text-white hover:text-gray-200 transition-colors cursor-pointer"
@@ -61,7 +54,6 @@ export default function CartButton() {
         )}
       </button>
 
-      {/* ================= Popup โชว์รายการสินค้า (สไตล์ Shopee) ================= */}
       {isHovered && items.length > 0 && (
         <div className="absolute top-full right-0 mt-1 w-[400px] bg-white text-black shadow-[0_4px_12px_rgba(0,0,0,0.15)] border border-gray-100 z-50 rounded-sm cursor-default">
           
@@ -73,11 +65,9 @@ export default function CartButton() {
           {/* รายการสินค้า */}
           <div className="flex flex-col">
             {displayItems.map((item: any) => {
-              // พยายามดึงข้อมูล (ปรับให้ตรงกับโครงสร้าง Zustand Store ของคุณ)
               const itemName = item.variant?.product?.Pname || item.name || "สินค้า"
               const itemPrice = item.variant?.price || item.price || 0
               
-              // สำคัญ: ดึงรูปภาพสินค้า (ถ้าใน Store ไม่มีรูป ให้ใช้ภาพเปล่าแทนไปก่อน)
               const itemImage = item.variant?.product?.images?.[0]?.url || item.image || "https://placehold.co/100x100?text=No+Image"
 
               return (

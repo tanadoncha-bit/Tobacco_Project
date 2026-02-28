@@ -1,19 +1,24 @@
 import prisma from "@/utils/db"
 import Link from "next/link"
 import { ShoppingCart, Search } from "lucide-react"
+import BannerSlider from "@/components/BannerSlider"
 
 export const revalidate = 15;
 
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string }> // 🚀 1. เปลี่ยน Type ให้ครอบด้วย Promise
+  searchParams: Promise<{ search?: string }> 
 }) {
-  // 🚀 2. ใช้ await เพื่อแกะค่าออกจาก searchParams ก่อน
   const params = await searchParams
   const keyword = params.search || ""
 
-  // 🚀 3. ดึงข้อมูลสินค้าโดยใช้เงื่อนไขการค้นหา (โค้ดต่อจากนี้เหมือนเดิมเป๊ะเลยครับ)
+  const banners = await prisma.banner.findMany({
+    where: { isActive: true },
+    orderBy: { createdAt: "desc" },
+    take: 5,
+  })
+
   const products = await prisma.product.findMany({
     where: {
       ...(keyword ? {
@@ -33,21 +38,7 @@ export default async function HomePage({
   return (
     <div className="min-h-screen bg-gray-50">
 
-      <div className="bg-white border-b border-gray-200 py-16 px-4 text-center shadow-sm">
-        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-          ยินดีต้อนรับสู่ร้านของเรา
-        </h1>
-        <p className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto">
-          ค้นหาสินค้าคุณภาพดี ราคาโดนใจ พร้อมจัดส่งถึงหน้าบ้านคุณ
-        </p>
-      </div>
-
-      {/* <div className="bg-gradient-to-r from-[#2E4BB1] to-[#8E63CE] text-white py-16 px-4 text-center">
-        <h1 className="text-4xl md:text-5xl font-bold mb-4">ยินดีต้อนรับสู่ร้านของเรา</h1>
-        <p className="text-lg md:text-xl text-blue-100 max-w-2xl mx-auto">
-          ค้นหาสินค้าคุณภาพดี ราคาโดนใจ พร้อมจัดส่งถึงหน้าบ้านคุณ
-        </p>
-      </div> */}
+      <BannerSlider banners={banners} />
 
       <div className="container mx-auto px-4 py-12">
 
@@ -91,8 +82,8 @@ export default async function HomePage({
 
               const imageUrl = product.images[0]?.url ?? null
 
-              return (
-                <div key={product.Pid} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 flex flex-col group">
+              return (  
+                <div key={product.Pid} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 flex flex-col group cursor-pointer">
 
                   <div className="aspect-square bg-gray-50 relative flex items-center justify-center overflow-hidden">
                     {imageUrl ? (
@@ -116,7 +107,7 @@ export default async function HomePage({
                     <h3 className="font-semibold text-gray-800 mb-1 line-clamp-2" title={product.Pname}>
                       {product.Pname}
                     </h3>
-                    <p className="text-[#2E4BB1] font-bold text-lg mb-4">
+                    <p className="text-purple-700 font-bold text-lg mb-4">
                       {minPrice > 0 ? `฿${minPrice.toLocaleString()}` : "N/A"}
                     </p>
 
@@ -127,7 +118,7 @@ export default async function HomePage({
                         </button>
                       ) : (
                         <Link href={`/product/${product.Pid}`}>
-                          <button className="w-full py-2.5 bg-[#2E4BB1] hover:bg-blue-700 text-white rounded-xl font-medium transition-colors text-sm flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+                          <button className="w-full py-2.5 bg-[linear-gradient(160deg,#2E4BB1_0%,#8E63CE_50%,#B07AD9_100%)] hover:opacity-90 text-white rounded-xl font-medium transition-colors text-sm flex items-center justify-center gap-2 cursor-pointer shadow-sm">
                             <ShoppingCart className="w-4 h-4" /> ดูรายละเอียด
                           </button>
                         </Link>

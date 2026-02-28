@@ -5,7 +5,6 @@ import { SquareChartGantt } from "lucide-react"
 export const dynamic = "force-dynamic";
 
 export default async function OrdersPage() {
-  // ดึงข้อมูลออเดอร์ทั้งหมด พร้อมของที่สั่งและข้อมูลลูกค้า
   const orders = await prisma.order.findMany({
     orderBy: { createdAt: "desc" },
     include: {

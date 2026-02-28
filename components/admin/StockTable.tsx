@@ -84,7 +84,6 @@ export default function StockTable({ data }: { data: StockItem[] }) {
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto">
       
-      {/* ================= HEADER ================= */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -97,11 +96,9 @@ export default function StockTable({ data }: { data: StockItem[] }) {
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
 
-        {/* ================= TOP BAR (Search & Actions) ================= */}
         <div className="relative z-10 p-5 border-b border-gray-100 bg-gray-50/50 rounded-t-2xl flex flex-wrap justify-between items-center gap-4">
           <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
             
-            {/* Search Bar */}
             <div className="relative w-full sm:w-72">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
@@ -113,7 +110,6 @@ export default function StockTable({ data }: { data: StockItem[] }) {
               />
             </div>
 
-            {/* Custom Sort Dropdown */}
             <div className="relative" ref={sortRef}>
               <button
                 onClick={() => setIsSortOpen(!isSortOpen)}
@@ -151,20 +147,19 @@ export default function StockTable({ data }: { data: StockItem[] }) {
           <div className="flex gap-3 w-full sm:w-auto">
             <button
               onClick={() => setRecipeModalOpen(true)}
-              className="flex-1 sm:flex-none bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-purple-300 hover:text-purple-700 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm flex items-center justify-center gap-2"
+              className="flex-1 sm:flex-none bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-purple-300 hover:text-purple-700 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
             >
               <BookOpen className="w-4 h-4" /> สูตรการผลิต
             </button>
             <button
               onClick={() => setOpen(true)}
-              className="flex-1 sm:flex-none bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2"
+              className="flex-1 sm:flex-none bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer"
             >
               <Plus className="w-4 h-4" /> เพิ่มสินค้าใหม่
             </button>
           </div>
         </div>
 
-        {/* ================= TABLE ================= */}
         <div className="overflow-x-auto rounded-b-2xl">
           <table className="w-full text-sm text-left">
             <thead className="bg-white text-gray-500 font-semibold border-b border-gray-100 uppercase tracking-wider text-xs">
@@ -203,31 +198,28 @@ export default function StockTable({ data }: { data: StockItem[] }) {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-end gap-2">
-                      {/* ปุ่มเพิ่มสต๊อก (ใหม่) */}
                       <button
                         onClick={() => { setAdjustProductId(item.Pid); setAdjustStockOpen(true) }}
-                        className="bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
+                        className="bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
                         title="รับเข้าสต๊อกแบบแมนนวล"
                       >
                         <ArrowDownToLine className="w-3.5 h-3.5" /> เพิ่มจำนวน
                       </button>
 
-                      {/* ปุ่ม Edit */}
                       <button
                         onClick={() => { setEditProductId(item.Pid); setEditModalOpen(true) }}
-                        className="bg-white text-gray-700 hover:text-purple-700 hover:bg-purple-50 border border-gray-200 hover:border-purple-200 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
+                        className="bg-white text-gray-700 hover:text-purple-700 hover:bg-purple-50 border border-gray-200 hover:border-purple-200 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
                       >
                         <Edit className="w-3.5 h-3.5" /> รายละเอียด
                       </button>
 
-                      {/* ปุ่ม History */}
                       <button
                         onClick={() => {
                           setSelectedSlipId(item.Pid)
                           setSelectedSlipName(item.name)
                           setSlipModalOpen(true)
                         }}
-                        className="bg-white text-gray-600 hover:text-blue-600 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
+                        className="bg-white text-gray-600 hover:text-blue-600 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
                       >
                         <FileText className="w-3.5 h-3.5" /> ประวัติ
                       </button>
@@ -248,7 +240,6 @@ export default function StockTable({ data }: { data: StockItem[] }) {
           </table>
         </div>
 
-        {/* --- Modals --- */}
         <AddProductModal
           open={open}
           onClose={() => setOpen(false)}
@@ -274,7 +265,6 @@ export default function StockTable({ data }: { data: StockItem[] }) {
           onClose={() => setRecipeModalOpen(false)}
         />
 
-        {/* 🌟 เรียกใช้ Modal เพิ่มจำนวนสต๊อก (แนบอยู่ด้านล่างไฟล์นี้) */}
         <AdjustStockModal 
           open={adjustStockOpen}
           productId={adjustProductId}
@@ -294,11 +284,9 @@ function AdjustStockModal({ open, productId, onClose, onSuccess }: { open: boole
   const [isLoading, setIsLoading] = useState(false)
   const [isFetching, setIsFetching] = useState(false)
 
-  // 👈 เพิ่ม State และ Ref สำหรับ Custom Dropdown
   const [isVariantOpen, setIsVariantOpen] = useState(false)
   const variantRef = useRef<HTMLDivElement>(null)
 
-  // ดึงข้อมูล
   useEffect(() => {
     if (open && productId) {
       setIsFetching(true)
@@ -314,7 +302,6 @@ function AdjustStockModal({ open, productId, onClose, onSuccess }: { open: boole
     }
   }, [open, productId])
 
-  // ปิด Dropdown เมื่อคลิกที่อื่น
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (variantRef.current && !variantRef.current.contains(event.target as Node)) {
@@ -356,7 +343,6 @@ function AdjustStockModal({ open, productId, onClose, onSuccess }: { open: boole
     }
   }
 
-  // 👈 หาชื่อที่เลือกมาแสดงบนปุ่ม
   const selectedVariant = variants.find(v => v.id.toString() === selectedVariantId)
   const selectedLabel = selectedVariant 
     ? `${selectedVariant.values?.map((val: any) => val.optionValue.value).join(" / ") || "ค่าเริ่มต้น"} (คงเหลือ: ${selectedVariant.stock})`
@@ -372,7 +358,7 @@ function AdjustStockModal({ open, productId, onClose, onSuccess }: { open: boole
             <ArrowDownToLine className="w-5 h-5" />
             <h2 className="text-lg font-bold">เพิ่มจำนวนสินค้า (รับเข้า)</h2>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1 rounded-md transition-colors">
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded-lg transition-colors cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -382,7 +368,6 @@ function AdjustStockModal({ open, productId, onClose, onSuccess }: { open: boole
             <div className="text-center py-8 text-gray-400 font-medium">กำลังโหลดข้อมูลสินค้า...</div>
           ) : (
             <>
-              {/* 🌟 1. Custom Dropdown สำหรับเลือก Variant */}
               <div className="space-y-2" ref={variantRef}>
                 <label className="block text-sm font-bold text-gray-700">เลือกตัวเลือก (Variant)</label>
                 <div className="relative">
@@ -399,7 +384,6 @@ function AdjustStockModal({ open, productId, onClose, onSuccess }: { open: boole
                     <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isVariantOpen ? 'rotate-180 text-green-500' : ''}`} />
                   </button>
 
-                  {/* เมนูที่เด้งลงมา */}
                   {isVariantOpen && (
                     <div className="absolute left-0 right-0 mt-2 max-h-48 overflow-y-auto bg-white rounded-xl shadow-lg border border-gray-100 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                       <div className="py-1.5">
@@ -467,7 +451,7 @@ function AdjustStockModal({ open, productId, onClose, onSuccess }: { open: boole
                 <button 
                   type="button"
                   onClick={onClose}
-                  className="flex-1 py-2.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors"
+                  className="flex-1 py-2.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
                 >
                   ยกเลิก
                 </button>
@@ -475,7 +459,7 @@ function AdjustStockModal({ open, productId, onClose, onSuccess }: { open: boole
                   type="button"
                   onClick={handleSave}
                   disabled={isLoading}
-                  className="flex-1 py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-sm hover:shadow-md transition-all disabled:opacity-50"
+                  className="flex-1 py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-sm hover:shadow-md transition-all disabled:opacity-50 cursor-pointer"
                 >
                   {isLoading ? "กำลังบันทึก..." : "ยืนยันรับเข้าสต๊อก"}
                 </button>

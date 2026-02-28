@@ -71,7 +71,6 @@ export async function POST() {
           data: { stock: { decrement: item.quantity } },
         })
 
-        // 🚨 [แก้ไขแล้ว] บันทึกประวัติโดยใช้ profileId แทน createdBy
         await tx.stockTransaction.create({
           data: {
             variantId: item.variantId,
@@ -83,7 +82,6 @@ export async function POST() {
         })
       }
 
-      // 3.4 ล้างตะกร้า
       await tx.cartItem.deleteMany({
         where: { cartId: cart.id },
       })

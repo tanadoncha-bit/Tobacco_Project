@@ -44,7 +44,6 @@ export default function OrderTable({ initialOrders }: { initialOrders: Order[] }
   const [trackingInput, setTrackingInput] = useState("")
   const [isSavingTrack, setIsSavingTrack] = useState(false)
 
-  // State สำหรับจัดการ Custom Dropdown
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -53,7 +52,6 @@ export default function OrderTable({ initialOrders }: { initialOrders: Order[] }
     }
   }, [selectedOrder])
 
-  // ฟังก์ชันปิด Dropdown เมื่อคลิกที่อื่น
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (!(e.target as Element).closest('.status-dropdown')) {
@@ -100,24 +98,18 @@ export default function OrderTable({ initialOrders }: { initialOrders: Order[] }
     }
   }
 
-  // ฟังก์ชันกำหนดว่า "สถานะปัจจุบัน" สามารถเปลี่ยนไปเป็น "สถานะอะไรได้บ้าง"
   const getAllowedStatuses = (currentStatus: string) => {
     switch (currentStatus.toUpperCase()) {
       case "PENDING":
-        // รอชำระเงิน -> ไปต่อได้แค่ รอตรวจสอบ, จ่ายแล้ว (กรณีแอดมินรับเงินสด), ยกเลิก
         return ["PENDING", "VERIFYING", "PAID", "CANCELLED"]
       case "VERIFYING":
-        // รอตรวจสอบสลิป -> ถอยกลับไป PENDING (ถ้าสลิปปลอม), ไป PAID, หรือ ยกเลิก
         return ["PENDING", "VERIFYING", "PAID", "CANCELLED"]
       case "PAID":
-        // ชำระเงินแล้ว -> ไปจัดส่ง หรือ ยกเลิก (ห้ามถอยกลับไปรอชำระเงิน)
         return ["PAID", "SHIPPED", "CANCELLED"]
       case "SHIPPED":
-        // จัดส่งแล้ว -> ไปเสร็จสิ้น หรือ ยกเลิก (ห้ามถอยกลับไปขั้นตอนก่อนหน้า)
         return ["SHIPPED", "COMPLETED", "CANCELLED"]
       case "COMPLETED":
       case "CANCELLED":
-        // เสร็จสิ้น หรือ ยกเลิก แล้ว -> ถือเป็นสถานะสิ้นสุด (Terminal State) เปลี่ยนไม่ได้แล้ว
         return [currentStatus]
       default:
         return []
@@ -231,17 +223,14 @@ export default function OrderTable({ initialOrders }: { initialOrders: Order[] }
                     <td className="px-6 py-4 w-[1%] whitespace-nowrap">
                       <div className="flex items-center justify-end gap-4">
 
-                        {/* 🌟 Custom Dropdown เริ่มต้นตรงนี้ 🌟 */}
                         <div className="relative status-dropdown">
                           <button
-                            // 1. เพิ่มเงื่อนไขว่า ถ้าเป็น COMPLETED หรือ CANCELLED ไม่ต้องเปิด Dropdown
                             onClick={() => {
                               if (order.status !== "COMPLETED" && order.status !== "CANCELLED") {
                                 setOpenDropdownId(openDropdownId === order.id ? null : order.id)
                               }
                             }}
-                            // 2. ปรับสไตล์ให้ดูรู้ว่ากดไม่ได้ (Disabled state)
-                            className={`flex items-center justify-between gap-2 w-[140px] px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-700 transition-all shadow-sm
+                            className={`flex items-center justify-between gap-2 w-[140px] px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-700 transition-all shadow-sm cursor-pointer
       ${order.status === "COMPLETED" || order.status === "CANCELLED"
                                 ? "opacity-60 cursor-not-allowed bg-gray-50"
                                 : "hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
@@ -252,7 +241,6 @@ export default function OrderTable({ initialOrders }: { initialOrders: Order[] }
                               <span className="truncate">{STATUS_OPTIONS.find(opt => opt.value === order.status)?.label || order.status}</span>
                             </div>
 
-                            {/* ซ่อนลูกศรลง ถ้าเป็นสถานะที่กดเปลี่ยนไม่ได้แล้ว */}
                             {order.status !== "COMPLETED" && order.status !== "CANCELLED" && (
                               <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${openDropdownId === order.id ? 'rotate-180' : ''}`} />
                             )}
@@ -260,14 +248,13 @@ export default function OrderTable({ initialOrders }: { initialOrders: Order[] }
 
                           {openDropdownId === order.id && (
                             <div className="absolute left-0 mt-1 w-[150px] bg-white border border-gray-100 rounded-lg shadow-xl z-50 py-1 overflow-hidden">
-                              {/* 3. ใช้ .filter() กรองเอาเฉพาะสถานะที่อนุญาตให้เปลี่ยนได้ */}
                               {STATUS_OPTIONS
                                 .filter(option => getAllowedStatuses(order.status).includes(option.value))
                                 .map((option) => (
                                   <button
                                     key={option.value}
                                     onClick={() => handleStatusChange(order.id, option.value)}
-                                    className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 transition-colors ${order.status === option.value
+                                    className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 transition-colors cursor-pointer ${order.status === option.value
                                         ? 'bg-purple-50/50 font-semibold text-purple-700'
                                         : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                                       }`}
@@ -279,7 +266,6 @@ export default function OrderTable({ initialOrders }: { initialOrders: Order[] }
                             </div>
                           )}
                         </div>
-                        {/* 🌟 สิ้นสุด Custom Dropdown 🌟 */}
 
                         <button
                           onClick={() => setSelectedOrder(order)}
@@ -304,7 +290,7 @@ export default function OrderTable({ initialOrders }: { initialOrders: Order[] }
         </div>
       </div>
 
-      {/* ================= MODAL รายละเอียดออเดอร์ (แอดมิน) ================= */}
+      {/* ================= MODAL รายละเอียดออเดอร์ ================= */}
       {selectedOrder && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -316,9 +302,9 @@ export default function OrderTable({ initialOrders }: { initialOrders: Order[] }
               </div>
               <button
                 onClick={() => setSelectedOrder(null)}
-                className="p-2 hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
+                className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded-lg transition-colors cursor-pointer"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -345,7 +331,6 @@ export default function OrderTable({ initialOrders }: { initialOrders: Order[] }
                 </div>
               </div>
 
-              {/* เพิ่มกล่องแสดงรูปสลิปตรงนี้ */}
               {selectedOrder.slipImage && (
                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                   <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2 mb-3">
@@ -359,18 +344,18 @@ export default function OrderTable({ initialOrders }: { initialOrders: Order[] }
                     />
                   </div>
 
-                  {/* ปุ่มอนุมัติยอดเงิน (โชว์เฉพาะตอนสถานะ VERIFYING) */}
+                  {/* ปุ่มอนุมัติยอดเงิน */}
                   {selectedOrder.status === "VERIFYING" && (
                     <div className="mt-4 flex gap-3">
                       <button
                         onClick={() => handleStatusChange(selectedOrder.id, "PENDING")}
-                        className="flex-1 py-2 bg-white border-2 border-red-500 text-red-600 rounded-lg text-sm font-bold hover:bg-red-50 flex justify-center items-center gap-1 transition"
+                        className="flex-1 py-2 bg-white border-2 border-red-500 text-red-600 rounded-lg text-sm font-bold hover:bg-red-50 flex justify-center items-center gap-1 transition cursor-pointer"
                       >
                         <XCircle className="w-4 h-4" /> สลิปไม่ถูกต้อง
                       </button>
                       <button
                         onClick={() => handleStatusChange(selectedOrder.id, "PAID")}
-                        className="flex-1 py-2 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 flex justify-center items-center gap-1 transition shadow-sm"
+                        className="flex-1 py-2 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 flex justify-center items-center gap-1 transition shadow-sm cursor-pointer"
                       >
                         <CheckCircle className="w-4 h-4" /> ยืนยันยอดเงิน
                       </button>
@@ -379,7 +364,7 @@ export default function OrderTable({ initialOrders }: { initialOrders: Order[] }
                 </div>
               )}
 
-              {/* กล่องใส่ Tracking Number (จะโชว์ให้กรอกเฉพาะตอนจ่ายเงินแล้ว) */}
+              {/* กล่องใส่ Tracking Number */}
               {["PAID", "SHIPPED", "COMPLETED"].includes(selectedOrder.status) && (
                 <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
                   <h3 className="text-xs font-semibold text-purple-800 uppercase tracking-wider mb-2 flex items-center gap-1.5">
@@ -404,7 +389,6 @@ export default function OrderTable({ initialOrders }: { initialOrders: Order[] }
                 </div>
               )}
 
-              {/* รายการสินค้า */}
               <div>
                 <h3 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
                   <Package className="w-4 h-4" />
@@ -441,8 +425,7 @@ export default function OrderTable({ initialOrders }: { initialOrders: Order[] }
               </div>
 
             </div>
-
-            {/* ยอดรวมด้านล่าง Modal */}
+            
             <div className="px-6 py-4 border-t bg-gray-50 flex justify-between items-center">
               <span className="text-gray-600 font-medium">ยอดชำระสุทธิ</span>
               <span className="text-xl font-bold text-purple-600">฿{selectedOrder.totalAmount.toLocaleString()}</span>

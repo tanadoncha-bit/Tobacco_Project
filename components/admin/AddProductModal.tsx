@@ -108,7 +108,6 @@ export default function AddProductModal({
     <div className="fixed inset-0 bg-gray-900/60 flex items-center justify-center z-50 p-4 transition-all duration-300">
       <div className="bg-gray-50 w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl flex flex-col">
 
-        {/* ================= HEADER ================= */}
         <div className="sticky top-0 bg-white px-8 py-5 border-b border-gray-100 flex justify-between items-center z-10 rounded-t-2xl shadow-sm">
           <div className="flex items-center gap-3">
             <div className="bg-purple-100 p-2 rounded-lg">
@@ -119,14 +118,13 @@ export default function AddProductModal({
               <p className="text-sm text-gray-500 font-medium mt-0.5">เพิ่มรายละเอียดและตัวเลือกของสินค้า</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors group">
-            <X className="w-5 h-5 text-gray-400 group-hover:text-gray-700" />
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded-lg transition-colors cursor-pointer">
+            <X className="w-5 h-5" /> 
           </button>
         </div>
 
         <div className="p-8 space-y-8">
 
-          {/* ================= IMAGES ================= */}
           <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
               <ImagePlus className="w-5 h-5 text-gray-400" />
@@ -146,7 +144,7 @@ export default function AddProductModal({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-28 h-28 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center text-gray-500 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-600 transition-colors"
+                className="w-28 h-28 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center text-gray-500 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-600 transition-colors cursor-pointer"
               >
                 <Plus className="w-6 h-6 mb-2" />
                 <span className="text-xs font-medium">เพิ่มรูปภาพ</span>
@@ -161,7 +159,6 @@ export default function AddProductModal({
             </div>
           </div>
 
-          {/* ================= NAME ================= */}
           <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
               <Tags className="w-5 h-5 text-gray-400" />
@@ -175,7 +172,6 @@ export default function AddProductModal({
             />
           </div>
 
-          {/* ================= SIMPLE PRICE (กรณีไม่มีตัวเลือก) ================= */}
           {options.length === 0 && (
             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
@@ -199,7 +195,6 @@ export default function AddProductModal({
             </div>
           )}
 
-          {/* ================= OPTIONS ================= */}
           <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-2">
@@ -209,7 +204,7 @@ export default function AddProductModal({
               <button
                 type="button"
                 onClick={() => setOptions([...options, { name: "", values: [] }])}
-                className="text-sm bg-purple-50 text-purple-600 hover:bg-purple-100 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+                className="text-sm bg-purple-50 text-purple-600 hover:bg-purple-100 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 cursor-pointer"
               >
                 <Plus className="w-4 h-4" /> เพิ่มหมวดหมู่ตัวเลือก
               </button>
@@ -234,7 +229,7 @@ export default function AddProductModal({
                         className="w-full sm:w-1/2 bg-gray-50 border border-gray-200 px-3 py-2 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-purple-500 outline-none transition-all font-medium text-gray-700"
                       />
                     </div>
-                    <button type="button" onClick={() => setOptions(options.filter((_, i) => i !== optionIndex))} className="text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors mt-4">
+                    <button type="button" onClick={() => setOptions(options.filter((_, i) => i !== optionIndex))} className="text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors mt-4 cursor-pointer">
                       <Trash2 className="w-5 h-5" />
                     </button>
                   </div>
@@ -254,7 +249,7 @@ export default function AddProductModal({
                           <button
                             type="button"
                             onClick={() => { const updated = [...options]; updated[optionIndex].values = updated[optionIndex].values.filter((_, i) => i !== valueIndex); setOptions(updated) }}
-                            className="text-gray-400 hover:text-red-500 hover:bg-gray-100 p-1 rounded-full transition-colors"
+                            className="text-gray-400 hover:text-red-500 hover:bg-gray-100 p-1 rounded-full transition-colors cursor-pointer"
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -263,7 +258,7 @@ export default function AddProductModal({
                       <button
                         type="button"
                         onClick={() => { const updated = [...options]; updated[optionIndex].values.push({ value: "" }); setOptions(updated) }}
-                        className="text-purple-600 bg-purple-50 hover:bg-purple-100 text-sm font-medium px-3 py-1.5 rounded-full flex items-center gap-1 transition-colors border border-purple-100"
+                        className="text-purple-600 bg-purple-50 hover:bg-purple-100 text-sm font-medium px-3 py-1.5 rounded-full flex items-center gap-1 transition-colors border border-purple-100 cursor-pointer"
                       >
                         <Plus className="w-3.5 h-3.5" /> เพิ่มค่า
                       </button>
@@ -274,7 +269,6 @@ export default function AddProductModal({
             </div>
           </div>
 
-          {/* ================= VARIANTS TABLE ================= */}
           {variants.length > 0 && (
             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
@@ -329,18 +323,17 @@ export default function AddProductModal({
 
         </div>
 
-        {/* ================= BUTTONS ================= */}
         <div className="sticky bottom-0 bg-white border-t border-gray-100 p-5 flex justify-end gap-3 rounded-b-2xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
           <button
             onClick={onClose}
-            className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl text-sm font-medium transition-colors shadow-sm"
+            className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl text-sm font-medium transition-colors shadow-sm cursor-pointer"
           >
             ยกเลิก
           </button>
           <button
             onClick={handleSave}
             disabled={isLoading}
-            className={`px-8 py-2.5 rounded-xl text-sm font-bold text-white transition-all shadow-md flex items-center gap-2 ${isLoading ? "bg-purple-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700 hover:shadow-lg hover:-translate-y-0.5"}`}
+            className={`px-8 py-2.5 rounded-xl text-sm font-bold text-white transition-all shadow-md flex items-center gap-2 cursor-pointer ${isLoading ? "bg-purple-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700 hover:shadow-lg hover:-translate-y-0.5"}`}
           >
             {isLoading ? (
               <>
