@@ -4,8 +4,6 @@ import { redirect } from "next/navigation"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/utils/authOptions"
 
-export const dynamic = "force-dynamic";
-
 export default async function MaintenancePage() {
   
   const settings = await prisma.storeSetting.findUnique({

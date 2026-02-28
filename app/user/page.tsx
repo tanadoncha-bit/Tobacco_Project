@@ -2,7 +2,7 @@ import prisma from "@/utils/db"
 import Link from "next/link"
 import { ShoppingCart, Search } from "lucide-react"
 
-export const dynamic = "force-dynamic"
+export const revalidate = 15;
 
 export default async function HomePage({
   searchParams,
@@ -33,7 +33,6 @@ export default async function HomePage({
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* 🎨 3. ปรับ UI Banner ใหม่เป็นโทนสว่าง เพื่อให้ตัดกับ Navbar */}
       <div className="bg-white border-b border-gray-200 py-16 px-4 text-center shadow-sm">
         <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
           ยินดีต้อนรับสู่ร้านของเรา
@@ -52,7 +51,6 @@ export default async function HomePage({
 
       <div className="container mx-auto px-4 py-12">
 
-        {/* 🚀 4. เปลี่ยนหัวข้อให้รู้ว่ากำลังแสดง "สินค้าทั้งหมด" หรือ "ผลการค้นหา" */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div>
             <h2 className="text-2xl font-bold text-gray-800">
@@ -69,7 +67,6 @@ export default async function HomePage({
           </span>
         </div>
 
-        {/* แสดงผลลัพธ์ */}
         {products.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
             <Search className="w-16 h-16 text-gray-300 mb-4" />

@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import Link from "next/link"
 
-export const dynamic = "force-dynamic";
-
 export default function RegisterPage() {
   const router = useRouter()
   const [form, setForm] = useState({ firstname: "", lastname: "", email: "", password: "" })
