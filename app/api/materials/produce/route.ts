@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/utils/authOptions"
-import prisma from "@/utils/db" // 🚨 ใช้ prisma จาก utils/db ที่มีอยู่แล้วดีกว่าครับ ป้องกัน Connection เต็ม
+import prisma from "@/utils/db"
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions)
-    // 🚨 ดึง ID ของ User ที่ทำรายการจาก Session
     const profileId = session?.user?.id 
 
     const body = await req.json()
@@ -31,11 +30,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "ไม่พบสูตรการผลิตสำหรับสินค้านี้ กรุณาตั้งค่าสูตรก่อน" }, { status: 400 })
     }
 
-    // ==========================================
-    // ใช้ Transaction: ทำงานรวดเดียว ถ้าพังกลางทางจะ Rollback ไม่บันทึกเลย
-    // ==========================================
     await prisma.$transaction(async (tx) => {
-      // 2. ตรวจสอบสต๊อกวัตถุดิบทั้งหมดก่อนว่าพอผลิตหรือไม่
       for (const recipe of variant.recipes) {
         const requiredAmount = recipe.quantity * Number(produceAmount)
 
@@ -52,7 +47,37 @@ export async function POST(req: Request) {
         }
       }
 
-      // 3. หักสต๊อกวัตถุดิบ และบันทึกประวัติ (MaterialTransaction)
+      const today = new Date()
+      const yy = today.getFullYear().toString().slice(2)
+      const mm = String(today.getMonth() + 1).padStart(2, '0')
+      const dd = String(today.getDate()).padStart(2, '0')
+      const datePrefix = `${yy}${mm}${dd}`
+
+      const lastOrder = await tx.productionOrder.findFirst({
+        where: { docNo: { startsWith: `PD-${datePrefix}` } },
+        orderBy: { id: 'desc' }
+      })
+
+      let runningNumber = 1
+      if (lastOrder) {
+        const parts = lastOrder.docNo.split('-')
+        if (parts.length === 3) {
+          runningNumber = parseInt(parts[2], 10) + 1
+        }
+      }
+      const formattedRunning = String(runningNumber).padStart(3, '0')
+      const newDocNo = `PD-${datePrefix}-${formattedRunning}`
+
+      await tx.productionOrder.create({
+        data: {
+          docNo: newDocNo,
+          variantId: Number(variantId),
+          amount: Number(produceAmount),
+          status: "PENDING",
+          note: note || null
+        }
+      })
+
       for (const recipe of variant.recipes) {
         const requiredAmount = recipe.quantity * Number(produceAmount)
 
@@ -66,14 +91,13 @@ export async function POST(req: Request) {
             materialId: recipe.materialId,
             type: "OUT",
             amount: requiredAmount,
-            note: `เบิกผลิต ${variant.product.Pname} จำนวน ${produceAmount} ชิ้น ${note ? `(หมายเหตุ: ${note})` : ""}`,
-            profileId: profileId // 🚨 เปลี่ยนมาใช้ profileId เชื่อมกับตาราง Profile
+            note: `เบิกผลิตเอกสาร ${newDocNo} (${variant.product.Pname}) จำนวน ${produceAmount} ชิ้น ${note ? `(หมายเหตุ: ${note})` : ""}`,
+            profileId: profileId
           }
         })
       }
     })
 
-    // 5. ดึงข้อมูล Material อัปเดตล่าสุด กลับไปให้หน้าบ้าน render ตารางใหม่
     const updatedMaterials = await prisma.material.findMany({
       orderBy: { id: 'desc' }
     })
@@ -82,7 +106,6 @@ export async function POST(req: Request) {
 
   } catch (error: any) {
     console.error("Produce Error:", error)
-    // คืนค่า Error Message กลับไปให้ Frontend (toast.error จะรับข้อความนี้ไปแสดง)
     return NextResponse.json({ error: error.message || "เกิดข้อผิดพลาดในการผลิต" }, { status: 500 })
   }
 }

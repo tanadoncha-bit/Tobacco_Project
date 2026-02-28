@@ -1,7 +1,7 @@
 import prisma from "@/utils/db"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { ChevronLeft } from "lucide-react"
+import { ArrowLeft, ChevronLeft } from "lucide-react"
 import ProductInteractive from "./ProductInteractive"
 
 export const dynamic = "force-dynamic"
@@ -10,17 +10,16 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const { id } = await params
   const productId = parseInt(id)
 
-  // 1. ดึงข้อมูลสินค้าแบบจัดเต็ม! (เอารูปภาพและตัวเลือกมาด้วย)
   const product = await prisma.product.findUnique({
     where: { Pid: productId },
-    include: { 
-      images: true, // ดึงรูปภาพ
-      Option: { include: { values: true } }, 
-      variants: { 
-        include: { 
-          values: { include: { optionValue: true } } 
-        } 
-      } 
+    include: {
+      images: true,
+      Option: { include: { values: true } },
+      variants: {
+        include: {
+          values: { include: { optionValue: true } }
+        }
+      }
     }
   })
 
@@ -31,10 +30,11 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
       <div className="max-w-4xl mx-auto">
-        
-        {/* ปุ่มย้อนกลับ */}
-        <Link href="/user" className="inline-flex items-center text-gray-500 hover:text-[#2E4BB1] mb-6 transition-colors font-medium">
-          <ChevronLeft className="w-5 h-5 mr-1" />
+
+        <Link href="/user" className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-purple-600 transition-colors mb-6 group">
+          <div className="p-1.5 rounded-full bg-white shadow-sm border border-gray-200 group-hover:border-purple-300 transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+          </div>
           กลับไปหน้าสินค้าทั้งหมด
         </Link>
 

@@ -8,7 +8,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const resolvedParams = await params
     const materialId = Number(resolvedParams.id)
 
-    // ดึงประวัติทั้งหมดของวัตถุดิบนี้ เรียงจากล่าสุดไปเก่าสุด
     const transactions = await prisma.materialTransaction.findMany({
       where: { materialId: materialId },
       include: { profile: true },

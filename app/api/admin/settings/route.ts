@@ -11,7 +11,6 @@ export async function GET() {
       where: { id: "global" }
     })
 
-    // ถ้ายังไม่มีข้อมูลในระบบ ให้สร้างค่าเริ่มต้น
     if (!settings) {
       settings = await prisma.storeSetting.create({
         data: { id: "global" }
@@ -28,7 +27,6 @@ export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions)
 
-    // ป้องกันคนที่ไม่ใช่ ADMIN เข้าถึง (ถ้าคุณมีเช็ค Role)
     if (!session || session.user.role !== "ADMIN") {
       return NextResponse.json({ error: "ไม่มีสิทธิ์เข้าถึง" }, { status: 403 })
     }

@@ -16,7 +16,6 @@ export async function PATCH(
       return NextResponse.json({ message: "Invalid Order ID" }, { status: 400 });
     }
 
-    // อัปเดตข้อมูลออเดอร์
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
       data: { 

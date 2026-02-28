@@ -81,6 +81,7 @@ model ProductVariant {
   CartItem         CartItem[]
   recipes          ProductRecipe[]
   StockTransaction StockTransaction[]
+  productionOrders ProductionOrder[]
 }
 
 model ProductVariantValue {
@@ -209,7 +210,8 @@ model StockTransaction {
   type   String 
   amount Int 
   note   String?
-
+  reason    String? 
+  reference String?
   profileId String?
   profile   Profile? @relation(fields: [profileId], references: [id])
 
@@ -235,4 +237,24 @@ model Banner {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+
+enum ProductionStatus {
+  PENDING    // รอรับเข้าสต๊อก (กำลังผลิต)
+  COMPLETED  // ผลิตเสร็จและรับเข้าสต๊อกแล้ว
+  CANCELLED  // ยกเลิกการผลิต
+}
+
+model ProductionOrder {
+  id          Int      @id @default(autoincrement())
+  docNo       String   @unique // เลขที่เอกสาร เช่น PD-260301-001
+  variantId   Int      // ไอดีของสินค้า (Variant) ที่สั่งผลิต
+  variant     ProductVariant  @relation(fields: [variantId], references: [id])
+  amount      Int      // จำนวนที่สั่งผลิต
+  status      ProductionStatus @default(PENDING)
+  note        String?  // หมายเหตุตอนเบิกผลิต
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

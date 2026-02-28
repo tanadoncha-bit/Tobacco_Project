@@ -30,7 +30,7 @@ export const authOptions: NextAuthOptions = {
                     email: user.email,
                     name: `${user.firstname} ${user.lastname}`,
                     role: user.role,
-                    image: user.profileImage, // <--- ดึงรูปจาก DB 
+                    image: user.profileImage,
                 }
             }
         })
@@ -40,9 +40,8 @@ export const authOptions: NextAuthOptions = {
             if (user) {
                 token.id = user.id
                 token.role = (user as any).role
-                token.picture = user.image // <--- เก็บรูปใน token
+                token.picture = user.image
             }
-            // เพิ่ม trigger "update" เพื่อให้เราสั่งอัปเดต Session จากฝั่ง Client ได้
             if (trigger === "update" && session?.image) {
                 token.picture = session.image
             }
@@ -54,7 +53,7 @@ export const authOptions: NextAuthOptions = {
                     ...session.user,
                     id: token.id as string,
                     role: token.role as string,
-                    image: token.picture as string | null, // <--- ส่งรูปเข้า Session
+                    image: token.picture as string | null,
                 } as any
             }
             return session

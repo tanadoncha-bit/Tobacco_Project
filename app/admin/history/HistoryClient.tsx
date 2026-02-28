@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Search, ArrowDownToLine, ArrowUpFromLine, Package, Hammer, Filter, Calendar } from "lucide-react"
-import dayjs from "dayjs" // อย่าลืมติดตั้ง npm install dayjs ถ้ายังไม่มี
+import dayjs from "dayjs"
 import 'dayjs/locale/th'
 
 dayjs.locale('th')

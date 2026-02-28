@@ -11,7 +11,6 @@ type Banner = {
 export default function BannerSlider({ banners }: { banners: Banner[] }) {
   const [currentIndex, setCurrentIndex] = useState(0)
 
-  // เลื่อนภาพอัตโนมัติทุกๆ 5 วินาที
   useEffect(() => {
     if (banners.length <= 1) return
     const timer = setInterval(() => {
@@ -28,7 +27,6 @@ export default function BannerSlider({ banners }: { banners: Banner[] }) {
     setCurrentIndex((prev) => (prev === banners.length - 1 ? 0 : prev + 1))
   }
 
-  // ถ้าไม่มีรูปใน Database ให้แสดง Banner สีพื้นอันเดิมของคุณ
   if (banners.length === 0) {
     return (
       <div className="bg-gradient-to-r from-[#2E4BB1] to-[#8E63CE] text-white py-16 px-4 text-center">
@@ -42,7 +40,6 @@ export default function BannerSlider({ banners }: { banners: Banner[] }) {
 
   return (
     <div className="relative w-full h-[300px] md:h-[400px] lg:h-[500px] overflow-hidden group">
-      {/* รูปภาพ Slider */}
       <div 
         className="flex transition-transform duration-700 ease-out h-full"
         style={{ transform: `translateX(-${currentIndex * 100}%)` }}
@@ -54,13 +51,11 @@ export default function BannerSlider({ banners }: { banners: Banner[] }) {
               alt="Banner"
               className="w-full h-full object-cover"
             />
-            {/* แผ่นฟิล์มดำบางๆ เพื่อให้ภาพดูพรีเมียม */}
             <div className="absolute inset-0 bg-black/10"></div>
           </div>
         ))}
       </div>
 
-      {/* ปุ่มเลื่อนซ้าย-ขวา (จะโชว์ตอนเอาเมาส์ชี้) */}
       {banners.length > 1 && (
         <>
           <button
@@ -76,7 +71,6 @@ export default function BannerSlider({ banners }: { banners: Banner[] }) {
             <ChevronRight className="w-6 h-6" />
           </button>
 
-          {/* จุดไข่ปลาด้านล่าง (Indicators) */}
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
             {banners.map((_, index) => (
               <button

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { UserPlus, Shield, User, X, Edit, Check, ChevronDown, ContactRound } from "lucide-react"
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,8 @@ export default function EmployeeManagementPage() {
   const [isRoleOpen, setIsRoleOpen] = useState(false)
 
   const [isLoading, setIsLoading] = useState(false)
+
+  const [isFetching, setIsFetching] = useState(true)
 
   const [formData, setFormData] = useState({
     firstname: "",
@@ -32,6 +35,8 @@ export default function EmployeeManagementPage() {
       if (res.ok) setEmployees(data)
     } catch (error) {
       console.error("Error fetching employees:", error)
+    } finally {
+      setIsFetching(false)
     }
   }
 
@@ -84,6 +89,10 @@ export default function EmployeeManagementPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (isFetching) {
+    return <LoadingSpinner text="กำลังโหลดข้อมูลการตั้งค่า..." />;
   }
 
   return (

@@ -25,7 +25,7 @@ export async function GET(
               include: {
                 optionValue: {
                   include: {
-                    option: true, // ⭐ สำคัญ
+                    option: true,
                   },
                 },
               },

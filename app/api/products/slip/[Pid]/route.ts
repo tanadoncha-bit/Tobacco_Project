@@ -8,7 +8,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ Pid: str
     const resolvedParams = await params
     const productId = Number(resolvedParams.Pid)
 
-    // ค้นหาประวัติจาก Pid ตรงๆ ตามโครงสร้าง schema ของคุณ
     const slips = await prisma.productSlip.findMany({
       where: { Pid: productId },
       orderBy: { createdAt: "desc" },

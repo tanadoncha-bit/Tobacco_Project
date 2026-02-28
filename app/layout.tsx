@@ -6,7 +6,6 @@ import ConditionalNavbar from "@/components/Navbar/ConditionalNavbar";
 import Navbar from "@/components/Navbar/Navbar";
 import Footer from "@/components/Footer";
 
-// เก็บ Toaster ไว้
 import { Toaster } from "sonner"
 
 const geistSans = Geist({
@@ -28,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+
         <Providers>
           <ConditionalNavbar>
             <Navbar />

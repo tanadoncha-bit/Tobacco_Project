@@ -26,7 +26,6 @@ export async function GET() {
   }
 }
 
-// สร้างบัญชีพนักงานใหม่
 export async function POST(req: Request) {
   try {
     const body = await req.json()
@@ -36,23 +35,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "กรุณากรอกข้อมูลให้ครบถ้วน" }, { status: 400 })
     }
 
-    // เช็คว่าอีเมลนี้ซ้ำไหม
     const existingUser = await prisma.profile.findUnique({ where: { email } })
     if (existingUser) {
       return NextResponse.json({ message: "อีเมลนี้ถูกใช้งานแล้ว" }, { status: 400 })
     }
 
-    // เข้ารหัสรหัสผ่าน
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    // บันทึกลง Database
     const newEmployee = await prisma.profile.create({
       data: {
         firstname,
         lastname,
         email,
         password: hashedPassword,
-        role, // เช่น "ADMIN", "STAFF", "MANAGER"
+        role,
       }
     })
 
@@ -63,7 +59,6 @@ export async function POST(req: Request) {
   }
 }
 
-// อัปเดตข้อมูลพนักงาน (และเปลี่ยนรหัสผ่านถ้ามี)
 export async function PUT(req: Request) {
   try {
     const body = await req.json()
@@ -73,7 +68,6 @@ export async function PUT(req: Request) {
       return NextResponse.json({ message: "กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน" }, { status: 400 })
     }
 
-    // เตรียมข้อมูลที่จะอัปเดต
     const updateData: any = {
       firstname,
       lastname,
@@ -81,13 +75,10 @@ export async function PUT(req: Request) {
       role
     }
 
-    // ทริคสำคัญ: ถ้าแอดมินพิมพ์รหัสผ่านใหม่มา ค่อยทำการเข้ารหัสแล้วจับยัดใส่ updateData
-    // แต่ถ้าเป็นค่าว่าง (ไม่ได้พิมพ์) เราก็จะไม่ยุ่งกับรหัสผ่านเดิมของเขา
     if (password && password.trim() !== "") {
       updateData.password = await bcrypt.hash(password, 10)
     }
 
-    // อัปเดตลง Database
     await prisma.profile.update({
       where: { id: id },
       data: updateData

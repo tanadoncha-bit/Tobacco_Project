@@ -24,15 +24,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "No image provided" }, { status: 400 })
     }
 
-    // 1. อัปโหลดขึ้น Cloudinary
     const uploadResponse = await cloudinary.uploader.upload(image, {
       folder: "next_shop_avatars", 
-      transformation: [{ width: 500, height: 500, crop: "fill" }] // ครอปให้เป็นสี่เหลี่ยมจัตุรัส
+      transformation: [{ width: 500, height: 500, crop: "fill" }]
     })
 
     const newImageUrl = uploadResponse.secure_url
 
-    // 2. อัปเดต URL รูปใน Database
     await prisma.profile.update({
       where: { id: session.user.id },
       data: { profileImage: newImageUrl },

@@ -105,7 +105,6 @@ export async function GET() {
   }
 }
 
-// ลบสินค้าออกจากตะกร้า
 export async function DELETE(req: Request) {
   try {
     const session = await getServerSession(authOptions)

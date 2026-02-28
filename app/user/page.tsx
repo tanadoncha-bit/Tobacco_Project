@@ -2,13 +2,14 @@ import prisma from "@/utils/db"
 import Link from "next/link"
 import { ShoppingCart, Search } from "lucide-react"
 import BannerSlider from "@/components/BannerSlider"
+import ProductButton from "@/components/ProductButton"
 
 export const revalidate = 15;
 
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string }> 
+  searchParams: Promise<{ search?: string }>
 }) {
   const params = await searchParams
   const keyword = params.search || ""
@@ -24,7 +25,7 @@ export default async function HomePage({
       ...(keyword ? {
         Pname: {
           contains: keyword,
-          mode: "insensitive", 
+          mode: "insensitive",
         }
       } : {})
     },
@@ -82,7 +83,7 @@ export default async function HomePage({
 
               const imageUrl = product.images[0]?.url ?? null
 
-              return (  
+              return (
                 <div key={product.Pid} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 flex flex-col group cursor-pointer">
 
                   <div className="aspect-square bg-gray-50 relative flex items-center justify-center overflow-hidden">
@@ -117,11 +118,7 @@ export default async function HomePage({
                           สินค้าหมด
                         </button>
                       ) : (
-                        <Link href={`/product/${product.Pid}`}>
-                          <button className="w-full py-2.5 bg-[linear-gradient(160deg,#2E4BB1_0%,#8E63CE_50%,#B07AD9_100%)] hover:opacity-90 text-white rounded-xl font-medium transition-colors text-sm flex items-center justify-center gap-2 cursor-pointer shadow-sm">
-                            <ShoppingCart className="w-4 h-4" /> ดูรายละเอียด
-                          </button>
-                        </Link>
+                        <ProductButton productId={product.Pid} />
                       )}
                     </div>
                   </div>

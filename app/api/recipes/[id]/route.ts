@@ -5,13 +5,13 @@ const prisma = new PrismaClient()
 
 export const dynamic = "force-dynamic";
 
-// ลบวัตถุดิบออกจากสูตร
+
 export async function DELETE(
   req: Request,
-  { params }: { params: Promise<{ id: string }> } // 👈 1. เปลี่ยน Type ตรงนี้ให้เป็น Promise
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params // 👈 2. ใส่ await ก่อนดึง id ออกมาใช้
+    const { id } = await params
     const recipeId = Number(id)
 
     await prisma.productRecipe.delete({

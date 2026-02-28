@@ -8,24 +8,20 @@ export async function POST(req: Request) {
     const data = await req.json()
     const { name, imageUrls, options, variants } = data
 
-    // 1. สร้างรหัสสินค้าอัตโนมัติ (เช่น P-0001)
     const count = await prisma.product.count()
     const productCode = `P-${(count + 1).toString().padStart(4, "0")}`
 
     const newProduct = await prisma.$transaction(async (tx) => {
-      // 2. สร้าง Product หลัก
       const product = await tx.product.create({
         data: { Pname: name, productCode },
       })
 
-      // 3. เซฟรูปภาพ
       if (imageUrls && imageUrls.length > 0) {
         await tx.productImage.createMany({
           data: imageUrls.map((url: string) => ({ Pid: product.Pid, url })),
         })
       }
 
-      // 4. เซฟ Options & Values
       const valueIdMap = new Map<string, number>()
       for (const opt of options || []) {
         const createdOption = await tx.productOption.create({
@@ -39,17 +35,16 @@ export async function POST(req: Request) {
         }
       }
 
-      // 5. เซฟ Variants (แบบไม่มีสูตรผลิต และสต๊อก = 0)
       for (const v of variants || []) {
         const createdVariant = await tx.productVariant.create({
           data: {
             Pid: product.Pid,
             price: Number(v.price),
-            stock: 0, // 👈 บังคับเริ่มต้นที่ 0 เสมอ
+            stock: 0,
           },
         })
 
-        // ผูก Option Value เข้ากับ Variant
+
         for (const valName of v.combination || []) {
           const optionValueId = valueIdMap.get(valName)
           if (optionValueId) {
@@ -63,7 +58,6 @@ export async function POST(req: Request) {
       return product
     }, 
     {
-      // 🚀 พระเอกขี่ม้าขาว: ขยายเวลาให้ Transaction รันได้นานสุด 20 วินาที
       maxWait: 5000, 
       timeout: 20000 
     })
@@ -82,35 +76,29 @@ export async function GET() {
       include: {
         variants: {
           include: {
-            // โฟกัสตรงนี้: อ้างอิงตาม Schema 'values' ใน ProductVariant
             values: {
               include: {
                 optionValue: true
               }
             },
-            recipes: true // ดึงสูตรมาเช็คด้วยว่ามีหรือยัง
+            recipes: true
           }
         }
       }
     })
 
-    // แปลงโครงสร้างให้แสดงใน Dropdown ได้ง่าย
-    // 2. แปลงข้อมูล (Flatten) เพื่อให้ Frontend เอาไปแสดงใน Dropdown ได้ง่ายๆ
     const formattedProducts = products.flatMap((product) => {
 
-      // กรณีที่ 1: สินค้าไม่มีตัวเลือกย่อย
       if (!product.variants || product.variants.length === 0) {
         return [{
-          id: -1, // 👈 เปลี่ยนจาก null เป็น -1 (เพื่อให้เป็น number เหมือนกัน)
-          productId: product.Pid, // 👈 เติม productId ให้หน้าตาตรงกับกรณีที่ 2
+          id: -1,
+          productId: product.Pid,
           name: `${product.Pname} (${product.productCode || 'ไม่มีรหัส'}) - ไม่มีตัวเลือก`,
           hasRecipe: false
         }]
       }
 
-      // กรณีที่ 2: สินค้ามีตัวเลือกย่อย (Variants)
       return product.variants.map((variant) => {
-        // ดึงชื่อ Option Values มาต่อกัน (เช่น "1 กิโลกรัม / องุ่น")
         const optionNames = variant.values
           ?.map((v) => v.optionValue.value)
           .join(" / ")
@@ -120,8 +108,8 @@ export async function GET() {
           : `${product.Pname} (${product.productCode || 'ไม่มีรหัส'})`
 
         return {
-          id: variant.id, // เป็น number
-          productId: product.Pid, // เป็น number
+          id: variant.id,
+          productId: product.Pid,
           name: displayName,
           hasRecipe: variant.recipes && variant.recipes.length > 0
         }

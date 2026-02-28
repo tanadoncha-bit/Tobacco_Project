@@ -1,9 +1,15 @@
 import prisma from "@/utils/db"
 import StockTable from "@/components/admin/StockTable"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/utils/authOptions";
 
 export const dynamic = "force-dynamic";
 
 export default async function StockPage() {
+  const session = await getServerSession(authOptions)
+  
+  const userRole = session?.user?.role || "STAFF"
+
   const products = await prisma.product.findMany({
     include: {
       variants: true,
@@ -29,5 +35,5 @@ export default async function StockPage() {
     }
   })
 
-  return <StockTable data={data} />
+  return <StockTable data={data} userRole={userRole} />
 }

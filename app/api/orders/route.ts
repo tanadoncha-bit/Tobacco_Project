@@ -14,7 +14,6 @@ export async function POST() {
 
     const userId = session.user.id
 
-    // 1. ดึงตะกร้า + สูตรวัตถุดิบ (Recipe) ของแต่ละ Variant มาด้วย
     const cart = await prisma.cart.findUnique({
       where: { profileId: userId },
       include: {
@@ -22,7 +21,7 @@ export async function POST() {
           include: {
             variant: {
               include: {
-                recipes: true, // ดึงสูตรมาแล้ว
+                recipes: true, 
               },
             },
           },
@@ -34,16 +33,13 @@ export async function POST() {
       return NextResponse.json({ message: "ตะกร้าว่างเปล่า" }, { status: 400 })
     }
 
-    // 2. คำนวณยอดรวม
     const totalAmount = cart.items.reduce(
       (sum, item) => sum + item.quantity * (item.variant.price ?? 0),
       0
     )
 
-    // 3. ใช้ Transaction เพื่อความปลอดภัย
     const order = await prisma.$transaction(async (tx) => {
 
-      // 3.1 สร้าง Order
       const newOrder = await tx.order.create({
         data: {
           profileId: userId,
@@ -62,10 +58,8 @@ export async function POST() {
       })
 
       const shortOrderId = newOrder.id.substring(0, 8).toUpperCase()
-      // 3.2 ตัดสต๊อกสินค้าหลัก (ProductVariant) และจดประวัติ
       for (const item of cart.items) {
         
-        // อัปเดตสต๊อกสินค้าลดลง
         await tx.productVariant.update({
           where: { id: item.variantId },
           data: { stock: { decrement: item.quantity } },

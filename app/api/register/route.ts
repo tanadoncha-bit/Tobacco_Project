@@ -12,16 +12,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "กรุณากรอกข้อมูลให้ครบถ้วน" }, { status: 400 })
     }
 
-    // เช็คว่าอีเมลนี้มีในระบบหรือยัง
     const existingUser = await prisma.profile.findUnique({ where: { email } })
     if (existingUser) {
       return NextResponse.json({ message: "อีเมลนี้ถูกใช้งานแล้ว" }, { status: 400 })
     }
 
-    // เข้ารหัสผ่าน
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    // บันทึกลง Database
     const newUser = await prisma.profile.create({
       data: {
         email,

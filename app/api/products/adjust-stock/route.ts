@@ -1,49 +1,62 @@
-import { authOptions } from "@/utils/authOptions"
-import prisma from "@/utils/db"
+import { NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
 import { getServerSession } from "next-auth"
-import { NextResponse } from "next/server"
+import { authOptions } from "@/utils/authOptions";
 
-export const dynamic = "force-dynamic";
+const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
   try {
-    const data = await req.json()
-    const { variantId, amount, type, note } = data
-    
-    const session = await getServerSession(authOptions)
-    
-    const profileId = session?.user?.id 
 
-    if (!variantId || !amount || amount <= 0) {
-      return NextResponse.json({ message: "ข้อมูลไม่ครบถ้วน หรือจำนวนไม่ถูกต้อง" }, { status: 400 })
+    const session = await getServerSession(authOptions);
+
+    if (!session || !session.user || !session.user.id) {
+      return NextResponse.json({ message: "Unauthorized - กรุณาเข้าสู่ระบบ" }, { status: 401 });
     }
 
-    await prisma.$transaction(async (tx) => {
-      
-      await tx.productVariant.update({
-        where: { id: variantId },
-        data: {
-          stock: {
-            increment: amount 
-          }
-        }
-      })
+    const body = await req.json();
 
-      await tx.stockTransaction.create({
-        data: {
-          variantId: variantId,
-          type: type || "IN", 
-          amount: amount,
-          note: note || "เพิ่มสต๊อกแมนนวล",
-          profileId: profileId,
-        }
-      })
-    })
+    const { variantId, amount, type, reason, reference, note } = body;
 
-    return NextResponse.json({ success: true, message: "ปรับสต๊อกเรียบร้อยแล้ว" })
-    
+    if (!variantId || !amount || !type || !reason || !reference) {
+      return NextResponse.json(
+        { message: "ข้อมูลไม่ครบถ้วน (ต้องระบุสาเหตุและเลขอ้างอิง)" },
+        { status: 400 }
+      );
+    }
+
+    const transaction = await prisma.stockTransaction.create({
+      data: {
+        variantId: Number(variantId),
+        amount: Number(amount),
+        type: type,
+        reason: reason,
+        reference: reference,
+        note: note || null,
+        profileId: session.user.id
+      }
+    });
+
+    const updatedVariant = await prisma.productVariant.update({
+      where: { id: Number(variantId) },
+      data: {
+        stock: {
+          increment: type === "IN" ? Number(amount) : -Number(amount)
+        }
+      }
+    });
+
+    return NextResponse.json({
+      success: true,
+      transaction,
+      newStock: updatedVariant.stock
+    });
+
   } catch (error: any) {
-    console.error("ADJUST STOCK ERROR:", error)
-    return NextResponse.json({ message: "เกิดข้อผิดพลาดในการปรับสต๊อก" }, { status: 500 })
+    console.error("Adjust Stock Error:", error);
+    return NextResponse.json(
+      { message: "เกิดข้อผิดพลาดในการปรับสต็อก", error: error.message },
+      { status: 500 }
+    );
   }
 }

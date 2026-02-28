@@ -220,7 +220,7 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
       setMaterials(updatedMaterials)
       setIsProduceOpen(false)
       setProduceForm({ variantId: "", amount: "", note: "" })
-      toast.success("เบิกวัตถุดิบเพื่อผลิตสินค้าเรียบร้อย สต๊อกสินค้าเพิ่มขึ้นแล้ว!")
+      toast.success("เบิกวัตถุดิบเพื่อผลิตสินค้าเสร็จสิ้น")
     } catch (error: any) {
       toast.error(error.message)
     } finally {
@@ -476,8 +476,8 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
       {txModal.isOpen && txModal.mat && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className={`px-6 py-4 border-b border-gray-100 flex justify-between items-center ${txModal.type === "IN" ? "bg-green-50/50" : "bg-red-50/50"}`}>
-              <div className={`flex items-center gap-2 ${txModal.type === "IN" ? "text-green-700" : "text-red-700"}`}>
+            <div className={`px-6 py-4 border-b border-gray-100 flex justify-between items-center ${txModal.type === "IN" ? "bg-emerald-50/50" : "bg-red-50/50"}`}>
+              <div className={`flex items-center gap-2 ${txModal.type === "IN" ? "text-emerald-700" : "text-red-700"}`}>
                 {txModal.type === "IN" ? <ArrowDownToLine className="w-5 h-5" /> : <ArrowUpFromLine className="w-5 h-5" />}
                 <h2 className="text-lg font-bold">
                   {txModal.type === "IN" ? "รับเข้าวัตถุดิบ" : "เบิกออกวัตถุดิบ"}
@@ -503,7 +503,7 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
                   value={txForm.amount}
                   onChange={e => setTxForm({ ...txForm, amount: e.target.value })}
                   placeholder="เช่น 10, 50"
-                  className={`w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:bg-white bg-gray-50 transition-all font-medium ${txModal.type === "IN" ? "focus:ring-green-500" : "focus:ring-red-500"}`}
+                  className={`w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:bg-white bg-gray-50 transition-all font-medium ${txModal.type === "IN" ? "focus:ring-emerald-500" : "focus:ring-red-500"}`}
                 />
               </div>
 
@@ -514,7 +514,7 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
                     type="number"
                     value={txForm.totalCost}
                     onChange={e => setTxForm({ ...txForm, totalCost: e.target.value })}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-green-500 focus:bg-white bg-gray-50 transition-all font-medium"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white bg-gray-50 transition-all font-medium"
                     placeholder="0.00"
                   />
                 </div>
@@ -526,7 +526,7 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
                   type="text"
                   value={txForm.note}
                   onChange={e => setTxForm({ ...txForm, note: e.target.value })}
-                  className={`w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:bg-white bg-gray-50 transition-all font-medium ${txModal.type === "IN" ? "focus:ring-green-500" : "focus:ring-red-500"}`}
+                  className={`w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:bg-white bg-gray-50 transition-all font-medium ${txModal.type === "IN" ? "focus:ring-emerald-500" : "focus:ring-red-500"}`}
                   placeholder={txModal.type === "IN" ? "เช่น ซื้อจากร้าน A" : "เช่น ของเสียชำรุด"}
                 />
               </div>
@@ -543,7 +543,7 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
                   type="button"
                   onClick={handleTransaction}
                   disabled={isLoading}
-                  className={`flex-1 py-2.5 text-white font-bold rounded-xl shadow-sm hover:shadow-md transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer ${txModal.type === "IN" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}`}
+                  className={`flex-1 py-2.5 text-white font-bold rounded-xl shadow-sm hover:shadow-md transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer ${txModal.type === "IN" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-red-600 hover:bg-red-700"}`}
                 >
                   {isLoading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : `ยืนยัน${txModal.type === "IN" ? "รับเข้า" : "เบิกออก"}`}
                 </button>
@@ -572,7 +572,6 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
                 ระบบจะทำการเบิกวัตถุดิบออกตาม <b className="text-orange-900">"สูตร"</b> ของสินค้าที่เลือก และเพิ่มจำนวนเข้าไปใน <b className="text-orange-900">"สต๊อกสินค้าสำเร็จรูป"</b> อัตโนมัติ
               </div>
 
-              {/* Custom Dropdown สำหรับเลือกสินค้า */}
               <div className="space-y-2" ref={productDropdownRef}>
                 <label className="block text-sm font-bold text-gray-700">เลือกสินค้าที่จะผลิต *</label>
                 <div className="relative">

@@ -3,12 +3,13 @@
 import { useMemo, useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Search, ChevronDown, PackagePlus, FileText, Edit, Plus, BookOpen, PackageSearch, X, ArrowDownToLine } from "lucide-react"
-import { toast } from "sonner"
 
 import AddProductModal from "./AddProductModal"
 import EditProductModal from "./EditProductModal"
 import ProductSlipModal from "./ProductSlipModal"
 import ProductRecipeModal from "../ProductRecipeModal"
+import AdjustStockModal from "./AdjustStockModal"
+import ReceiveProduceModal from "./ReceiveProduceModal"
 
 type StockItem = {
   Pid: number
@@ -27,15 +28,20 @@ const SORT_OPTIONS = [
   { value: "name-za", label: "ชื่อ (Z-A)" },
 ] as const
 
-export default function StockTable({ data }: { data: StockItem[] }) {
+export default function StockTable({ data, userRole }: { data: StockItem[], userRole: string }) {
+
+  const canAdjustStock = userRole === "ADMIN" || userRole === "MANAGER";
   const router = useRouter()
 
   const [search, setSearch] = useState("")
   const [sort, setSort] = useState<"newest" | "oldest" | "stock-high" | "stock-low" | "name-az" | "name-za">("newest")
-  
+
   const [open, setOpen] = useState(false)
   const [recipeModalOpen, setRecipeModalOpen] = useState(false)
-  
+
+  const [isReceiveProduceOpen, setIsReceiveProduceOpen] = useState(false)
+
+
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [editProductId, setEditProductId] = useState<number | null>(null)
 
@@ -83,7 +89,7 @@ export default function StockTable({ data }: { data: StockItem[] }) {
 
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto">
-      
+
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -98,7 +104,7 @@ export default function StockTable({ data }: { data: StockItem[] }) {
 
         <div className="relative z-10 p-5 border-b border-gray-100 bg-gray-50/50 rounded-t-2xl flex flex-wrap justify-between items-center gap-4">
           <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-            
+
             <div className="relative w-full sm:w-72">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
@@ -129,11 +135,10 @@ export default function StockTable({ data }: { data: StockItem[] }) {
                           setSort(option.value as any)
                           setIsSortOpen(false)
                         }}
-                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer ${
-                          sort === option.value
-                            ? "bg-purple-50 text-purple-700 font-bold border-l-4 border-purple-500"
-                            : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent font-medium"
-                        }`}
+                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer ${sort === option.value
+                          ? "bg-purple-50 text-purple-700 font-bold border-l-4 border-purple-500"
+                          : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent font-medium"
+                          }`}
                       >
                         {option.label}
                       </button>
@@ -143,8 +148,15 @@ export default function StockTable({ data }: { data: StockItem[] }) {
               )}
             </div>
           </div>
-          
+
           <div className="flex gap-3 w-full sm:w-auto">
+            <button
+              onClick={() => setIsReceiveProduceOpen(true)}
+              className="flex-1 sm:flex-none bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <PackagePlus className="w-4 h-4" /> รับเข้าผลิต
+            </button>
+
             <button
               onClick={() => setRecipeModalOpen(true)}
               className="flex-1 sm:flex-none bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-purple-300 hover:text-purple-700 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
@@ -188,23 +200,24 @@ export default function StockTable({ data }: { data: StockItem[] }) {
                   <td className="px-6 py-4 font-semibold text-gray-700">{item.productCode}</td>
                   <td className="px-6 py-4 font-bold text-gray-900 text-base">{item.name}</td>
                   <td className="px-6 py-4 text-center">
-                    <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full font-bold text-sm border ${
-                      item.stock <= 5 
-                        ? 'text-red-600 bg-red-50 border-red-100' 
-                        : 'text-purple-700 bg-purple-50 border-purple-100'
-                    }`}>
+                    <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full font-bold text-sm border ${item.stock <= 5
+                      ? 'text-red-600 bg-red-50 border-red-100'
+                      : 'text-purple-700 bg-purple-50 border-purple-100'
+                      }`}>
                       {item.stock} ชิ้น
                     </span>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => { setAdjustProductId(item.Pid); setAdjustStockOpen(true) }}
-                        className="bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
-                        title="รับเข้าสต๊อกแบบแมนนวล"
-                      >
-                        <ArrowDownToLine className="w-3.5 h-3.5" /> เพิ่มจำนวน
-                      </button>
+                      {canAdjustStock && (
+                        <button
+                          onClick={() => { setAdjustProductId(item.Pid); setAdjustStockOpen(true) }}
+                          className="bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+                          title="รับเข้าสต๊อกแบบแมนนวล (เฉพาะ Admin)"
+                        >
+                          <ArrowDownToLine className="w-3.5 h-3.5" /> เพิ่มจำนวน
+                        </button>
+                      )}
 
                       <button
                         onClick={() => { setEditProductId(item.Pid); setEditModalOpen(true) }}
@@ -265,208 +278,17 @@ export default function StockTable({ data }: { data: StockItem[] }) {
           onClose={() => setRecipeModalOpen(false)}
         />
 
-        <AdjustStockModal 
+        <AdjustStockModal
           open={adjustStockOpen}
           productId={adjustProductId}
           onClose={() => { setAdjustStockOpen(false); setAdjustProductId(null) }}
           onSuccess={() => router.refresh()}
         />
-      </div>
-    </div>
-  )
-}
-
-function AdjustStockModal({ open, productId, onClose, onSuccess }: { open: boolean, productId: number | null, onClose: () => void, onSuccess: () => void }) {
-  const [variants, setVariants] = useState<any[]>([])
-  const [selectedVariantId, setSelectedVariantId] = useState("")
-  const [amount, setAmount] = useState("")
-  const [note, setNote] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [isFetching, setIsFetching] = useState(false)
-
-  const [isVariantOpen, setIsVariantOpen] = useState(false)
-  const variantRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (open && productId) {
-      setIsFetching(true)
-      fetch(`/api/products/${productId}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.variants) setVariants(data.variants)
-          if (data.variants?.length === 1) setSelectedVariantId(data.variants[0].id.toString())
-        })
-        .finally(() => setIsFetching(false))
-    } else {
-      setVariants([]); setSelectedVariantId(""); setAmount(""); setNote(""); setIsVariantOpen(false)
-    }
-  }, [open, productId])
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (variantRef.current && !variantRef.current.contains(event.target as Node)) {
-        setIsVariantOpen(false)
-      }
-    }
-    if (isVariantOpen) {
-      document.addEventListener("mousedown", handleClickOutside)
-    }
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [isVariantOpen])
-
-  const handleSave = async () => {
-    if (!selectedVariantId) return toast.error("กรุณาเลือกตัวเลือกสินค้า")
-    if (!amount || Number(amount) <= 0) return toast.error("กรุณาระบุจำนวนให้ถูกต้อง")
-
-    setIsLoading(true)
-    try {
-      const res = await fetch("/api/products/adjust-stock", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          variantId: Number(selectedVariantId),
-          amount: Number(amount),
-          type: "IN",
-          note: note || "เพิ่มสต๊อกแมนนวล"
-        })
-      })
-
-      if (!res.ok) throw new Error("เกิดข้อผิดพลาดในการปรับสต๊อก")
-
-      toast.success("เพิ่มสต๊อกเรียบร้อยแล้ว")
-      onSuccess()
-      onClose()
-    } catch (error: any) {
-      toast.error(error.message)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const selectedVariant = variants.find(v => v.id.toString() === selectedVariantId)
-  const selectedLabel = selectedVariant 
-    ? `${selectedVariant.values?.map((val: any) => val.optionValue.value).join(" / ") || "ค่าเริ่มต้น"} (คงเหลือ: ${selectedVariant.stock})`
-    : "-- กรุณาเลือกตัวเลือกสินค้า --"
-
-  if (!open) return null
-
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-green-50/50">
-          <div className="flex items-center gap-2 text-green-700">
-            <ArrowDownToLine className="w-5 h-5" />
-            <h2 className="text-lg font-bold">เพิ่มจำนวนสินค้า (รับเข้า)</h2>
-          </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded-lg transition-colors cursor-pointer">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="p-6 space-y-5">
-          {isFetching ? (
-            <div className="text-center py-8 text-gray-400 font-medium">กำลังโหลดข้อมูลสินค้า...</div>
-          ) : (
-            <>
-              <div className="space-y-2" ref={variantRef}>
-                <label className="block text-sm font-bold text-gray-700">เลือกตัวเลือก (Variant)</label>
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setIsVariantOpen(!isVariantOpen)}
-                    className={`w-full flex items-center justify-between border ${
-                      isVariantOpen ? 'ring-2 ring-green-500' : 'border-gray-200 hover:border-green-300'
-                    } rounded-xl px-4 py-2.5 text-sm bg-gray-50 focus:bg-white transition-all cursor-pointer text-left`}
-                  >
-                    <span className={selectedVariantId ? "text-gray-800 font-bold" : "text-gray-400 font-medium"}>
-                      {selectedLabel}
-                    </span>
-                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isVariantOpen ? 'rotate-180 text-green-500' : ''}`} />
-                  </button>
-
-                  {isVariantOpen && (
-                    <div className="absolute left-0 right-0 mt-2 max-h-48 overflow-y-auto bg-white rounded-xl shadow-lg border border-gray-100 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                      <div className="py-1.5">
-                        {variants.length === 0 ? (
-                          <div className="px-4 py-3 text-sm text-gray-500 text-center">ไม่มีตัวเลือกสินค้า</div>
-                        ) : (
-                          variants.map((v: any) => {
-                            const optionName = v.values?.map((val: any) => val.optionValue.value).join(" / ") || "ค่าเริ่มต้น (ไม่มีตัวเลือก)"
-                            const isSelected = selectedVariantId === v.id.toString()
-                            
-                            return (
-                              <button
-                                key={v.id}
-                                type="button"
-                                onClick={() => {
-                                  setSelectedVariantId(v.id.toString())
-                                  setIsVariantOpen(false)
-                                }}
-                                className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer flex justify-between items-center ${
-                                  isSelected
-                                    ? "bg-green-50 text-green-700 font-bold border-l-4 border-green-500"
-                                    : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent font-medium"
-                                }`}
-                              >
-                                <span>{optionName}</span>
-                                <span className={`text-xs px-2.5 py-1 rounded-full font-bold ${
-                                  isSelected ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                                }`}>
-                                  เหลือ {v.stock}
-                                </span>
-                              </button>
-                            )
-                          })
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">จำนวนที่ต้องการเพิ่ม (ชิ้น)</label>
-                <input 
-                  type="number"
-                  min="1"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="เช่น 10, 50"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-green-500 focus:bg-white bg-gray-50 transition-all font-medium"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">หมายเหตุ (ถ้ามี)</label>
-                <input 
-                  type="text"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  placeholder="เช่น สินค้ารับคืน, สินค้าแถม..."
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-green-500 focus:bg-white bg-gray-50 transition-all font-medium"
-                />
-              </div>
-
-              <div className="pt-2 flex gap-3">
-                <button 
-                  type="button"
-                  onClick={onClose}
-                  className="flex-1 py-2.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
-                >
-                  ยกเลิก
-                </button>
-                <button 
-                  type="button"
-                  onClick={handleSave}
-                  disabled={isLoading}
-                  className="flex-1 py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-sm hover:shadow-md transition-all disabled:opacity-50 cursor-pointer"
-                >
-                  {isLoading ? "กำลังบันทึก..." : "ยืนยันรับเข้าสต๊อก"}
-                </button>
-              </div>
-            </>
-          )}
-        </div>
+        <ReceiveProduceModal
+          open={isReceiveProduceOpen}
+          onSuccess={() => router.refresh()}
+          onClose={() => setIsReceiveProduceOpen(false)}
+        />
       </div>
     </div>
   )

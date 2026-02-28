@@ -49,7 +49,7 @@ export default function MaterialHistoryModal({ materialId, materialName, open, o
                         <History className="text-blue-600 w-6 h-6" />
                         <h2 className="text-xl font-bold">ประวัติวัตถุดิบ: <span className="text-blue-600">{materialName}</span></h2>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded-lg transition-colors cursor-pointer">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -82,7 +82,7 @@ export default function MaterialHistoryModal({ materialId, materialName, open, o
                                                 })}
                                             </td>
                                             <td className="px-4 py-3">
-                                                <span className={`px-2 py-1 rounded text-xs font-semibold ${txn.type === "IN" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
+                                                <span className={`px-2 py-1 rounded text-xs font-semibold whitespace-nowrap ${txn.type === "IN" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
                                                     }`}>
                                                     {txn.type === "IN" ? "รับเข้า (IN)" : "เบิกออก (OUT)"}
                                                 </span>

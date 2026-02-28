@@ -39,7 +39,6 @@ export default function ProductCard({ product }: { product: any }) {
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
-      {/* รูปภาพสินค้า */}
       <div className="aspect-square bg-gray-100 relative">
         {defaultImage ? (
           <img src={defaultImage} alt={product.Pname} className="w-full h-full object-cover" />
@@ -49,7 +48,6 @@ export default function ProductCard({ product }: { product: any }) {
           </div>
         )}
         
-        {/* ป้าย Out of stock */}
         {selectedVariant?.stock <= 0 && (
           <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
             สินค้าหมด
@@ -61,7 +59,6 @@ export default function ProductCard({ product }: { product: any }) {
         <h3 className="font-bold text-lg text-gray-800 truncate">{product.Pname}</h3>
         <p className="text-gray-500 text-sm mb-4 truncate">รหัส: {product.productCode || "-"}</p>
 
-        {/* ตัวเลือก Variant (สี/ไซส์) */}
         {product.variants?.length > 0 && (
           <div className="mb-4">
             <label className="block text-xs font-medium text-gray-600 mb-1">เลือกรูปแบบ:</label>

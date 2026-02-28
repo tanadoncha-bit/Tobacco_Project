@@ -4,13 +4,15 @@ import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import {
   Store, Phone, Mail, MapPin, Settings2, Save, Power,
-  CreditCard, Building, User, Info, BookText, ImageIcon, Trash2, Eye, EyeOff, Plus
+  CreditCard, Building, User, Info, BookText, ImageIcon, Trash2, Eye, EyeOff, Plus,
+  Loader2,
+  UploadCloud
 } from "lucide-react"
 import { getAdminBanners, addBannerAction, toggleBannerAction, deleteBannerAction } from "@/utils/actions"
+import LoadingSpinner from "@/components/LoadingSpinner"
 
 export const dynamic = "force-dynamic";
 
-// กำหนด Type ให้ Banner
 type Banner = {
   id: string
   imageUrl: string
@@ -22,7 +24,8 @@ export default function AdminSettingsPage() {
   const [isFetching, setIsFetching] = useState(true)
 
   const [banners, setBanners] = useState<Banner[]>([])
-  const [newBannerUrl, setNewBannerUrl] = useState("")
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [bannerToDelete, setBannerToDelete] = useState<string | null>(null)
@@ -69,15 +72,34 @@ export default function AdminSettingsPage() {
   }, [])
 
   const handleAddBanner = async () => {
-    if (!newBannerUrl) return toast.error("กรุณาใส่ URL รูปภาพ")
-    const res = await addBannerAction(newBannerUrl)
-    if (res.success) {
-      toast.success("เพิ่มแบนเนอร์เรียบร้อย")
-      setNewBannerUrl("")
-      // โหลดข้อมูลใหม่
-      setBanners(await getAdminBanners())
-    } else {
-      toast.error(res.message)
+    if (!selectedFile) return toast.error("กรุณาเลือกรูปภาพก่อนครับ")
+
+    setIsUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", selectedFile)
+
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!uploadRes.ok) throw new Error("อัปโหลดรูปไม่สำเร็จ")
+      const { imageUrl } = await uploadRes.json()
+
+      const res = await addBannerAction(imageUrl)
+
+      if (res.success) {
+        toast.success("เพิ่มแบนเนอร์เรียบร้อย")
+        setSelectedFile(null)
+        setBanners(await getAdminBanners())
+      } else {
+        toast.error(res.message)
+      }
+    } catch (error) {
+      toast.error("เกิดข้อผิดพลาดในการอัปโหลด")
+    } finally {
+      setIsUploading(false)
     }
   }
 
@@ -131,7 +153,7 @@ export default function AdminSettingsPage() {
   }
 
   if (isFetching) {
-    return <div className="p-10 text-center text-gray-500">กำลังโหลดข้อมูลการตั้งค่า...</div>
+    return <LoadingSpinner text="กำลังโหลดข้อมูลการตั้งค่า..." />;
   }
 
   return (
@@ -262,19 +284,36 @@ export default function AdminSettingsPage() {
 
           <div className="flex flex-col sm:flex-row gap-3 mb-6">
             <input
-              type="text"
-              placeholder="วางลิงก์ URL รูปภาพที่ต้องการ (เช่น https://.../image.png)"
-              className="flex-1 border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-purple-500 outline-none transition"
-              value={newBannerUrl}
-              onChange={(e) => setNewBannerUrl(e.target.value)}
+              type="file"
+              id="banner-upload"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files && e.target.files[0]) {
+                  setSelectedFile(e.target.files[0])
+                }
+              }}
             />
+            <label
+              htmlFor="banner-upload"
+              className={`flex-1 border rounded-xl px-4 py-2.5 flex items-center gap-3 cursor-pointer transition hover:border-purple-400 ${selectedFile ? "bg-purple-50 border-purple-300" : "bg-white"
+                }`}
+            >
+              <UploadCloud size={20} className={selectedFile ? "text-purple-600" : "text-gray-400"} />
+              <span className={`flex-1 truncate text-sm ${selectedFile ? "text-purple-700 font-medium" : "text-gray-400"}`}>
+                {selectedFile ? selectedFile.name : "คลิกเพื่อเลือกไฟล์รูปภาพจากเครื่อง..."}
+              </span>
+            </label>
             <button
               type="button"
               onClick={handleAddBanner}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2.5 rounded-xl font-medium flex items-center justify-center gap-2 transition shadow-sm whitespace-nowrap cursor-pointer"
+              disabled={!selectedFile || isUploading}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2.5 rounded-xl font-medium flex items-center justify-center gap-2 transition shadow-sm whitespace-nowrap cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Plus size={18} /> เพิ่มรูปลงสไลด์
+              {isUploading ? <Loader2 className="animate-spin" size={18} /> : <Plus size={18} />}
+              {isUploading ? "กำลังอัปโหลด..." : "เพิ่มรูปลงสไลด์"}
             </button>
+
           </div>
 
           {banners.length === 0 ? (

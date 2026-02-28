@@ -32,9 +32,6 @@ export async function POST(req: Request) {
       let newStock = material.stock
       let newAvgCost = material.costPerUnit ?? 0
 
-      // =========================
-      // 🔥 RECEIVE MATERIAL (IN)
-      // =========================
       if (type === "IN") {
 
         if (!totalCost || totalCost <= 0) {
@@ -51,9 +48,6 @@ export async function POST(req: Request) {
         newAvgCost = newTotalValue / newStock
       }
 
-      // =========================
-      // 🔥 ISSUE MATERIAL (OUT)
-      // =========================
       if (type === "OUT") {
 
         if (material.stock < amount) {
@@ -61,10 +55,8 @@ export async function POST(req: Request) {
         }
 
         newStock = material.stock - amount
-        // ❗ Average cost ไม่เปลี่ยนตอน OUT
       }
 
-      // 1️⃣ อัปเดต Material
       const updatedMaterial = await tx.material.update({
         where: { id: materialId },
         data: {
@@ -73,7 +65,6 @@ export async function POST(req: Request) {
         },
       })
 
-      // 2️⃣ บันทึก Transaction
       const transaction = await tx.materialTransaction.create({
         data: {
           materialId,
@@ -81,7 +72,6 @@ export async function POST(req: Request) {
           amount,
           totalCost: type === "IN" ? totalCost : null,
           note,
-          // 🚨 เปลี่ยนจาก createdBy เป็น profileId ตาม Schema ใหม่
           profileId: profileId, 
         },
       })

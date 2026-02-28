@@ -20,22 +20,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "ข้อมูลไม่ครบถ้วน" }, { status: 400 })
     }
 
-    // 1. แปลงไฟล์รูปภาพเป็น Base64 เพื่อส่งให้ Cloudinary
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
     const base64Image = `data:${file.type};base64,${buffer.toString("base64")}`
 
-    // 2. อัปโหลดขึ้น Cloudinary (เก็บในโฟลเดอร์ชื่อ payment_slips)
     const uploadResponse = await cloudinary.uploader.upload(base64Image, {
       folder: "payment_slips", 
     })
 
-    // 3. เอา URL ที่ได้จาก Cloudinary มาบันทึกลง Database
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
       data: {
         slipImage: uploadResponse.secure_url,
-        status: "VERIFYING", // 👈 อัปเดตสถานะเป็น "กำลังตรวจสอบ" ให้แอดมินรู้
+        status: "VERIFYING",
       },
     })
 

@@ -14,7 +14,6 @@ export default async function AdminDashboard() {
   const totalOrders = orders.length
   const pendingOrders = orders.filter((o) => o.status === "PENDING").length
 
-  // ================= 2. LOW STOCK =================
   const lowStockVariants = await prisma.productVariant.findMany({
     where: { stock: { lt: 10 } },
     include: {
@@ -31,7 +30,6 @@ export default async function AdminDashboard() {
     stock: v.stock,
   }))
 
-  // ================= 3. SALES 7 DAYS =================
   const last7Days = Array.from({ length: 7 })
     .map((_, i) => {
       const d = new Date()
@@ -54,7 +52,6 @@ export default async function AdminDashboard() {
     }
   })
 
-  // ================= CURRENT DATE FOR HEADER =================
   const today = new Date().toLocaleDateString("th-TH", {
     weekday: "long",
     year: "numeric",
@@ -65,7 +62,6 @@ export default async function AdminDashboard() {
   return (
     <div className="p-8 space-y-8">
 
-      {/* ================= PREMIUM HEADER ================= */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 
         <div>
@@ -83,7 +79,6 @@ export default async function AdminDashboard() {
         </div>
       </div>
 
-      {/* ================= CLIENT DASHBOARD ================= */}
       <DashboardClient
         stats={{ totalRevenue, totalOrders, pendingOrders }}
         salesData={salesData}

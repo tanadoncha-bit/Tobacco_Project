@@ -43,26 +43,6 @@ export async function POST(req: Request) {
 
       const shortOrderId = orderId.substring(0, 8).toUpperCase()
 
-      // // (B) กรณีต้อง "ตัดสต๊อก" (OUT)
-      // if (shouldDeductStock) {
-      //   for (const item of existingOrder.items) {
-      //     await tx.productVariant.update({
-      //       where: { id: item.variantId },
-      //       data: { stock: { decrement: item.quantity } }
-      //     })
-
-      //     await tx.stockTransaction.create({
-      //       data: {
-      //         variantId: item.variantId,
-      //         type: "OUT",
-      //         amount: item.quantity,
-      //         note: `ตัดสต็อกจากออเดอร์ ORD-${shortOrderId}`,
-      //         profileId: profileId 
-      //       }
-      //     })
-      //   }
-      // }
-
       if (shouldRestock) {
         for (const item of existingOrder.items) {
           await tx.productVariant.update({
