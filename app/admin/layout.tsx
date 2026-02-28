@@ -1,6 +1,6 @@
-export const dynamic = "force-dynamic";
-
 import Sidebar from "@/components/Sidebar/Sidebar";
+
+export const dynamic = "force-dynamic";
 
 export default function MainLayout({
   children,

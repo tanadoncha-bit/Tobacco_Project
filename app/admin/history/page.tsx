@@ -1,9 +1,9 @@
-export const dynamic = "force-dynamic";
-
 import prisma from "@/utils/db"
 import HistoryClient from "./HistoryClient"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/utils/authOptions"
+
+export const dynamic = "force-dynamic";
 
 export default async function GlobalHistoryPage() {
 

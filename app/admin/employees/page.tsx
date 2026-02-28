@@ -1,10 +1,10 @@
 "use client"
 
-export const dynamic = "force-dynamic";
-
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { UserPlus, Shield, User, X, Edit, Check, ChevronDown, ContactRound } from "lucide-react"
+
+export const dynamic = "force-dynamic";
 
 export default function EmployeeManagementPage() {
   const [employees, setEmployees] = useState<any[]>([])

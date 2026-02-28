@@ -1,14 +1,12 @@
-export const dynamic = "force-dynamic";
-
 import prisma from "@/utils/db"
 import { NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 
-// ดึงรายชื่อพนักงานทั้งหมด (ไม่เอาลูกค้าธรรมดา)
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const employees = await prisma.profile.findMany({
-      // สมมติว่าลูกค้าปกติคือ "USER" เราจะดึงเฉพาะคนที่ไม่ใช่ USER
       where: {
         role: { not: "USER" } 
       },

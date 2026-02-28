@@ -1,11 +1,11 @@
-export const dynamic = "force-dynamic";
-
 "use client"
 
 import { useState } from "react"
 import { ShoppingCart, Minus, Plus } from "lucide-react"
 import { toast } from "sonner"
 import { useCartStore } from "@/store/cartStore"
+
+export const dynamic = "force-dynamic";
 
 export default function AddToCart({
   variantId,

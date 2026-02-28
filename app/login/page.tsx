@@ -1,5 +1,3 @@
-export const dynamic = "force-dynamic";
-
 "use client"
 
 import { useState } from "react"
@@ -7,6 +5,8 @@ import { signIn, getSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import Link from "next/link"
+
+export const dynamic = "force-dynamic";
 
 export default function LoginPage() {
   const router = useRouter()

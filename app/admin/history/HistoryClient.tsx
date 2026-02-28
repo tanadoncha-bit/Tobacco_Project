@@ -1,5 +1,3 @@
-export const dynamic = "force-dynamic";
-
 "use client"
 
 import { useState } from "react"
@@ -22,6 +20,8 @@ type Transaction = {
   creatorName: string
   creatorImage: string | null
 }
+
+export const dynamic = "force-dynamic";
 
 export default function HistoryClient({ initialData }: { initialData: Transaction[] }) {
   const [search, setSearch] = useState("")

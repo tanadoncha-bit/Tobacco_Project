@@ -1,10 +1,9 @@
-export const dynamic = "force-dynamic";
-
-// app/api/materials/produce/route.ts
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/utils/authOptions"
 import prisma from "@/utils/db" // 🚨 ใช้ prisma จาก utils/db ที่มีอยู่แล้วดีกว่าครับ ป้องกัน Connection เต็ม
+
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {

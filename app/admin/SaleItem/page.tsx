@@ -1,8 +1,8 @@
-export const dynamic = "force-dynamic";
-
 import prisma from "@/utils/db"
 import OrderTable from "@/components/admin/OrderTable"
 import { SquareChartGantt } from "lucide-react"
+
+export const dynamic = "force-dynamic";
 
 export default async function OrdersPage() {
   // ดึงข้อมูลออเดอร์ทั้งหมด พร้อมของที่สั่งและข้อมูลลูกค้า

@@ -1,5 +1,3 @@
-export const dynamic = "force-dynamic";
-
 import { NextResponse } from "next/server"
 import prisma from "@/utils/db"
 import { v2 as cloudinary } from "cloudinary"
@@ -9,6 +7,8 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY?.trim(),
   api_secret: process.env.CLOUDINARY_API_SECRET?.trim(),
 })
+
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {

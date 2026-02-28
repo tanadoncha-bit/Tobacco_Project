@@ -1,5 +1,3 @@
-export const dynamic = "force-dynamic";
-
 "use client"
 
 import { useState } from "react"
@@ -7,6 +5,8 @@ import Link from "next/link"
 import { Package, Truck, FileText, CheckCircle2, X, Printer, Upload, CreditCard, Clock, Ban, AlertCircle } from "lucide-react" // 👈 เพิ่มไอคอน Ban
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+
+export const dynamic = "force-dynamic";
 
 // 1. เพิ่ม Type สำหรับตั้งค่าธนาคาร
 type PaymentSettings = {

@@ -1,10 +1,10 @@
-export const dynamic = "force-dynamic";
-
 import { Wrench } from "lucide-react"
 import prisma from "@/utils/db"
 import { redirect } from "next/navigation"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/utils/authOptions"
+
+export const dynamic = "force-dynamic";
 
 export default async function MaintenancePage() {
   

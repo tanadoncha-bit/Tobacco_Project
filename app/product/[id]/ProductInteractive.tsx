@@ -1,10 +1,10 @@
-export const dynamic = "force-dynamic";
-
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
 import { PackageSearch } from "lucide-react"
-import AddToCart from "./AddToCart" // เรียกใช้ปุ่มตะกร้าของคุณ
+import AddToCart from "./AddToCart"
+
+export const dynamic = "force-dynamic";
 
 export default function ProductInteractive({ product }: { product: any }) {
   const imageUrl = product.images?.[0]?.url

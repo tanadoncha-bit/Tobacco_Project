@@ -1,10 +1,10 @@
-export const dynamic = "force-dynamic";
-
 "use client"
 
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { Store, Phone, Mail, MapPin, Settings2, Save, Power, CreditCard, Building, User, Info, BookText } from "lucide-react" 
+
+export const dynamic = "force-dynamic";
 
 export default function AdminSettingsPage() {
   const [isLoading, setIsLoading] = useState(false)

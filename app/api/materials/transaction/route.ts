@@ -1,13 +1,12 @@
-export const dynamic = "force-dynamic";
-
 import { authOptions } from "@/utils/authOptions"
 import prisma from "@/utils/db"
 import { getServerSession } from "next-auth"
 import { NextResponse } from "next/server"
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: Request) {
   try {
-    // 🔥 ย้าย getServerSession มาไว้ข้างนอก Transaction เพื่อให้ DB ทำงานเร็วขึ้น
     const session = await getServerSession(authOptions)
     const profileId = session?.user?.id
 

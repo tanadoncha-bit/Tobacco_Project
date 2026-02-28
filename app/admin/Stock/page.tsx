@@ -1,7 +1,7 @@
-export const dynamic = "force-dynamic";
-
 import prisma from "@/utils/db"
 import StockTable from "@/components/admin/StockTable"
+
+export const dynamic = "force-dynamic";
 
 export default async function StockPage() {
   const products = await prisma.product.findMany({

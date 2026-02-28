@@ -1,7 +1,7 @@
-export const dynamic = "force-dynamic";
-
 import { NextResponse } from "next/server"
 import cloudinary from "@/utils/cloudinary"
+
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {

@@ -1,7 +1,7 @@
-export const dynamic = "force-dynamic";
-
 import prisma from "@/utils/db"
 import MaterialTable from "@/components/admin/MaterialTable"
+
+export const dynamic = "force-dynamic";
 
 export default async function MaterialsPage() {
   // ดึงข้อมูลวัตถุดิบทั้งหมด เรียงตามอักษร

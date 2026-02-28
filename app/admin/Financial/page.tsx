@@ -1,5 +1,3 @@
-export const dynamic = "force-dynamic";
-
 import { 
   DollarSign, 
   TrendingUp, 
@@ -9,6 +7,8 @@ import {
   Wallet
 } from "lucide-react"
 import prisma from "@/utils/db"
+
+export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
   // ================= 1. ดึงยอดรวมรายรับ (Income) =================

@@ -1,11 +1,10 @@
-export const dynamic = "force-dynamic";
-
 import prisma from "@/utils/db"
 import DashboardClient from "@/components/admin/DashboardClient"
 import { ChartColumnIncreasing } from "lucide-react"
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminDashboard() {
-  // ================= 1. ORDERS =================
   const orders = await prisma.order.findMany({
     where: { status: { not: "CANCELLED" } },
     select: { totalAmount: true, createdAt: true, status: true },
