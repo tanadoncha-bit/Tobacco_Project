@@ -2,6 +2,7 @@ import { authOptions } from "@/utils/authOptions";
 import prisma from "@/utils/db";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import { deductStockFIFO } from "@/utils/inventory"
 
 export const dynamic = "force-dynamic";
 
@@ -39,33 +40,15 @@ export async function POST(req: Request) {
         },
       });
 
+      const shortOrderId = order.id.substring(0, 8).toUpperCase()
+
       for (const item of items) {
-        const variant = await tx.productVariant.findUnique({
-          where: { id: item.variantId }
-        });
-
-        if (!variant || variant.stock < item.quantity) {
-          throw new Error(`สินค้าสต๊อกไม่เพียงพอสำหรับสั่งซื้อ`);
-        }
-
-        await tx.productVariant.update({
-          where: { id: item.variantId },
-          data: {
-            stock: { decrement: item.quantity }
-          }
-        });
-        
-        const shortOrderId = order.id.substring(0, 8).toUpperCase()
-        
-        await tx.stockTransaction.create({
-          data: {
-            variantId: item.variantId,
-            type: "OUT",
-            amount: item.quantity,
-            note: `ขายสินค้า ออเดอร์ #ORD-${shortOrderId}`,
-            profileId: profileId,
-          }
-        });
+        await deductStockFIFO(tx, {
+          variantId: item.variantId,
+          amountToDeduct: item.quantity,
+          profileId: profileId,
+          note: `ขายสินค้า ออเดอร์ #ORD-${shortOrderId}`
+        })
       }
 
       return order;

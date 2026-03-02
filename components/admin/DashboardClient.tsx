@@ -36,7 +36,7 @@ export default function DashboardClient({ stats, salesData, lowStockItems }: Das
                 ยอดขายรวมทั้งหมด
               </p>
               <h3 className="text-3xl font-bold text-gray-900 tracking-tight">
-                ฿{stats.totalRevenue.toLocaleString()}
+                ฿ {stats.totalRevenue.toLocaleString()}
               </h3>
             </div>
 

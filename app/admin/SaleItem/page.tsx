@@ -1,5 +1,5 @@
 import prisma from "@/utils/db"
-import OrderTable from "@/components/admin/OrderTable"
+import OrderTable from "@/components/admin/orders/OrderTable"
 import { SquareChartGantt } from "lucide-react"
 
 export const dynamic = "force-dynamic";
@@ -26,7 +26,6 @@ export default async function OrdersPage() {
     },
   })
 
-  // จัดฟอร์แมตข้อมูลส่งไปให้ตาราง
   const formattedOrders = orders.map((order) => ({
     id: order.id,
     orderNumber: `ORD-${order.id.substring(0, 8).toUpperCase()}`,

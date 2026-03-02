@@ -1,69 +1,90 @@
-import prisma from "@/utils/db"
-import HistoryClient from "./HistoryClient"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/utils/authOptions"
+// app/.../history/page.tsx 
+
+import prisma from "@/utils/db"; 
+import HistoryClient from "./HistoryClient"; 
 
 export const dynamic = "force-dynamic";
 
-export default async function GlobalHistoryPage() {
+// ✅ 1. แก้ไข Type ให้มี productionDocNo (และผมขอเอา reference ออกตามที่เราคุยกันนะครับ เพื่อความคลีน)
+type Transaction = {
+  id: string;
+  date: Date;
+  type: string;
+  category: string;
+  itemName: string;
+  amount: number;
+  unit: string;
+  totalCost: number | null;
+  note: string | null;
+  creatorName: string;
+  creatorImage: string | null;
+  lotNumber: string | null; 
+  productionDocNo: string | null; // 🌟 เพิ่มตัวนี้แทน reference
+};
 
-  const session = await getServerSession(authOptions)
-  const rawMaterialTx = await prisma.materialTransaction.findMany({
-    include: { material: true, profile: true },
-    orderBy: { createdAt: 'desc' },
-  })
-
-  const rawStockTx = await prisma.stockTransaction.findMany({
+export default async function HistoryPage() {
+  const materialTx = await prisma.materialTransaction.findMany({
     include: {
+      material: true,
       profile: true,
-      variant: {
-        include: {
-          product: true,
-          values: { include: { optionValue: true } }
-        }
-      }
+      materialLot: true,
+      productionOrder: true,
     },
-    orderBy: { createdAt: 'desc' },
-  })
+    orderBy: { createdAt: "desc" },
+  });
 
-  const formattedMaterialTx = rawMaterialTx.map((tx) => ({
-    id: `MAT-${tx.id}`,
+  const stockTx = await prisma.stockTransaction.findMany({
+    include: {
+      variant: {
+        include: { product: true, values: { include: { optionValue: true } } }
+      },
+      profile: true,
+      variantLot: true, 
+      productionOrder: true, // ✅ 2. เพิ่ม include ตัวนี้ให้ฝั่ง Stock ด้วย
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const formattedMaterialTx: Transaction[] = materialTx.map((tx) => ({
+    id: `mat-${tx.id}`,
     date: tx.createdAt,
-    type: tx.type,
+    type: tx.type, 
     category: "MATERIAL",
     itemName: tx.material.name,
     amount: tx.amount,
     unit: tx.material.unit,
     totalCost: tx.totalCost,
     note: tx.note,
-    creatorName: tx.profile ? `${tx.profile.firstname} ${tx.profile.lastname}` : "System",
-    creatorImage: tx.profile?.profileImage || null
-  }))
+    creatorName: tx.profile ? `${tx.profile.firstname} ${tx.profile.lastname}` : "ไม่ระบุ",
+    creatorImage: tx.profile?.profileImage || null,
+    lotNumber: tx.materialLot?.lotNumber || null,
+    productionDocNo: tx.productionOrder?.docNo || null, // ✅ ส่งเลขใบผลิตไป
+  }));
 
-  const formattedStockTx = rawStockTx.map((tx) => {
-    const variantName = tx.variant.values?.map((v: any) => v.optionValue.value).join(" / ")
-    const fullName = variantName
-      ? `${tx.variant.product.Pname} (${variantName})`
-      : tx.variant.product.Pname
+  const formattedStockTx: Transaction[] = stockTx.map((tx) => {
+    const variantNames = tx.variant.values?.map((v: any) => v.optionValue.value).join(" ");
+    const fullName = variantNames ? `${tx.variant.product.Pname} (${variantNames})` : tx.variant.product.Pname;
 
     return {
-      id: `PRD-${tx.id}`,
+      id: `stk-${tx.id}`,
       date: tx.createdAt,
-      type: tx.type,
+      type: tx.type, 
       category: "PRODUCT",
       itemName: fullName,
       amount: tx.amount,
-      unit: "ชิ้น",
-      totalCost: null,
+      unit: "ชิ้น", 
+      totalCost: null, 
       note: tx.note,
-      creatorName: tx.profile ? `${tx.profile.firstname} ${tx.profile.lastname}` : "System",
-      creatorImage: tx.profile?.profileImage || null
-    }
-  })
+      creatorName: tx.profile ? `${tx.profile.firstname} ${tx.profile.lastname}` : "ไม่ระบุ",
+      creatorImage: tx.profile?.profileImage || null,
+      lotNumber: tx.variantLot?.lotNumber || null,
+      productionDocNo: tx.productionOrder?.docNo || null, // ✅ 3. เปลี่ยนจาก reference เป็นดึงเลขใบผลิตแทน
+    };
+  });
 
   const allTransactions = [...formattedMaterialTx, ...formattedStockTx].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  )
+    (a, b) => b.date.getTime() - a.date.getTime()
+  );
 
-  return <HistoryClient initialData={allTransactions} />
+  return <HistoryClient initialData={allTransactions} />;
 }

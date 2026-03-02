@@ -1,5 +1,5 @@
 import prisma from "@/utils/db"
-import StockTable from "@/components/admin/StockTable"
+import StockTable from "@/components/admin/stock/StockTable"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/utils/authOptions";
 

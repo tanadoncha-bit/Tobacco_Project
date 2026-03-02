@@ -2,6 +2,7 @@ import prisma from "@/utils/db"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/utils/authOptions"
 import { NextResponse } from "next/server"
+import { deductStockFIFO } from "@/utils/inventory"
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,7 @@ export async function POST() {
           include: {
             variant: {
               include: {
-                recipes: true, 
+                recipes: true,
               },
             },
           },
@@ -59,21 +60,14 @@ export async function POST() {
 
       const shortOrderId = newOrder.id.substring(0, 8).toUpperCase()
       for (const item of cart.items) {
-        
-        await tx.productVariant.update({
-          where: { id: item.variantId },
-          data: { stock: { decrement: item.quantity } },
+
+        await deductStockFIFO(tx, {
+          variantId: item.variantId,
+          amountToDeduct: item.quantity,
+          profileId: userId,
+          note: `ขายสินค้า Order ORD-${shortOrderId}`
         })
 
-        await tx.stockTransaction.create({
-          data: {
-            variantId: item.variantId,
-            type: "OUT",
-            amount: item.quantity,
-            note: `ขายสินค้า Order ORD-${shortOrderId}`,
-            profileId: userId,
-          }
-        })
       }
 
       await tx.cartItem.deleteMany({

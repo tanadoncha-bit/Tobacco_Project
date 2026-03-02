@@ -11,7 +11,8 @@ import {
   Settings2,
   LogOut,
   ClipboardClock,
-  UserCircle
+  UserCircle,
+  ClipboardMinus
 } from "lucide-react"
 import { usePathname } from "next/navigation"
 import clsx from "clsx"
@@ -47,6 +48,12 @@ const menu = [
     label: "Stock",
     href: "/admin/Stock",
     icon: Warehouse,
+    roles: ["ADMIN", "STAFF", "MANAGER"]
+  },
+    {
+    label: "Reports",
+    href: "/admin/reports/defects",
+    icon: ClipboardMinus,
     roles: ["ADMIN", "STAFF", "MANAGER"]
   },
   {

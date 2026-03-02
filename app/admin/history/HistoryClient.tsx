@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Search, ArrowDownToLine, ArrowUpFromLine, Package, Hammer, Filter, Calendar } from "lucide-react"
+import { Search, ArrowDownToLine, ArrowUpFromLine, Package, Hammer, Filter, Calendar, Factory } from "lucide-react"
 import dayjs from "dayjs"
 import 'dayjs/locale/th'
 
@@ -10,8 +10,8 @@ dayjs.locale('th')
 type Transaction = {
   id: string
   date: Date
-  type: string
-  category: string
+  type: string // "IN", "OUT", "PROD_IN", "PROD_OUT"
+  category: string // "MATERIAL", "PRODUCT"
   itemName: string
   amount: number
   unit: string
@@ -19,20 +19,36 @@ type Transaction = {
   note: string | null
   creatorName: string
   creatorImage: string | null
+  productionDocNo: string | null
+  lotNumber: string | null   // เลขล็อต
 }
-
-export const dynamic = "force-dynamic";
 
 export default function HistoryClient({ initialData }: { initialData: Transaction[] }) {
   const [search, setSearch] = useState("")
-  const [filterCategory, setFilterCategory] = useState<"ALL" | "MATERIAL" | "PRODUCT">("ALL")
+  // ✅ 1. เพิ่ม State "PRODUCTION" สำหรับปุ่มหมวดหมู่
+  const [filterCategory, setFilterCategory] = useState<"ALL" | "MATERIAL" | "PRODUCT" | "PRODUCTION">("ALL")
+  // 🔘 ส่วนปุ่มเข้า/ออก ใช้แค่ 3 สถานะตามรูป
   const [filterType, setFilterType] = useState<"ALL" | "IN" | "OUT">("ALL")
 
   const filteredData = initialData.filter((tx) => {
-    const matchSearch = tx.itemName.toLowerCase().includes(search.toLowerCase()) ||
-      (tx.note && tx.note.toLowerCase().includes(search.toLowerCase()))
-    const matchCategory = filterCategory === "ALL" || tx.category === filterCategory
-    const matchType = filterType === "ALL" || tx.type === filterType
+    const searchTerm = search.toLowerCase()
+    const matchSearch =
+      tx.itemName.toLowerCase().includes(searchTerm) ||
+      (tx.note && tx.note.toLowerCase().includes(searchTerm)) ||
+      (tx.productionDocNo && tx.productionDocNo.toLowerCase().includes(searchTerm)) ||
+      (tx.lotNumber && tx.lotNumber.toLowerCase().includes(searchTerm))    // ค้นหาด้วยเลขล็อต
+
+    const matchCategory = filterCategory === "ALL"
+      ? true
+      : filterCategory === "PRODUCTION"
+        ? ["PROD_IN", "PROD_OUT"].includes(tx.type) // ถ้าเลือกการผลิต ให้ดึงเฉพาะ Type ที่เกี่ยวกับการผลิต
+        : tx.category === filterCategory
+
+    const matchType = filterType === "ALL"
+      ? true
+      : filterType === "IN"
+        ? ["IN", "PROD_IN"].includes(tx.type) // กด "รับเข้า" แสดงทั้ง IN และ PROD_IN
+        : ["OUT", "PROD_OUT"].includes(tx.type) // กด "เบิกออก" แสดงทั้ง OUT และ PROD_OUT
 
     return matchSearch && matchCategory && matchType
   })
@@ -52,6 +68,7 @@ export default function HistoryClient({ initialData }: { initialData: Transactio
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-5 border-b border-gray-100 bg-gray-50/50 flex flex-wrap gap-4 items-center justify-between">
 
+          {/* ช่องค้นหา */}
           <div className="relative w-full md:w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
@@ -63,7 +80,9 @@ export default function HistoryClient({ initialData }: { initialData: Transactio
             />
           </div>
 
-          <div className="flex flex-wrap gap-3 w-full md:w-auto">
+          <div className="flex flex-wrap gap-3 w-full lg:w-auto">
+
+            {/* ✅ กลุ่ม Filter หมวดหมู่ (เพิ่มปุ่ม "การผลิต" เข้ามาข้างสินค้า) */}
             <div className="flex items-center gap-2 bg-white border border-gray-200 p-1 rounded-xl shadow-sm">
               <button
                 onClick={() => setFilterCategory("ALL")}
@@ -83,8 +102,16 @@ export default function HistoryClient({ initialData }: { initialData: Transactio
               >
                 <Package className="w-3.5 h-3.5" /> สินค้า
               </button>
+              {/* ปุ่มการผลิตที่เพิ่มเข้ามาใหม่ */}
+              <button
+                onClick={() => setFilterCategory("PRODUCTION")}
+                className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1 cursor-pointer ${filterCategory === "PRODUCTION" ? "bg-teal-100 text-teal-700" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                <Factory className="w-3.5 h-3.5" /> การผลิต
+              </button>
             </div>
 
+            {/* ✅ กลุ่ม Filter สถานะ (มีแค่ เข้า/ออก ตามรูปภาพของคุณ) */}
             <div className="flex items-center gap-2 bg-white border border-gray-200 p-1 rounded-xl shadow-sm">
               <button
                 onClick={() => setFilterType("ALL")}
@@ -108,12 +135,14 @@ export default function HistoryClient({ initialData }: { initialData: Transactio
           </div>
         </div>
 
+        {/* ตารางแสดงข้อมูล */}
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="bg-white text-gray-500 font-semibold border-b border-gray-100 uppercase tracking-wider text-xs">
               <tr>
                 <th className="px-6 py-4">วัน-เวลา</th>
                 <th className="px-6 py-4">ประเภท</th>
+                <th className="px-6 py-4">ใบสั่งผลิต / ล็อต</th>
                 <th className="px-6 py-4">สถานะ</th>
                 <th className="px-6 py-4 min-w-[200px]">ชื่อรายการ</th>
                 <th className="px-6 py-4 text-right">จำนวน</th>
@@ -141,14 +170,48 @@ export default function HistoryClient({ initialData }: { initialData: Transactio
                     )}
                   </td>
 
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex flex-col gap-1">
+                      {/* แสดงเลขใบสั่งผลิต (ถ้ามี) */}
+                      {tx.productionDocNo ? (
+                        <span className="inline-flex items-center text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 w-fit">
+                          <Factory className="w-3 h-3 mr-1" /> {tx.productionDocNo}
+                        </span>
+                      ) : null}
+
+                      {/* แสดงเลขล็อต (ถ้ามี) */}
+                      {tx.lotNumber ? (
+                        <span className="inline-flex items-center text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 w-fit">
+                          LOT: {tx.lotNumber}
+                        </span>
+                      ) : null}
+
+                      {/* ถ้าไม่มีทั้งสองอย่าง */}
+                      {!tx.productionDocNo && !tx.lotNumber && (
+                        <span className="text-[11px] text-gray-300">-</span>
+                      )}
+                    </div>
+                  </td>
+
                   <td className="px-6 py-4">
-                    {tx.type === "IN" ? (
-                      <span className="inline-flex items-center gap-1 text-green-600 font-bold bg-green-50 px-2 py-1 rounded-md text-xs">
+                    {tx.type === "IN" && (
+                      <span className="inline-flex items-center gap-1 text-green-600 font-bold bg-green-50 px-2 py-1 rounded-md text-xs whitespace-nowrap">
                         <ArrowDownToLine className="w-3.5 h-3.5" /> รับเข้า
                       </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-red-600 font-bold bg-red-50 px-2 py-1 rounded-md text-xs">
+                    )}
+                    {tx.type === "OUT" && (
+                      <span className="inline-flex items-center gap-1 text-red-600 font-bold bg-red-50 px-2 py-1 rounded-md text-xs whitespace-nowrap">
                         <ArrowUpFromLine className="w-3.5 h-3.5" /> ออก
+                      </span>
+                    )}
+                    {tx.type === "PROD_IN" && (
+                      <span className="inline-flex items-center gap-1 text-teal-600 font-bold bg-teal-50 px-2 py-1 rounded-md text-xs whitespace-nowrap">
+                        <ArrowDownToLine className="w-3.5 h-3.5" /> รับเข้าผลิต
+                      </span>
+                    )}
+                    {tx.type === "PROD_OUT" && (
+                      <span className="inline-flex items-center gap-1 text-orange-600 font-bold bg-orange-50 px-2 py-1 rounded-md text-xs whitespace-nowrap">
+                        <ArrowUpFromLine className="w-3.5 h-3.5" /> เบิกผลิต
                       </span>
                     )}
                   </td>
@@ -156,8 +219,8 @@ export default function HistoryClient({ initialData }: { initialData: Transactio
                   <td className="px-6 py-4 font-semibold text-gray-800">{tx.itemName}</td>
 
                   <td className="px-6 py-4 text-right">
-                    <span className={`font-bold text-base ${tx.type === "IN" ? "text-green-600" : "text-red-600"}`}>
-                      {tx.type === "IN" ? "+" : "-"}{tx.amount.toLocaleString()}
+                    <span className={`font-bold text-base ${["IN", "PROD_IN"].includes(tx.type) ? "text-green-600" : "text-red-600"}`}>
+                      {["IN", "PROD_IN"].includes(tx.type) ? "+" : "-"}{tx.amount.toLocaleString()}
                     </span>
                     <span className="text-gray-400 text-xs ml-1">{tx.unit}</span>
                     {tx.totalCost && (

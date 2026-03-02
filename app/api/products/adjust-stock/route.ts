@@ -5,9 +5,15 @@ import { authOptions } from "@/utils/authOptions";
 
 const prisma = new PrismaClient();
 
+const REASON_TEXT: Record<string, string> = {
+  "NEW_PURCHASE": "รับเข้าสินค้าใหม่",
+  "PRODUCTION": "รับเข้าจากการผลิต",
+  "RETURN": "ลูกค้านำสินค้ามาคืน",
+  "AUDIT": "ปรับยอดสต๊อก (นับเกิน)",
+};
+
 export async function POST(req: Request) {
   try {
-
     const session = await getServerSession(authOptions);
 
     if (!session || !session.user || !session.user.id) {
@@ -16,40 +22,86 @@ export async function POST(req: Request) {
 
     const body = await req.json();
 
-    const { variantId, amount, type, reason, reference, note } = body;
+    const { variantId, amount, type, reason, note, lotNumber, expireDate } = body;
 
-    if (!variantId || !amount || !type || !reason || !reference) {
+    if (!variantId || !amount || !type || !reason) {
       return NextResponse.json(
-        { message: "ข้อมูลไม่ครบถ้วน (ต้องระบุสาเหตุและเลขอ้างอิง)" },
+        { message: "ข้อมูลไม่ครบถ้วน (กรุณาระบุสาเหตุให้ครบ)" },
         { status: 400 }
       );
     }
 
-    const transaction = await prisma.stockTransaction.create({
-      data: {
-        variantId: Number(variantId),
-        amount: Number(amount),
-        type: type,
-        reason: reason,
-        reference: reference,
-        note: note || null,
-        profileId: session.user.id
-      }
-    });
+    const result = await prisma.$transaction(async (tx) => {
+      let currentLotId: number | null = null;
+      let lotNumberForNote = "";
 
-    const updatedVariant = await prisma.productVariant.update({
-      where: { id: Number(variantId) },
-      data: {
-        stock: {
-          increment: type === "IN" ? Number(amount) : -Number(amount)
+      if (type === "IN" && (reason === "NEW_PURCHASE" || reason === "PRODUCTION")) {
+        const currentLotNumber = lotNumber || `LOT-${new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14)}`;
+        lotNumberForNote = currentLotNumber;
+
+        const existingLot = await tx.productVariantLot.findUnique({
+          where: {
+            variantId_lotNumber: {
+              variantId: Number(variantId),
+              lotNumber: currentLotNumber
+            }
+          }
+        });
+
+        if (existingLot) {
+          const updatedLot = await tx.productVariantLot.update({
+            where: { id: existingLot.id },
+            data: { stock: { increment: Number(amount) } }
+          });
+          currentLotId = updatedLot.id;
+        } else {
+          const newLot = await tx.productVariantLot.create({
+            data: {
+              variantId: Number(variantId),
+              lotNumber: currentLotNumber,
+              stock: Number(amount),
+              expireDate: expireDate ? new Date(expireDate) : null,
+              produceDate: new Date(),
+            }
+          });
+          currentLotId = newLot.id;
         }
       }
+
+      let generatedNote = REASON_TEXT[reason] || "ปรับสต๊อก";
+      
+      if (lotNumberForNote !== "") {
+        generatedNote += ` [Lot: ${lotNumberForNote}]`;
+      }
+
+      const transaction = await tx.stockTransaction.create({
+        data: {
+          variantId: Number(variantId),
+          amount: Number(amount),
+          type: type,
+          reason: reason,
+          note: generatedNote,
+          profileId: session.user.id,
+          variantLotId: currentLotId
+        }
+      });
+
+      const updatedVariant = await tx.productVariant.update({
+        where: { id: Number(variantId) },
+        data: {
+          stock: {
+            increment: type === "IN" ? Number(amount) : -Number(amount)
+          }
+        }
+      });
+
+      return { transaction, updatedVariant };
     });
 
     return NextResponse.json({
       success: true,
-      transaction,
-      newStock: updatedVariant.stock
+      transaction: result.transaction,
+      newStock: result.updatedVariant.stock
     });
 
   } catch (error: any) {

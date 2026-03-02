@@ -24,16 +24,15 @@ export default function MaterialHistoryModal({ materialId, materialName, open, o
                     return data
                 })
                 .then((data) => {
-                    // 🚨 เช็คให้ชัวร์ว่าข้อมูลที่ได้มาเป็น Array จริงๆ ค่อยเอาไปเซ็ต State
                     setTransactions(Array.isArray(data) ? data : [])
                 })
                 .catch((err) => {
                     console.error("โหลดประวัติไม่สำเร็จ:", err)
-                    setTransactions([]) // ถ้า Error ให้เซ็ตเป็นค่าว่าง จะได้ไม่พัง
+                    setTransactions([])
                 })
                 .finally(() => setIsLoading(false))
         } else {
-            setTransactions([]) // ล้างข้อมูลตอนปิด
+            setTransactions([])
         }
     }, [open, materialId])
 

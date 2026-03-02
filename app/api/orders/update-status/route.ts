@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import prisma from "@/utils/db"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/utils/authOptions"
+import { returnStockToLatestLot } from "@/utils/inventory"
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,7 @@ export async function POST(req: Request) {
     }
 
     const closingStatuses = ["SHIPPED", "COMPLETED", "PENDING", "VERIFYING", "PAID"]
-    
+
     const shouldDeductStock =
       closingStatuses.includes(status) &&
       !closingStatuses.includes(existingOrder.status)
@@ -45,20 +46,14 @@ export async function POST(req: Request) {
 
       if (shouldRestock) {
         for (const item of existingOrder.items) {
-          await tx.productVariant.update({
-            where: { id: item.variantId },
-            data: { stock: { increment: item.quantity } }
+
+          await returnStockToLatestLot(tx, {
+            variantId: item.variantId,
+            amountToReturn: item.quantity,
+            profileId: profileId,
+            note: `คืนสต๊อกเนื่องจากยกเลิก/เปลี่ยนสถานะออเดอร์ ORD-${shortOrderId}`
           })
 
-          await tx.stockTransaction.create({
-            data: {
-              variantId: item.variantId,
-              type: "IN",
-              amount: item.quantity,
-              note: `คืนสต๊อกเนื่องจากยกเลิก/เปลี่ยนสถานะออเดอร์ ORD-${shortOrderId}`,
-              profileId: profileId 
-            }
-          })
         }
       }
 

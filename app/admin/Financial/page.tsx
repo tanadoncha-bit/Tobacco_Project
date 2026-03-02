@@ -1,8 +1,8 @@
-import { 
-  DollarSign, 
-  TrendingUp, 
-  TrendingDown, 
-  ShoppingBag, 
+import {
+  DollarSign,
+  TrendingUp,
+  TrendingDown,
+  ShoppingBag,
   Package,
   Wallet
 } from "lucide-react"
@@ -19,9 +19,9 @@ export default async function AdminDashboard() {
 
   const expenseAgg = await prisma.materialTransaction.aggregate({
     _sum: { totalCost: true },
-    where: { 
-      type: "IN", 
-      totalCost: { not: null } 
+    where: {
+      type: "IN",
+      totalCost: { not: null }
     }
   })
   const totalExpense = expenseAgg._sum.totalCost || 0
@@ -43,14 +43,16 @@ export default async function AdminDashboard() {
 
   const combinedTransactions = [
     ...recentOrders.map(order => ({
-      id: `ORD-${order.id.substring(0, 8).toUpperCase()}`,
+      uniqueKey: `ORD-TX-${order.id}`,
+      displayCode: `ORD-${order.id.substring(0, 8).toUpperCase()}`,
       date: order.createdAt,
       description: `ขายสินค้า (ออเดอร์)`,
       type: "income",
       amount: order.totalAmount
     })),
     ...recentMaterials.map(mat => ({
-      id: `MAT-${mat.id}`,
+      uniqueKey: `MAT-TX-${mat.id}`,
+      displayCode: mat.material?.code || `MAT-${mat.id}`,
       date: mat.createdAt,
       description: `สั่งซื้อวัตถุดิบ (${mat.material?.name || 'ไม่ระบุ'})`,
       type: "expense",
@@ -113,7 +115,7 @@ export default async function AdminDashboard() {
         <div className="p-6 border-b border-gray-100 flex justify-between items-center">
           <h2 className="text-lg font-bold text-gray-800">ประวัติการเข้า-ออกของเงินล่าสุด</h2>
         </div>
-        
+
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -134,14 +136,15 @@ export default async function AdminDashboard() {
                 </tr>
               )}
               {displayTransactions.map((trx) => (
-                <tr key={trx.id} className="hover:bg-gray-50 transition">
+                <tr key={trx.uniqueKey} className="hover:bg-gray-50 transition">
                   <td className="px-6 py-4 text-sm text-gray-600">
-                    {trx.date.toLocaleString('th-TH', { 
-                      day: '2-digit', month: 'short', year: 'numeric', 
-                      hour: '2-digit', minute:'2-digit' 
+                    {trx.date.toLocaleString('th-TH', {
+                      day: '2-digit', month: 'short', year: 'numeric',
+                      hour: '2-digit', minute: '2-digit'
                     })}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500 font-mono">{trx.id}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500 font-mono">{trx.displayCode}</td>
+
                   <td className="px-6 py-4 text-sm text-gray-800 font-medium">
                     <div className="flex items-center gap-2">
                       {trx.type === "income" ? (
@@ -153,15 +156,13 @@ export default async function AdminDashboard() {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      trx.type === "income" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                    }`}>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${trx.type === "income" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                      }`}>
                       {trx.type === "income" ? "รายรับ (ขาย)" : "รายจ่าย (ทุน)"}
                     </span>
                   </td>
-                  <td className={`px-6 py-4 text-sm font-bold text-right ${
-                    trx.type === "income" ? "text-green-600" : "text-red-500"
-                  }`}>
+                  <td className={`px-6 py-4 text-sm font-bold text-right ${trx.type === "income" ? "text-green-600" : "text-red-500"
+                    }`}>
                     {trx.type === "income" ? "+" : "-"}฿{trx.amount.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
                   </td>
                 </tr>

@@ -1,24 +1,20 @@
-"use client" // 🚀 1. ต้องมีตัวนี้เพราะมีการใช้ State และ Router
+"use client" 
 
 import { useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { Input } from "../ui/input"
-import { Search as SearchIcon } from "lucide-react" // 🚀 นำเข้าไอคอนแว่นขยาย
+import { Search as SearchIcon } from "lucide-react"
 
 const Search = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const router = useRouter()
   const pathname = usePathname()
-
-  // ฟังก์ชันนี้จะทำงานเมื่อลูกค้ากดปุ่ม Enter หรือคลิกไอคอนแว่นขยาย
   const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault() // ป้องกันไม่ให้หน้าเว็บรีเฟรชกระตุก
+    e.preventDefault()
     
     if (searchTerm.trim()) {
-      // โยนคำค้นหาใส่ URL (ผลลัพธ์: /user?search=คำที่พิมพ์)
       router.push(`${pathname}?search=${encodeURIComponent(searchTerm.trim())}`)
     } else {
-      // ถ้าไม่ได้พิมพ์อะไรแล้วกดค้นหา ให้เคลียร์ URL กลับเป็นหน้าปกติ
       router.push(pathname)
     }
   }

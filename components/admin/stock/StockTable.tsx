@@ -2,14 +2,16 @@
 
 import { useMemo, useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Search, ChevronDown, PackagePlus, FileText, Edit, Plus, BookOpen, PackageSearch, X, ArrowDownToLine } from "lucide-react"
+import { Search, ChevronDown, PackagePlus, FileText, Edit, Plus, BookOpen, PackageSearch, X, ArrowDownToLine, ArrowUpFromLine, Boxes, Layers } from "lucide-react"
 
 import AddProductModal from "./AddProductModal"
 import EditProductModal from "./EditProductModal"
 import ProductSlipModal from "./ProductSlipModal"
-import ProductRecipeModal from "../ProductRecipeModal"
+import ProductRecipeModal from "./ProductRecipeModal"
 import AdjustStockModal from "./AdjustStockModal"
 import ReceiveProduceModal from "./ReceiveProduceModal"
+import ProductLotModal from "./ProductLotModal"
+import DispatchProductModal from "./DispatchProductModal"
 
 type StockItem = {
   Pid: number
@@ -30,6 +32,8 @@ const SORT_OPTIONS = [
 
 export default function StockTable({ data, userRole }: { data: StockItem[], userRole: string }) {
 
+  const [selectedUnit, setSelectedUnit] = useState<string>("ชิ้น")
+
   const canAdjustStock = userRole === "ADMIN" || userRole === "MANAGER";
   const router = useRouter()
 
@@ -49,8 +53,17 @@ export default function StockTable({ data, userRole }: { data: StockItem[], user
   const [selectedSlipId, setSelectedSlipId] = useState<number | null>(null)
   const [selectedSlipName, setSelectedSlipName] = useState("")
 
+  const [lotModalOpen, setLotModalOpen] = useState(false)
+  const [selectedLotProductCode, setSelectedLotProductCode] = useState("")
+  const [selectedLotProductId, setSelectedLotProductId] = useState<number | null>(null)
+  const [selectedLotProductName, setSelectedLotProductName] = useState("")
+
   const [adjustStockOpen, setAdjustStockOpen] = useState(false)
   const [adjustProductId, setAdjustProductId] = useState<number | null>(null)
+
+  const [dispatchOpen, setDispatchOpen] = useState(false)
+  const [dispatchProductId, setDispatchProductId] = useState<number | null>(null)
+  const [dispatchProductName, setDispatchProductName] = useState("")
 
   const [isSortOpen, setIsSortOpen] = useState(false)
   const sortRef = useRef<HTMLDivElement>(null)
@@ -210,14 +223,41 @@ export default function StockTable({ data, userRole }: { data: StockItem[], user
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-end gap-2">
                       {canAdjustStock && (
-                        <button
-                          onClick={() => { setAdjustProductId(item.Pid); setAdjustStockOpen(true) }}
-                          className="bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
-                          title="รับเข้าสต๊อกแบบแมนนวล (เฉพาะ Admin)"
-                        >
-                          <ArrowDownToLine className="w-3.5 h-3.5" /> เพิ่มจำนวน
-                        </button>
+                        <>
+                          <button
+                            onClick={() => { setAdjustProductId(item.Pid); setAdjustStockOpen(true) }}
+                            className="bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+                            title="รับเข้าสต๊อกแบบแมนนวล (เฉพาะ Admin)"
+                          >
+                            <ArrowDownToLine className="w-3.5 h-3.5" /> เพิ่มจำนวน
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setDispatchProductId(item.Pid);
+                              setDispatchProductName(item.name);
+                              setDispatchOpen(true);
+                            }}
+                            className="bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+                            title="เบิกสินค้าไปขาย / ตัดของเสีย"
+                          >
+                            <ArrowUpFromLine className="w-3.5 h-3.5" /> เบิกออก
+                          </button>
+                        </>
                       )}
+
+                      <button
+                        onClick={() => {
+                          setSelectedLotProductCode(item.productCode)
+                          setSelectedLotProductId(item.Pid)
+                          setSelectedLotProductName(item.name)
+                          setSelectedUnit("ชิ้น") // หรือ item.unit ถ้ามี
+                          setLotModalOpen(true)
+                        }}
+                        className="bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Layers className="w-3.5 h-3.5" /> ล๊อต
+                      </button>
 
                       <button
                         onClick={() => { setEditProductId(item.Pid); setEditModalOpen(true) }}
@@ -289,6 +329,27 @@ export default function StockTable({ data, userRole }: { data: StockItem[], user
           onSuccess={() => router.refresh()}
           onClose={() => setIsReceiveProduceOpen(false)}
         />
+
+        <ProductLotModal
+          open={lotModalOpen}
+          productCode={selectedLotProductCode}
+          productId={selectedLotProductId}
+          productName={selectedLotProductName}
+          unit={selectedUnit}
+          onClose={() => {
+            setLotModalOpen(false)
+            setSelectedLotProductId(null)
+          }}
+        />
+        {dispatchOpen && dispatchProductId && (
+          <DispatchProductModal
+            open={dispatchOpen}
+            productId={dispatchProductId}
+            productName={dispatchProductName}
+            onClose={() => { setDispatchOpen(false); setDispatchProductId(null) }}
+            onSuccess={() => router.refresh()}
+          />
+        )}
       </div>
     </div>
   )
