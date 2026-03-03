@@ -15,10 +15,10 @@ export async function getAdminBanners() {
 
 export async function addBannerAction(imageUrl: string) {
   try {
-    await prisma.banner.create({ data: { imageUrl } })
-    revalidatePath("/")
-    return { success: true }
-  } catch (error) {
+    const banner = await prisma.banner.create({ data: { imageUrl } })
+    revalidatePath("/admin/settings")  // ← เฉพาะหน้านี้ แทน "/"
+    return { success: true, banner }
+  } catch {
     return { success: false, message: "เพิ่มรูปไม่สำเร็จ" }
   }
 }
@@ -68,10 +68,10 @@ export async function updateProfileAction(prevState: any, formData: FormData) {
         address,
       },
     })
-    
 
 
-    return { message: "บันทึกข้อมูลเรียบร้อย!", redirectUrl: targetUrl}
+
+    return { message: "บันทึกข้อมูลเรียบร้อย!", redirectUrl: targetUrl }
 
   } catch (error) {
     console.error(error)

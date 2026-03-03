@@ -58,20 +58,14 @@ export default function DispatchProductModal({ open, productId, productName, onC
 
   const availableLots = lots.filter(lot => {
     if (Number(lot.stock) <= 0) return false;
-
-    // ถ้าเลือกตัด "สินค้าหมดอายุ" ให้เช็คว่าเลยวันรึยัง
-    if (form.reason === "EXPIRED") {
-      if (!lot.expireDate) return false; // ไม่มีวันหมดอายุ = ไม่หมดอายุ
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const expDate = new Date(lot.expireDate);
-      expDate.setHours(0, 0, 0, 0);
-
-      return expDate <= today; // ต้องน้อยกว่าวันนี้ถึงจะนับว่าหมดอายุ
+    if (lot.expireDate) {
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const expDate = new Date(lot.expireDate)
+      expDate.setHours(0, 0, 0, 0)
+      if (expDate <= today) return false
     }
-
-    return true; // ถ้าเป็น SALE หรือ DAMAGED โชว์หมด
+    return true;
   })
 
   const handleSubmit = async () => {
@@ -139,8 +133,7 @@ export default function DispatchProductModal({ open, productId, productName, onC
   // ดึงข้อมูลสำหรับปุ่ม Dropdown เหตุผล
   const getReasonDisplay = () => {
     if (form.reason === "SALE") return { text: "เบิกไปขาย / ใช้งานปกติ" }
-    if (form.reason === "DAMAGED") return { text: "ตัดของชำรุด / เสียหาย" }
-    return { text: "ตัดสินค้าหมดอายุ" }
+    return { text: "ตัดของชำรุด / เสียหาย" }
   }
   const currentReason = getReasonDisplay()
 
@@ -232,19 +225,6 @@ export default function DispatchProductModal({ open, productId, productName, onC
                   </div>
                   {form.reason === "DAMAGED" && <Check className="w-4 h-4 text-orange-500" />}
                 </button>
-                <div className="h-px bg-gray-50" />
-                <button
-                  type="button"
-                  onClick={() => handleSelectReason("EXPIRED")}
-                  className={`w-full text-left px-4 py-3 text-sm hover:bg-red-50 transition-colors flex items-center justify-between ${form.reason === "EXPIRED" ? 'bg-red-50/50' : ''}`}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className={`${form.reason === "EXPIRED" ? 'font-bold text-red-600' : 'font-medium text-gray-700'}`}>
-                      ตัดสินค้าหมดอายุ
-                    </span>
-                  </div>
-                  {form.reason === "EXPIRED" && <Check className="w-4 h-4 text-red-600" />}
-                </button>
               </div>
             )}
           </div>
@@ -253,9 +233,6 @@ export default function DispatchProductModal({ open, productId, productName, onC
           <div className="bg-red-50/30 p-4 rounded-2xl border border-red-100">
             <div className="flex justify-between items-center mb-2">
               <label className="block text-[11px] font-bold text-red-700">เลือกล็อตที่ต้องการเบิก</label>
-              {form.reason === "EXPIRED" && (
-                <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold">กรองเฉพาะของหมดอายุ</span>
-              )}
             </div>
 
             <div className="relative">

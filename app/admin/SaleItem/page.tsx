@@ -1,8 +1,8 @@
 import prisma from "@/utils/db"
 import OrderTable from "@/components/admin/orders/OrderTable"
-import { SquareChartGantt } from "lucide-react"
+import { SquareChartGantt, Clock, CreditCard, Truck, CheckCircle } from "lucide-react"
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic"
 
 export default async function OrdersPage() {
   const orders = await prisma.order.findMany({
@@ -13,12 +13,8 @@ export default async function OrdersPage() {
         include: {
           variant: {
             include: {
-              product: {
-                include: { images: true }
-              },
-              values: {
-                include: { optionValue: true }
-              }
+              product: { include: { images: true } },
+              values: { include: { optionValue: true } }
             }
           }
         }
@@ -47,17 +43,43 @@ export default async function OrdersPage() {
     }))
   }))
 
-  return (
-    <div className="p-6">
+  const totalOrders    = formattedOrders.length
+  const pendingOrders  = formattedOrders.filter(o => ["PENDING", "VERIFYING"].includes(o.status)).length
+  const shippingOrders = formattedOrders.filter(o => ["PAID", "SHIPPED"].includes(o.status)).length
+  const doneOrders     = formattedOrders.filter(o => o.status === "COMPLETED").length
 
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            <SquareChartGantt className="w-7 h-7 text-purple-600" />
-            Orders Management
-          </h1>
-          <p className="text-gray-500 text-sm mt-1">จัดการรายการคำสั่งซื้อ สถานะคำสั่งซื้อ และตรวจสอบพัสดุที่ต้องจัดส่ง</p>
+  return (
+    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-3 rounded-2xl shadow-lg shadow-purple-200">
+          <SquareChartGantt className="w-6 h-6 text-white" />
         </div>
+        <div>
+          <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">Orders Management</h1>
+          <p className="text-[16px] text-gray-500 font-medium mt-1">จัดการรายการคำสั่งซื้อ สถานะ และตรวจสอบพัสดุที่ต้องจัดส่ง</p>
+        </div>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+        {[
+          { label: "ออเดอร์ทั้งหมด", value: totalOrders,    icon: <SquareChartGantt className="w-6 h-6" />, gradient: "from-indigo-500 to-purple-600", shadow: "shadow-purple-200" },
+          { label: "รอดำเนินการ",    value: pendingOrders,  icon: <Clock className="w-6 h-6" />,            gradient: "from-orange-400 to-amber-500",  shadow: "shadow-orange-200" },
+          { label: "กำลังจัดส่ง",    value: shippingOrders, icon: <Truck className="w-6 h-6" />,            gradient: "from-blue-400 to-indigo-500",   shadow: "shadow-blue-200"   },
+          { label: "เสร็จสิ้น",       value: doneOrders,     icon: <CheckCircle className="w-6 h-6" />,      gradient: "from-emerald-400 to-teal-500",  shadow: "shadow-emerald-200"},
+        ].map(card => (
+          <div key={card.label} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-6 flex items-center gap-5 group">
+            <div className={`bg-gradient-to-br ${card.gradient} rounded-2xl p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
+              {card.icon}
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 font-bold mb-1">{card.label}</p>
+              <p className="text-3xl font-black text-gray-900">{card.value} <span className="text-base font-semibold text-gray-400">รายการ</span></p>
+            </div>
+          </div>
+        ))}
       </div>
 
       <OrderTable initialOrders={formattedOrders} />

@@ -40,6 +40,17 @@ export default function ProductLotModal({
 
     if (!open) return null
 
+    const visibleLots = lots.filter(lot => {
+        if (lot.stock <= 0 && lot.expireDate) {
+            const today = new Date()
+            today.setHours(0, 0, 0, 0)
+            const expDate = new Date(lot.expireDate)
+            expDate.setHours(0, 0, 0, 0)
+            if (expDate <= today) return false  // หมดอายุ + ตัดหมดแล้ว ไม่โชว์
+        }
+        return true
+    })
+
     const totalStock = lots.reduce((sum, lot) => sum + (lot.stock ?? 0), 0)
 
     return (
@@ -71,7 +82,7 @@ export default function ProductLotModal({
                 <div className="overflow-y-auto p-6 flex-1">
                     {isLoading ? (
                         <div className="text-center py-10 text-gray-500">กำลังโหลดข้อมูล...</div>
-                    ) : lots.length === 0 ? (
+                    ) : visibleLots.length === 0 ? (
                         <div className="text-center py-12 text-gray-400 border-2 border-dashed border-gray-100 rounded-xl">
                             <Layers className="w-8 h-8 mx-auto mb-3 text-gray-300" />
                             <p>ไม่พบข้อมูลล๊อต หรือสินค้าหมดสต๊อก</p>
@@ -89,7 +100,7 @@ export default function ProductLotModal({
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
-                                    {lots.map((lot) => {
+                                    {visibleLots.map((lot) => {
                                         let statusText = "ปกติ"
                                         let statusClass = "bg-green-50 text-green-700 border-green-200"
 

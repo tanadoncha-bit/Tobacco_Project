@@ -39,7 +39,7 @@ export async function POST(req: Request) {
 
             // 2. หัก Variant โดยใช้ relation จาก lot
             await tx.productVariant.update({
-                where: { id: lot.variantId },  // ✅ ใช้จาก DB ไม่เชื่อ frontend
+                where: { id: lot.variantId }, 
                 data: { stock: { decrement: deductAmount } }
             })
 

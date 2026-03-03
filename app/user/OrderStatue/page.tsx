@@ -3,57 +3,54 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/utils/authOptions"
 import { redirect } from "next/navigation"
 import OrderListClient from "./OrderListClient"
-import { PackageSearch } from "lucide-react"
+import { Package } from "lucide-react"
 
 export const dynamic = "force-dynamic"
-export const revalidate = 0 // กันแคช
 
 export default async function OrderStatusPage() {
   const session = await getServerSession(authOptions)
+  if (!session?.user?.id) redirect("/login")
 
-  if (!session?.user?.id) {
-    redirect("/login")
-  }
-
-  // 1. ดึงข้อมูล Profile และออเดอร์
-  const orders = await prisma.order.findMany({
-    where: { profileId: session.user.id },
-    include: {
-      profile: true,
-      items: {
-        include: {
-          variant: {
-            include: {
-              product: true,
-              values: {
-                include: { optionValue: true }
-              }
-            }
-          }
-        }
-      }
-    },
-    orderBy: { createdAt: "desc" },
-  })
-
-  const storeSetting = await prisma.storeSetting.findFirst()
+  const [orders, storeSetting] = await Promise.all([
+    prisma.order.findMany({
+      where: { profileId: session.user.id },
+      include: {
+        items: {
+          include: {
+            variant: {
+              include: {
+                product: { include: { images: true } },
+                values: { include: { optionValue: true } },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.storeSetting.findFirst(),
+  ])
 
   const paymentSettings = {
-    bankName: storeSetting?.bankName || "ไม่ระบุธนาคาร",
+    bankName:      storeSetting?.bankName      || "ไม่ระบุธนาคาร",
     accountNumber: storeSetting?.accountNumber || "ไม่ระบุเลขบัญชี",
-    accountName: storeSetting?.accountName || "ไม่ระบุชื่อบัญชี"
+    accountName:   storeSetting?.accountName   || "ไม่ระบุชื่อบัญชี",
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 min-h-screen">
-      <div className="flex items-center gap-3 mb-8">
-        <PackageSearch className="w-8 h-8 text-purple-700" />
-        <h1 className="text-3xl font-bold text-gray-800">ประวัติการสั่งซื้อของคุณ</h1>
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex items-center gap-4">
+          <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-3 rounded-2xl shadow-lg shadow-purple-200">
+            <Package className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">ประวัติการสั่งซื้อ</h1>
+            <p className="text-[16px] text-gray-500 font-medium mt-1">ติดตามสถานะและรายละเอียดคำสั่งซื้อของคุณ</p>
+          </div>
+        </div>
+        <OrderListClient orders={orders} paymentSettings={paymentSettings} />
       </div>
-      <OrderListClient
-        orders={orders}
-        paymentSettings={paymentSettings}
-      />
     </div>
   )
 }

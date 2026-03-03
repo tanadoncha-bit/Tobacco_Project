@@ -17,6 +17,7 @@ export default function AddProductModal({
   onClose: () => void
   onSuccess: () => void
 }) {
+  const [isUploading, setIsUploading] = useState(false)
   const [name, setName] = useState("")
   const [images, setImages] = useState<string[]>([])
 
@@ -119,7 +120,7 @@ export default function AddProductModal({
             </div>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded-lg transition-colors cursor-pointer">
-            <X className="w-5 h-5" /> 
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -135,7 +136,7 @@ export default function AddProductModal({
                 <div key={index} className="relative w-28 h-28 rounded-xl overflow-hidden group shadow-sm border border-gray-200">
                   <img src={url} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <button type="button" onClick={() => removeImage(index)} className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transform hover:scale-110 transition-all">
+                    <button type="button" onClick={() => removeImage(index)} className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transform hover:scale-110 transition-all cursor-pointer">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -143,19 +144,80 @@ export default function AddProductModal({
               ))}
               <button
                 type="button"
+                disabled={isUploading}
                 onClick={() => fileInputRef.current?.click()}
-                className="w-28 h-28 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center text-gray-500 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-600 transition-colors cursor-pointer"
+                className={`w-28 h-28 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-colors cursor-pointer
+                ${isUploading
+                    ? "bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed"
+                    : "border-gray-300 text-gray-500 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-600"
+                  }`}
               >
-                <Plus className="w-6 h-6 mb-2" />
-                <span className="text-xs font-medium">เพิ่มรูปภาพ</span>
+                {isUploading ? (
+                  <>
+                    <svg
+                      className="animate-spin h-6 w-6 mb-2 text-purple-500"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                      />
+                    </svg>
+                    <span className="text-xs font-medium">กำลังอัปโหลด...</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-6 h-6 mb-2" />
+                    <span className="text-xs font-medium">เพิ่มรูปภาพ</span>
+                  </>
+                )}
               </button>
-              <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={async (e) => {
-                if (!e.target.files?.[0]) return
-                const formData = new FormData(); formData.append("file", e.target.files[0])
-                const res = await fetch("/api/upload", { method: "POST", body: formData })
-                const data = await res.json()
-                if (data.url) setImages((prev) => [...prev, data.url])
-              }} />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={async (e) => {
+                  if (!e.target.files?.[0]) return
+
+                  try {
+                    setIsUploading(true)
+
+                    const formData = new FormData()
+                    formData.append("file", e.target.files[0])
+
+                    const res = await fetch("/api/upload", {
+                      method: "POST",
+                      body: formData,
+                    })
+
+                    const data = await res.json()
+
+                    if (!res.ok) throw new Error(data.error || "Upload failed")
+
+                    if (data.imageUrl) {
+                      setImages((prev) => [...prev, data.imageUrl])
+                    }
+
+                  } catch (err: any) {
+                    toast.error(err.message)
+                  } finally {
+                    setIsUploading(false)
+                    e.target.value = ""
+                  }
+                }}
+              />
             </div>
           </div>
 

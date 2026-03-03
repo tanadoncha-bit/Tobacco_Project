@@ -9,7 +9,7 @@ export async function GET() {
         const expiredProductLots = await prisma.productVariantLot.findMany({
             where: {
                 expireDate: { lt: now },
-                stock: { gt: 0 } 
+                stock: { gt: 0 }
             },
             include: {
                 variant: {
@@ -42,7 +42,9 @@ export async function GET() {
             unit: "ชิ้น",
             expireDate: item.expireDate,
             unitCost: item.unitCost || 0,
-            category: "สินค้าสำเร็จรูป"
+            category: item.lotNumber?.includes("PD")
+                ? "สินค้าจากการผลิต"
+                : "สินค้าสำเร็จรูป"
         }))
 
         const materials = expiredMaterialLots.map(item => ({
@@ -58,8 +60,8 @@ export async function GET() {
             category: "วัตถุดิบ"
         }))
 
-        return NextResponse.json({ 
-            success: true, 
+        return NextResponse.json({
+            success: true,
             data: [...products, ...materials] // รวมร่างกันส่งไป
         })
 

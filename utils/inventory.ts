@@ -51,7 +51,7 @@ export async function deductStockFIFO(
                 variantId: variantId,
                 variantLotId: lot.id,
                 type: "SALE_OUT",
-                amount: -deductFromThisLot,
+                amount: deductFromThisLot,
                 reason: "SALE",
                 note: note,
                 profileId: profileId

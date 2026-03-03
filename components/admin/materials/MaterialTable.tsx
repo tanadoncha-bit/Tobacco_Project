@@ -2,15 +2,9 @@
 
 import { useState, useEffect, useRef, useMemo } from "react"
 import {
-  Plus,
-  ArrowDownToLine,
-  ArrowUpFromLine,
-  Search,
-  Hammer,
-  ChevronDown,
-  Layers,
-  FileText,
-  Package,
+  Plus, ArrowDownToLine, ArrowUpFromLine, Search, Hammer,
+  ChevronDown, Layers, FileText, AlertTriangle, FlaskConical,
+  PackageX, Timer,
 } from "lucide-react"
 import { toast } from "sonner"
 import MaterialHistoryModal from "./MaterialHistoryModal"
@@ -52,6 +46,13 @@ type TransactionForm = {
   materialLotId: string
 }
 
+type Stats = {
+  totalMaterials: number
+  outOfStock: number
+  lowStock: number
+  nearExpiry: number
+}
+
 const SORT_OPTIONS = [
   { value: "newest", label: "เพิ่มล่าสุด" },
   { value: "oldest", label: "เก่าสุด" },
@@ -63,8 +64,13 @@ const SORT_OPTIONS = [
 
 type SortValue = typeof SORT_OPTIONS[number]["value"]
 
-export default function MaterialTable({ initialMaterials }: { initialMaterials: Material[] }) {
-  // ─── Core state ───────────────────────────────────────────────────────────
+export default function MaterialTable({
+  initialMaterials,
+  stats,
+}: {
+  initialMaterials: Material[]
+  stats: Stats
+}) {
   const [materials, setMaterials] = useState<Material[]>(initialMaterials)
   const [search, setSearch] = useState("")
   const [sort, setSort] = useState<SortValue>("newest")
@@ -72,11 +78,9 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
   const sortRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(false)
 
-  // ─── Add modal ────────────────────────────────────────────────────────────
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [newMat, setNewMat] = useState({ code: "", name: "", unit: "กรัม" })
 
-  // ─── Transaction modal ────────────────────────────────────────────────────
   const [txModal, setTxModal] = useState<{ isOpen: boolean; mat: Material | null; type: "IN" | "OUT" }>({
     isOpen: false, mat: null, type: "IN",
   })
@@ -85,30 +89,21 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
   const [expireDate, setExpireDate] = useState("")
   const [noExpire, setNoExpire] = useState(true)
 
-  // ─── Produce modal ────────────────────────────────────────────────────────
   const [isProduceOpen, setIsProduceOpen] = useState(false)
   const [products, setProducts] = useState<ProductOption[]>([])
   const [produceForm, setProduceForm] = useState({ variantId: "", amount: "", note: "" })
   const [isProductDropdownOpen, setIsProductDropdownOpen] = useState(false)
   const productDropdownRef = useRef<HTMLDivElement>(null)
 
-  // ─── Lots modal ───────────────────────────────────────────────────────────
-  const [lotsModal, setLotsModal] = useState<{ isOpen: boolean; mat: Material | null }>({
-    isOpen: false, mat: null,
-  })
-
-  // ─── History modal ────────────────────────────────────────────────────────
+  const [lotsModal, setLotsModal] = useState<{ isOpen: boolean; mat: Material | null }>({ isOpen: false, mat: null })
   const [historyModalOpen, setHistoryModalOpen] = useState(false)
   const [selectedHistoryId, setSelectedHistoryId] = useState<number | null>(null)
   const [selectedHistoryName, setSelectedHistoryName] = useState("")
 
-  // ─── Effects ──────────────────────────────────────────────────────────────
   useEffect(() => {
     if (txModal.isOpen) {
       setTxForm({ amount: "", totalCost: "", note: "", materialLotId: "" })
-      setLotNumber("")
-      setExpireDate("")
-      setNoExpire(false)
+      setLotNumber(""); setExpireDate(""); setNoExpire(false)
     }
   }, [txModal.isOpen, txModal.mat])
 
@@ -121,85 +116,66 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
 
   useEffect(() => {
     if (isProduceOpen && products.length === 0) {
-      fetch("/api/products")
-        .then(res => res.json())
-        .then(data => setProducts(data))
-        .catch(err => console.error("โหลดสินค้าล้มเหลว", err))
+      fetch("/api/products").then(r => r.json()).then(setProducts).catch(console.error)
     }
   }, [isProduceOpen, products.length])
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (productDropdownRef.current && !productDropdownRef.current.contains(event.target as Node)) {
+    const handler = (e: MouseEvent) => {
+      if (productDropdownRef.current && !productDropdownRef.current.contains(e.target as Node))
         setIsProductDropdownOpen(false)
-      }
-      if (sortRef.current && !sortRef.current.contains(event.target as Node)) {
+      if (sortRef.current && !sortRef.current.contains(e.target as Node))
         setIsSortOpen(false)
-      }
     }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
   }, [])
 
-  // ─── Derived state ────────────────────────────────────────────────────────
   const filteredAndSorted = useMemo(() => {
     let result = [...materials].filter(
-      item =>
-        item.name.toLowerCase().includes(search.toLowerCase()) ||
-        (item.code && item.code.toLowerCase().includes(search.toLowerCase()))
+      m =>
+        m.name.toLowerCase().includes(search.toLowerCase()) ||
+        (m.code && m.code.toLowerCase().includes(search.toLowerCase()))
     )
     switch (sort) {
       case "stock-high": result.sort((a, b) => b.stock - a.stock); break
-      case "stock-low":  result.sort((a, b) => a.stock - b.stock); break
-      case "name-az":    result.sort((a, b) => a.name.localeCompare(b.name)); break
-      case "name-za":    result.sort((a, b) => b.name.localeCompare(a.name)); break
-      case "oldest":     result.reverse(); break
+      case "stock-low": result.sort((a, b) => a.stock - b.stock); break
+      case "name-az": result.sort((a, b) => a.name.localeCompare(b.name)); break
+      case "name-za": result.sort((a, b) => b.name.localeCompare(a.name)); break
+      case "oldest": result.reverse(); break
     }
     return result
   }, [materials, search, sort])
 
-  const currentSortLabel = SORT_OPTIONS.find(opt => opt.value === sort)?.label
-
-  // ─── Handlers ─────────────────────────────────────────────────────────────
   const handleAddMaterial = async () => {
     if (!newMat.name || !newMat.unit) return toast.error("กรุณากรอกชื่อและหน่วยนับ")
     setIsLoading(true)
     try {
       const res = await fetch("/api/materials", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newMat),
       })
       if (!res.ok) throw new Error("บันทึกไม่สำเร็จ")
-      const savedMat = await res.json()
-      setMaterials([savedMat, ...materials])
+      setMaterials([await res.json(), ...materials])
       setIsAddOpen(false)
       toast.success("เพิ่มวัตถุดิบเรียบร้อย")
-    } catch {
-      toast.error("เกิดข้อผิดพลาดในการเพิ่มวัตถุดิบ")
-    } finally {
-      setIsLoading(false)
-    }
+    } catch { toast.error("เกิดข้อผิดพลาด") }
+    finally { setIsLoading(false) }
   }
 
   const handleTransaction = async () => {
     const amountVal = Number(txForm.amount)
     if (amountVal <= 0) return toast.error("กรุณาระบุจำนวนให้ถูกต้อง")
-    if (txModal.type === "OUT" && txModal.mat && amountVal > txModal.mat.stock) {
+    if (txModal.type === "OUT" && txModal.mat && amountVal > txModal.mat.stock)
       return toast.error("จำนวนเบิกออก มากกว่าสต๊อกที่มีอยู่!")
-    }
-    if (txModal.type === "IN" && (!txForm.totalCost || Number(txForm.totalCost) <= 0)) {
+    if (txModal.type === "IN" && (!txForm.totalCost || Number(txForm.totalCost) <= 0))
       return toast.error("กรุณากรอกราคารวมล๊อตนี้")
-    }
     setIsLoading(true)
     try {
       const res = await fetch("/api/materials/transaction", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          materialId: txModal.mat?.id,
-          type: txModal.type,
-          amount: amountVal,
+          materialId: txModal.mat?.id, type: txModal.type, amount: amountVal,
           totalCost: txForm.totalCost ? Number(txForm.totalCost) : null,
           note: txForm.note,
           lotNumber: txModal.type === "IN" ? lotNumber || undefined : undefined,
@@ -207,25 +183,25 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
           materialLotId: txModal.type === "OUT" && txForm.materialLotId ? Number(txForm.materialLotId) : null,
         }),
       })
-      if (!res.ok) {
-        const errorData = await res.json()
-        throw new Error(errorData.message || "อัปเดตสต๊อกไม่สำเร็จ")
-      }
+      if (!res.ok) throw new Error((await res.json()).message || "อัปเดตสต๊อกไม่สำเร็จ")
       const refreshRes = await fetch("/api/materials")
       if (refreshRes.ok) {
-        const freshMaterials = await refreshRes.json()
-        setMaterials(freshMaterials.data || freshMaterials)
+        const fresh = await refreshRes.json()
+        const freshList = fresh.data || fresh
+        setMaterials(freshList)
+
+        // ── sync LotsModal ถ้าเปิดอยู่ ──
+        if (lotsModal.isOpen && lotsModal.mat) {
+          const updatedMat = freshList.find((m: Material) => m.id === lotsModal.mat!.id)
+          if (updatedMat) setLotsModal(prev => ({ ...prev, mat: updatedMat }))
+        }
       }
       setTxModal({ isOpen: false, mat: null, type: "IN" })
       setTxForm({ amount: "", note: "", totalCost: "", materialLotId: "" })
-      setLotNumber("")
-      setExpireDate("")
+      setLotNumber(""); setExpireDate("")
       toast.success(`บันทึก${txModal.type === "IN" ? "รับเข้า" : "เบิกออก"}เรียบร้อย`)
-    } catch (error: any) {
-      toast.error(error.message || "เกิดข้อผิดพลาด")
-    } finally {
-      setIsLoading(false)
-    }
+    } catch (e: any) { toast.error(e.message || "เกิดข้อผิดพลาด") }
+    finally { setIsLoading(false) }
   }
 
   const handleProduce = async () => {
@@ -235,77 +211,92 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
     setIsLoading(true)
     try {
       const res = await fetch("/api/materials/produce", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ variantId: Number(produceForm.variantId), produceAmount: amountVal, note: produceForm.note }),
       })
-      if (!res.ok) {
-        const errorData = await res.json()
-        throw new Error(errorData.error || "ผลิตสินค้าไม่สำเร็จ วัตถุดิบอาจไม่เพียงพอ")
-      }
-      const updatedMaterials = await res.json()
-      setMaterials(updatedMaterials)
+      if (!res.ok) throw new Error((await res.json()).error || "ผลิตสินค้าไม่สำเร็จ วัตถุดิบอาจไม่เพียงพอ")
+      setMaterials(await res.json())
       setIsProduceOpen(false)
       setProduceForm({ variantId: "", amount: "", note: "" })
       toast.success("เบิกวัตถุดิบเพื่อผลิตสินค้าเสร็จสิ้น")
-    } catch (error: any) {
-      toast.error(error.message)
-    } finally {
-      setIsLoading(false)
-    }
+    } catch (e: any) { toast.error(e.message) }
+    finally { setIsLoading(false) }
   }
 
-  // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 p-3 rounded-2xl shadow-lg shadow-emerald-200">
+          <FlaskConical className="w-6 h-6 text-white" />
+        </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            <Layers className="w-7 h-7 text-purple-600" />
-            Materials Inventory
-          </h1>
-          <p className="text-gray-500 text-sm mt-1">จัดการข้อมูลวัตถุดิบ การเบิกใช้ และตรวจสอบจำนวนคงเหลือ</p>
+          <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">Materials Inventory</h1>
+          <p className="text-[16px] text-gray-500 font-medium mt-1">จัดการข้อมูลวัตถุดิบ การเบิกใช้ และตรวจสอบจำนวนคงเหลือ</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+        {[
+          { label: "วัตถุดิบทั้งหมด", value: stats.totalMaterials, unit: "รายการ", icon: <FlaskConical className="w-6 h-6" />, gradient: "from-emerald-500 to-teal-600", shadow: "shadow-emerald-200" },
+          { label: "สต็อกต่ำ (≤10)", value: stats.lowStock, unit: "รายการ", icon: <AlertTriangle className="w-6 h-6" />, gradient: "from-orange-400 to-amber-500", shadow: "shadow-orange-200" },
+          { label: "หมดสต็อก", value: stats.outOfStock, unit: "รายการ", icon: <PackageX className="w-6 h-6" />, gradient: "from-rose-500 to-red-600", shadow: "shadow-rose-200" },
+          { label: "ใกล้หมดอายุ (30 วัน)", value: stats.nearExpiry, unit: "รายการ", icon: <Timer className="w-6 h-6" />, gradient: "from-purple-500 to-indigo-600", shadow: "shadow-purple-200" },
+        ].map(card => (
+          <div key={card.label} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-6 flex items-center gap-5 group">
+            <div className={`bg-gradient-to-br ${card.gradient} rounded-2xl p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
+              {card.icon}
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 font-bold mb-1">{card.label}</p>
+              <p className="text-3xl font-black text-gray-900">
+                {card.value} <span className="text-base font-semibold text-gray-400">{card.unit}</span>
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Main Table Card */}
+      <div className="bg-white rounded-3xl shadow-sm border border-gray-100">
 
         {/* Toolbar */}
-        <div className="relative z-10 p-5 border-b border-gray-100 bg-gray-50/50 rounded-t-2xl flex flex-wrap justify-between items-center gap-4">
-          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+        <div className="p-4 md:p-6 border-b border-gray-100 bg-gray-50/30 rounded-t-3xl flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative w-72 group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-emerald-500 transition-colors" />
               <input
                 type="text"
                 placeholder="ค้นหารหัส หรือ ชื่อวัตถุดิบ..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white shadow-sm transition-all"
+                className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 bg-white transition-all shadow-sm"
               />
             </div>
 
             <div className="relative" ref={sortRef}>
               <button
                 onClick={() => setIsSortOpen(!isSortOpen)}
-                className="flex items-center justify-between min-w-[160px] border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-white hover:border-purple-300 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all shadow-sm cursor-pointer"
+                className="flex items-center justify-between min-w-[170px] border border-gray-200 rounded-2xl px-4 py-3 text-sm bg-white hover:border-emerald-300 focus:outline-none transition-all shadow-sm cursor-pointer font-bold text-gray-700"
               >
-                <span className="text-gray-700 font-medium">{currentSortLabel}</span>
-                <ChevronDown className={`w-4 h-4 text-gray-400 ml-2 transition-transform duration-200 ${isSortOpen ? "rotate-180 text-purple-500" : ""}`} />
+                {SORT_OPTIONS.find(o => o.value === sort)?.label}
+                <ChevronDown className={`w-4 h-4 text-gray-400 ml-2 transition-transform duration-200 ${isSortOpen ? "rotate-180 text-emerald-500" : ""}`} />
               </button>
               {isSortOpen && (
-                <div className="absolute left-0 sm:right-0 sm:left-auto mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute left-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="py-1.5">
-                    {SORT_OPTIONS.map(option => (
+                    {SORT_OPTIONS.map(opt => (
                       <button
-                        key={option.value}
-                        onClick={() => { setSort(option.value as SortValue); setIsSortOpen(false) }}
-                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer ${
-                          sort === option.value
-                            ? "bg-purple-50 text-purple-700 font-bold border-l-4 border-purple-500"
-                            : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent font-medium"
-                        }`}
+                        key={opt.value}
+                        onClick={() => { setSort(opt.value); setIsSortOpen(false) }}
+                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer ${sort === opt.value
+                          ? "bg-emerald-50 text-emerald-700 font-bold border-l-4 border-emerald-500"
+                          : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent font-medium"
+                          }`}
                       >
-                        {option.label}
+                        {opt.label}
                       </button>
                     ))}
                   </div>
@@ -314,16 +305,16 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
             </div>
           </div>
 
-          <div className="flex gap-3 w-full sm:w-auto">
+          <div className="flex gap-3 flex-wrap">
             <button
               onClick={() => setIsProduceOpen(true)}
-              className="flex-1 sm:flex-none bg-orange-50 border border-orange-300 text-orange-700 hover:bg-orange-100 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+              className="bg-orange-50 border border-orange-200 text-orange-700 hover:bg-orange-100 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer"
             >
               <Hammer className="w-4 h-4" /> เบิกผลิตสินค้า
             </button>
             <button
               onClick={() => setIsAddOpen(true)}
-              className="flex-1 sm:flex-none bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer"
+              className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-4 py-2.5 rounded-2xl text-sm font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-2 cursor-pointer"
             >
               <Plus className="w-4 h-4" /> เพิ่มวัตถุดิบ
             </button>
@@ -331,139 +322,142 @@ export default function MaterialTable({ initialMaterials }: { initialMaterials: 
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto rounded-b-2xl">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-white text-gray-500 font-semibold border-b border-gray-100 uppercase tracking-wider text-xs">
-              <tr>
-                <th className="px-6 py-4">รหัส</th>
-                <th className="px-6 py-4">ชื่อวัตถุดิบ</th>
-                <th className="px-6 py-4 text-center">คงเหลือ</th>
-                <th className="px-6 py-4">หน่วย</th>
-                <th className="px-6 py-4">ต้นทุน/หน่วย</th>
-                <th className="px-6 py-4 text-right">จัดการสต๊อก</th>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-center">
+            <thead>
+              <tr className="bg-gray-50/80 border-b border-gray-100">
+                {["รหัส", "ชื่อวัตถุดิบ", "คงเหลือ", "หน่วย", "ต้นทุน/หน่วย", "จัดการสต๊อก"].map(h => (
+                  <th key={h} className="px-6 py-5 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {filteredAndSorted.map(mat => (
-                <tr key={mat.id} className="hover:bg-purple-50/30 transition-colors group">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-500">{mat.code || "-"}</td>
-                  <td className="px-6 py-4 text-sm font-semibold text-gray-700">{mat.name}</td>
-                  <td className="px-6 py-4 text-center">
-                    <span className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-full font-bold text-xs border ${
-                      mat.stock > 10
-                        ? "text-green-700 bg-green-50 border-green-100"
-                        : mat.stock > 0
-                        ? "text-orange-700 bg-orange-50 border-orange-100"
-                        : "text-red-600 bg-red-50 border-red-100"
-                    }`}>
-                      {(mat.stock ?? 0).toLocaleString()}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{mat.unit}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">฿{(mat.costPerUnit ?? 0).toFixed(2)}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => setTxModal({ isOpen: true, mat, type: "IN" })}
-                        className="bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <ArrowDownToLine className="w-3.5 h-3.5" /> รับเข้า
-                      </button>
-                      <button
-                        onClick={() => setTxModal({ isOpen: true, mat, type: "OUT" })}
-                        className="bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <ArrowUpFromLine className="w-3.5 h-3.5" /> เบิกออก
-                      </button>
-                      <button
-                        onClick={() => setLotsModal({ isOpen: true, mat })}
-                        className="bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <Layers className="w-3.5 h-3.5" /> ล๊อต
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedHistoryId(mat.id)
-                          setSelectedHistoryName(mat.name)
-                          setHistoryModalOpen(true)
-                        }}
-                        className="bg-white text-gray-600 hover:text-blue-600 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <FileText className="w-3.5 h-3.5" /> ประวัติ
-                      </button>
+              {filteredAndSorted.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-24 text-center">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="bg-gray-50 rounded-full p-6 ring-8 ring-gray-50/50">
+                        <Search className="w-10 h-10 text-gray-300" />
+                      </div>
+                      <div>
+                        <p className="text-gray-900 font-bold text-lg">ไม่พบวัตถุดิบ</p>
+                        <p className="text-gray-400 font-medium mt-1">ไม่มีวัตถุดิบที่ตรงกับเงื่อนไขการค้นหา</p>
+                      </div>
                     </div>
                   </td>
                 </tr>
-              ))}
-              {filteredAndSorted.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-6 py-16 text-center text-gray-400 bg-gray-50/50">
-                    <Search className="w-8 h-8 mx-auto mb-3 text-gray-300" />
-                    ไม่พบข้อมูลวัตถุดิบที่ค้นหา
-                  </td>
-                </tr>
+              ) : (
+                filteredAndSorted.map(mat => (
+                  <tr key={mat.id} className="hover:bg-teal-50/20 transition-colors group">
+
+                    <td className="px-6 py-4">
+                      <span className="font-bold text-gray-400 text-sm">{mat.code || "—"}</span>
+                    </td>
+
+                    <td className="px-6 py-4">
+                      <p className="font-black text-gray-900 group-hover:text-teal-700 transition-colors">{mat.name}</p>
+                    </td>
+
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-black text-sm border ${mat.stock === 0
+                        ? "text-rose-600 bg-rose-50 border-rose-200"
+                        : mat.stock <= 10
+                          ? "text-orange-600 bg-orange-50 border-orange-200"
+                          : "text-emerald-700 bg-emerald-50 border-emerald-200"
+                        }`}>
+                        {(mat.stock ?? 0).toLocaleString()}
+                      </span>
+                    </td>
+
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-gray-500 font-medium">{mat.unit}</span>
+                    </td>
+
+                    <td className="px-6 py-4">
+                      <span className="text-sm font-bold text-gray-700">฿{(mat.costPerUnit ?? 0).toFixed(2)}</span>
+                    </td>
+
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-center gap-2 flex-wrap">
+                        <button
+                          onClick={() => setTxModal({ isOpen: true, mat, type: "IN" })}
+                          className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+                        >
+                          <ArrowDownToLine className="w-3.5 h-3.5" /> รับเข้า
+                        </button>
+                        <button
+                          onClick={() => setTxModal({ isOpen: true, mat, type: "OUT" })}
+                          className="inline-flex items-center gap-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+                        >
+                          <ArrowUpFromLine className="w-3.5 h-3.5" /> เบิกออก
+                        </button>
+                        <button
+                          onClick={() => setLotsModal({ isOpen: true, mat })}
+                          className="inline-flex items-center gap-1.5 bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+                        >
+                          <Layers className="w-3.5 h-3.5" /> ล็อต
+                        </button>
+                        <button
+                          onClick={() => { setSelectedHistoryId(mat.id); setSelectedHistoryName(mat.name); setHistoryModalOpen(true) }}
+                          className="inline-flex items-center gap-1.5 bg-white text-gray-600 hover:text-blue-600 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+                        >
+                          <FileText className="w-3.5 h-3.5" /> ประวัติ
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
         </div>
+
+        {/* Footer */}
+        {filteredAndSorted.length > 0 && (
+          <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex justify-between items-center rounded-b-3xl">
+            <span className="text-sm font-medium text-gray-500">
+              แสดงผล <strong className="text-gray-900">{filteredAndSorted.length}</strong> จาก <strong className="text-gray-900">{materials.length}</strong> รายการ
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* ─── Modals ─────────────────────────────────────────────────────────── */}
+      {/* Modals */}
       <AddMaterialModal
-        isOpen={isAddOpen}
-        onClose={() => setIsAddOpen(false)}
-        newMat={newMat}
-        setNewMat={setNewMat}
-        onSubmit={handleAddMaterial}
-        isLoading={isLoading}
+        isOpen={isAddOpen} onClose={() => setIsAddOpen(false)}
+        newMat={newMat} setNewMat={setNewMat}
+        onSubmit={handleAddMaterial} isLoading={isLoading}
       />
-
       <TransactionModal
-        isOpen={txModal.isOpen}
-        mat={txModal.mat}
-        type={txModal.type}
-        onClose={() => {
-          setTxModal({ isOpen: false, mat: null, type: "IN" })
-          setTxForm({ amount: "", totalCost: "", note: "", materialLotId: "" })
-        }}
-        txForm={txForm}
-        setTxForm={setTxForm}
-        lotNumber={lotNumber}
-        setLotNumber={setLotNumber}
-        expireDate={expireDate}
-        setExpireDate={setExpireDate}
-        noExpire={noExpire}
-        setNoExpire={setNoExpire}
-        onSubmit={handleTransaction}
-        isLoading={isLoading}
+        isOpen={txModal.isOpen} mat={txModal.mat} type={txModal.type}
+        onClose={() => { setTxModal({ isOpen: false, mat: null, type: "IN" }); setTxForm({ amount: "", totalCost: "", note: "", materialLotId: "" }) }}
+        txForm={txForm} setTxForm={setTxForm}
+        lotNumber={lotNumber} setLotNumber={setLotNumber}
+        expireDate={expireDate} setExpireDate={setExpireDate}
+        noExpire={noExpire} setNoExpire={setNoExpire}
+        onSubmit={handleTransaction} isLoading={isLoading}
         currentStock={materials.find(m => m.id === txModal.mat?.id)?.stock ?? txModal.mat?.stock ?? 0}
         currentLots={materials.find(m => m.id === txModal.mat?.id)?.MaterialLot ?? []}
       />
-
       <ProduceModal
-        isOpen={isProduceOpen}
-        onClose={() => setIsProduceOpen(false)}
-        products={products}
-        produceForm={produceForm}
-        setProduceForm={setProduceForm}
-        isProductDropdownOpen={isProductDropdownOpen}
-        setIsProductDropdownOpen={setIsProductDropdownOpen}
-        productDropdownRef={productDropdownRef}
-        onSubmit={handleProduce}
-        isLoading={isLoading}
+        isOpen={isProduceOpen} onClose={() => setIsProduceOpen(false)}
+        products={products} produceForm={produceForm} setProduceForm={setProduceForm}
+        isProductDropdownOpen={isProductDropdownOpen} setIsProductDropdownOpen={setIsProductDropdownOpen}
+        productDropdownRef={productDropdownRef} onSubmit={handleProduce} isLoading={isLoading}
       />
-
       <LotsModal
         isOpen={lotsModal.isOpen}
-        mat={lotsModal.mat}
+        mat={lotsModal.isOpen && lotsModal.mat
+          ? materials.find(m => m.id === lotsModal.mat!.id) ?? lotsModal.mat
+          : null
+        }
         onClose={() => setLotsModal({ isOpen: false, mat: null })}
       />
-
       <MaterialHistoryModal
-        open={historyModalOpen}
-        materialId={selectedHistoryId}
-        materialName={selectedHistoryName}
-        onClose={() => setHistoryModalOpen(false)}
+        open={historyModalOpen} materialId={selectedHistoryId}
+        materialName={selectedHistoryName} onClose={() => setHistoryModalOpen(false)}
       />
     </div>
   )

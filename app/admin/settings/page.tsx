@@ -2,7 +2,7 @@ import { getAdminBanners } from "@/utils/actions"
 import SettingsClient from "./SettingsClient"
 import prisma from "@/utils/db" 
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60
 
 export default async function AdminSettingsPage() {
   const [dbBanners, dbSettings] = await Promise.all([

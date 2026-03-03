@@ -10,6 +10,7 @@ type Transaction = {
   id: string;
   date: Date;
   type: string;
+  reason: string | null;
   category: string;
   itemName: string;
   amount: number;
@@ -49,6 +50,7 @@ export default async function HistoryPage() {
     id: `mat-${tx.id}`,
     date: tx.createdAt,
     type: tx.type, 
+    reason: null,
     category: "MATERIAL",
     itemName: tx.material.name,
     amount: tx.amount,
@@ -69,6 +71,7 @@ export default async function HistoryPage() {
       id: `stk-${tx.id}`,
       date: tx.createdAt,
       type: tx.type, 
+      reason: tx.reason || null,
       category: "PRODUCT",
       itemName: fullName,
       amount: tx.amount,

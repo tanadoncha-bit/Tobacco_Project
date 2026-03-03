@@ -142,6 +142,7 @@ model MaterialLot {
   transactions MaterialTransaction[]
 
   @@unique([materialId, lotNumber])
+  @@index([stock, expireDate])
 }
 
 model MaterialTransaction {
@@ -180,6 +181,7 @@ model Order {
   updatedAt DateTime @updatedAt
 
   items OrderItem[]
+  @@index([status])
 }
 
 model OrderItem {

@@ -2,7 +2,11 @@
 
 import { useMemo, useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Search, ChevronDown, PackagePlus, FileText, Edit, Plus, BookOpen, PackageSearch, X, ArrowDownToLine, ArrowUpFromLine, Boxes, Layers } from "lucide-react"
+import {
+  Search, ChevronDown, PackagePlus, FileText, Edit, Plus, BookOpen,
+  PackageSearch, ArrowDownToLine, ArrowUpFromLine, Layers,
+  Package, AlertTriangle, BoxesIcon, BarChart3
+} from "lucide-react"
 
 import AddProductModal from "./AddProductModal"
 import EditProductModal from "./EditProductModal"
@@ -18,7 +22,14 @@ type StockItem = {
   productCode: string
   name: string
   stock: number
-  imageUrl?: string
+  imageUrl?: string | null
+}
+
+type Stats = {
+  totalProducts: number
+  outOfStock: number
+  lowStock: number
+  totalStock: number
 }
 
 const SORT_OPTIONS = [
@@ -30,130 +41,145 @@ const SORT_OPTIONS = [
   { value: "name-za", label: "ชื่อ (Z-A)" },
 ] as const
 
-export default function StockTable({ data, userRole }: { data: StockItem[], userRole: string }) {
+type SortValue = typeof SORT_OPTIONS[number]["value"]
 
-  const [selectedUnit, setSelectedUnit] = useState<string>("ชิ้น")
-
-  const canAdjustStock = userRole === "ADMIN" || userRole === "MANAGER";
+export default function StockTable({
+  data,
+  userRole,
+  stats,
+}: {
+  data: StockItem[]
+  userRole: string
+  stats: Stats
+}) {
+  const canAdjustStock = userRole === "ADMIN" || userRole === "MANAGER"
   const router = useRouter()
 
   const [search, setSearch] = useState("")
-  const [sort, setSort] = useState<"newest" | "oldest" | "stock-high" | "stock-low" | "name-az" | "name-za">("newest")
+  const [sort, setSort] = useState<SortValue>("newest")
+  const [isSortOpen, setIsSortOpen] = useState(false)
+  const sortRef = useRef<HTMLDivElement>(null)
 
+  // Modal states
   const [open, setOpen] = useState(false)
   const [recipeModalOpen, setRecipeModalOpen] = useState(false)
-
   const [isReceiveProduceOpen, setIsReceiveProduceOpen] = useState(false)
-
-
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [editProductId, setEditProductId] = useState<number | null>(null)
-
   const [slipModalOpen, setSlipModalOpen] = useState(false)
   const [selectedSlipId, setSelectedSlipId] = useState<number | null>(null)
   const [selectedSlipName, setSelectedSlipName] = useState("")
-
   const [lotModalOpen, setLotModalOpen] = useState(false)
   const [selectedLotProductCode, setSelectedLotProductCode] = useState("")
   const [selectedLotProductId, setSelectedLotProductId] = useState<number | null>(null)
   const [selectedLotProductName, setSelectedLotProductName] = useState("")
-
   const [adjustStockOpen, setAdjustStockOpen] = useState(false)
   const [adjustProductId, setAdjustProductId] = useState<number | null>(null)
-
   const [dispatchOpen, setDispatchOpen] = useState(false)
   const [dispatchProductId, setDispatchProductId] = useState<number | null>(null)
   const [dispatchProductName, setDispatchProductName] = useState("")
 
-  const [isSortOpen, setIsSortOpen] = useState(false)
-  const sortRef = useRef<HTMLDivElement>(null)
-
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (sortRef.current && !sortRef.current.contains(event.target as Node)) {
-        setIsSortOpen(false)
-      }
+    const handler = (e: MouseEvent) => {
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) setIsSortOpen(false)
     }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
   }, [])
 
   const filteredAndSorted = useMemo(() => {
-    let result = [...data]
-
-    result = result.filter(
-      (item) =>
+    let result = data.filter(
+      item =>
         item.name.toLowerCase().includes(search.toLowerCase()) ||
         item.productCode.toLowerCase().includes(search.toLowerCase())
     )
-
     switch (sort) {
       case "stock-high": result.sort((a, b) => b.stock - a.stock); break
       case "stock-low": result.sort((a, b) => a.stock - b.stock); break
       case "name-az": result.sort((a, b) => a.name.localeCompare(b.name)); break
       case "name-za": result.sort((a, b) => b.name.localeCompare(a.name)); break
-      case "oldest": result.reverse(); break
+      case "oldest": result = [...result].reverse(); break
     }
-
     return result
   }, [data, search, sort])
 
-  const currentSortLabel = SORT_OPTIONS.find((opt) => opt.value === sort)?.label
-
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-3 rounded-2xl shadow-lg shadow-purple-200">
+          <PackageSearch className="w-6 h-6 text-white" />
+        </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            <PackageSearch className="w-7 h-7 text-purple-600" />
-            Product Inventory
-          </h1>
-          <p className="text-gray-500 text-sm mt-1">จัดการข้อมูลสินค้า สูตรการผลิต และตรวจสอบจำนวนคงเหลือ</p>
+          <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">Product Inventory</h1>
+          <p className="text-[16px] text-gray-500 font-medium mt-1">จัดการข้อมูลสินค้า สูตรการผลิต และตรวจสอบจำนวนคงเหลือ</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+        {[
+          { label: "สินค้าทั้งหมด", value: stats.totalProducts, unit: "รายการ", icon: <Package className="w-6 h-6" />, gradient: "from-indigo-500 to-purple-600", shadow: "shadow-purple-200" },
+          { label: "สต็อกรวม", value: stats.totalStock, unit: "ชิ้น", icon: <BoxesIcon className="w-6 h-6" />, gradient: "from-blue-400 to-indigo-500", shadow: "shadow-blue-200" },
+          { label: "สต็อกต่ำ (≤5)", value: stats.lowStock, unit: "รายการ", icon: <BarChart3 className="w-6 h-6" />, gradient: "from-orange-400 to-amber-500", shadow: "shadow-orange-200" },
+          { label: "หมดสต็อก", value: stats.outOfStock, unit: "รายการ", icon: <AlertTriangle className="w-6 h-6" />, gradient: "from-rose-500 to-red-600", shadow: "shadow-rose-200" },
+        ].map(card => (
+          <div key={card.label} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-6 flex items-center gap-5 group">
+            <div className={`bg-gradient-to-br ${card.gradient} rounded-2xl p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
+              {card.icon}
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 font-bold mb-1">{card.label}</p>
+              <p className="text-3xl font-black text-gray-900">
+                {card.value.toLocaleString()} <span className="text-base font-semibold text-gray-400">{card.unit}</span>
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
 
-        <div className="relative z-10 p-5 border-b border-gray-100 bg-gray-50/50 rounded-t-2xl flex flex-wrap justify-between items-center gap-4">
-          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+      {/* Main Table Card */}
+      <div className="bg-white rounded-3xl shadow-sm border border-gray-100">
 
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+        {/* Toolbar */}
+        <div className="p-4 md:p-6 border-b border-gray-100 bg-gray-50/30 rounded-t-3xl flex flex-wrap items-center justify-between gap-4">
+
+          {/* Left: Search + Sort */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative w-72 group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-purple-500 transition-colors" />
               <input
                 type="text"
                 placeholder="ค้นหารหัส หรือ ชื่อสินค้า..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white shadow-sm transition-all"
+                onChange={e => setSearch(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 bg-white transition-all shadow-sm"
               />
             </div>
 
             <div className="relative" ref={sortRef}>
               <button
                 onClick={() => setIsSortOpen(!isSortOpen)}
-                className="flex items-center justify-between min-w-[160px] border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-white hover:border-purple-300 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all shadow-sm cursor-pointer"
+                className="flex items-center justify-between min-w-[160px] border border-gray-200 rounded-2xl px-4 py-3 text-sm bg-white hover:border-purple-300 focus:outline-none transition-all shadow-sm cursor-pointer font-bold text-gray-700"
               >
-                <span className="text-gray-700 font-medium">{currentSortLabel}</span>
-                <ChevronDown className={`w-4 h-4 text-gray-400 ml-2 transition-transform duration-200 ${isSortOpen ? 'rotate-180 text-purple-500' : ''}`} />
+                {SORT_OPTIONS.find(o => o.value === sort)?.label}
+                <ChevronDown className={`w-4 h-4 text-gray-400 ml-2 transition-transform duration-200 ${isSortOpen ? "rotate-180 text-purple-500" : ""}`} />
               </button>
 
               {isSortOpen && (
-                <div className="absolute left-0 sm:right-0 sm:left-auto mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute left-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="py-1.5">
-                    {SORT_OPTIONS.map((option) => (
+                    {SORT_OPTIONS.map(opt => (
                       <button
-                        key={option.value}
-                        onClick={() => {
-                          setSort(option.value as any)
-                          setIsSortOpen(false)
-                        }}
-                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer ${sort === option.value
-                          ? "bg-purple-50 text-purple-700 font-bold border-l-4 border-purple-500"
-                          : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent font-medium"
+                        key={opt.value}
+                        onClick={() => { setSort(opt.value); setIsSortOpen(false) }}
+                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer ${sort === opt.value
+                            ? "bg-purple-50 text-purple-700 font-bold border-l-4 border-purple-500"
+                            : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent font-medium"
                           }`}
                       >
-                        {option.label}
+                        {opt.label}
                       </button>
                     ))}
                   </div>
@@ -162,195 +188,170 @@ export default function StockTable({ data, userRole }: { data: StockItem[], user
             </div>
           </div>
 
-          <div className="flex gap-3 w-full sm:w-auto">
+          {/* Right: Action buttons */}
+          <div className="flex gap-3 flex-wrap">
             <button
               onClick={() => setIsReceiveProduceOpen(true)}
-              className="flex-1 sm:flex-none bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+              className="bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer"
             >
               <PackagePlus className="w-4 h-4" /> รับเข้าผลิต
             </button>
-
             <button
               onClick={() => setRecipeModalOpen(true)}
-              className="flex-1 sm:flex-none bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-purple-300 hover:text-purple-700 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+              className="bg-white border border-gray-200 text-gray-700 hover:border-purple-300 hover:text-purple-700 hover:bg-purple-50 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer"
             >
               <BookOpen className="w-4 h-4" /> สูตรการผลิต
             </button>
             <button
               onClick={() => setOpen(true)}
-              className="flex-1 sm:flex-none bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer"
+              className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white px-4 py-2.5 rounded-2xl text-sm font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-2 cursor-pointer"
             >
               <Plus className="w-4 h-4" /> เพิ่มสินค้าใหม่
             </button>
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-b-2xl">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-white text-gray-500 font-semibold border-b border-gray-100 uppercase tracking-wider text-xs">
-              <tr>
-                <th className="px-6 py-4">รูปภาพ</th>
-                <th className="px-6 py-4">รหัสสินค้า</th>
-                <th className="px-6 py-4">ชื่อสินค้า</th>
-                <th className="px-6 py-4 text-center">จำนวนสต็อกรวม</th>
-                <th className="px-6 py-4 text-right">จัดการ</th>
+        {/* Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-center">
+            <thead>
+              <tr className="bg-gray-50/80 border-b border-gray-100">
+                {["รูปภาพ", "รหัสสินค้า", "ชื่อสินค้า", "สต็อกรวม", "จัดการ"].map(h => (
+                  <th key={h} className="px-6 py-5 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {filteredAndSorted.map((item) => (
-                <tr key={item.Pid} className="hover:bg-purple-50/30 transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="w-14 h-14 bg-gray-50 rounded-xl border border-gray-200 overflow-hidden flex-shrink-0 shadow-sm group-hover:shadow transition-all">
-                      {item.imageUrl ? (
-                        <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
-                          No Image
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 font-semibold text-gray-700">{item.productCode}</td>
-                  <td className="px-6 py-4 font-bold text-gray-900 text-base">{item.name}</td>
-                  <td className="px-6 py-4 text-center">
-                    <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full font-bold text-sm border ${item.stock <= 5
-                      ? 'text-red-600 bg-red-50 border-red-100'
-                      : 'text-purple-700 bg-purple-50 border-purple-100'
-                      }`}>
-                      {item.stock} ชิ้น
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-end gap-2">
-                      {canAdjustStock && (
-                        <>
-                          <button
-                            onClick={() => { setAdjustProductId(item.Pid); setAdjustStockOpen(true) }}
-                            className="bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
-                            title="รับเข้าสต๊อกแบบแมนนวล (เฉพาะ Admin)"
-                          >
-                            <ArrowDownToLine className="w-3.5 h-3.5" /> เพิ่มจำนวน
-                          </button>
-
-                          <button
-                            onClick={() => {
-                              setDispatchProductId(item.Pid);
-                              setDispatchProductName(item.name);
-                              setDispatchOpen(true);
-                            }}
-                            className="bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
-                            title="เบิกสินค้าไปขาย / ตัดของเสีย"
-                          >
-                            <ArrowUpFromLine className="w-3.5 h-3.5" /> เบิกออก
-                          </button>
-                        </>
-                      )}
-
-                      <button
-                        onClick={() => {
-                          setSelectedLotProductCode(item.productCode)
-                          setSelectedLotProductId(item.Pid)
-                          setSelectedLotProductName(item.name)
-                          setSelectedUnit("ชิ้น") // หรือ item.unit ถ้ามี
-                          setLotModalOpen(true)
-                        }}
-                        className="bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <Layers className="w-3.5 h-3.5" /> ล๊อต
-                      </button>
-
-                      <button
-                        onClick={() => { setEditProductId(item.Pid); setEditModalOpen(true) }}
-                        className="bg-white text-gray-700 hover:text-purple-700 hover:bg-purple-50 border border-gray-200 hover:border-purple-200 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <Edit className="w-3.5 h-3.5" /> รายละเอียด
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setSelectedSlipId(item.Pid)
-                          setSelectedSlipName(item.name)
-                          setSlipModalOpen(true)
-                        }}
-                        className="bg-white text-gray-600 hover:text-blue-600 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <FileText className="w-3.5 h-3.5" /> ประวัติ
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-
-              {filteredAndSorted.length === 0 && (
+              {filteredAndSorted.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-16 text-center text-gray-400 bg-gray-50/50">
-                    <Search className="w-8 h-8 mx-auto mb-3 text-gray-300" />
-                    ไม่พบข้อมูลสินค้าที่ค้นหา
+                  <td colSpan={5} className="px-6 py-24 text-center">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="bg-gray-50 rounded-full p-6 ring-8 ring-gray-50/50">
+                        <Search className="w-10 h-10 text-gray-300" />
+                      </div>
+                      <div>
+                        <p className="text-gray-900 font-bold text-lg">ไม่พบสินค้า</p>
+                        <p className="text-gray-400 font-medium mt-1">ไม่มีสินค้าที่ตรงกับเงื่อนไขการค้นหา</p>
+                      </div>
+                    </div>
                   </td>
                 </tr>
+              ) : (
+                filteredAndSorted.map(item => (
+                  <tr key={item.Pid} className="hover:bg-indigo-50/20 transition-colors group">
+
+                    {/* รูปภาพ */}
+                    <td className="px-6 py-4">
+                      <div className="w-14 h-14 bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden shrink-0 shadow-sm group-hover:shadow-md transition-all">
+                        {item.imageUrl ? (
+                          <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs font-medium">
+                            No Image
+                          </div>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* รหัสสินค้า */}
+                    <td className="px-6 py-4">
+                      <span className="font-bold text-gray-500 text-sm">{item.productCode}</span>
+                    </td>
+
+                    {/* ชื่อสินค้า */}
+                    <td className="px-6 py-4">
+                      <p className="font-extrabold text-gray-800 text-base group-hover:text-indigo-700 transition-colors">{item.name}</p>
+                    </td>
+
+                    {/* สต็อกรวม */}
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center px-3 py-1.5 rounded-xl font-black text-sm border ${item.stock === 0
+                          ? "text-rose-600 bg-rose-50 border-rose-200"
+                          : item.stock <= 5
+                            ? "text-orange-600 bg-orange-50 border-orange-200"
+                            : "text-indigo-700 bg-indigo-50 border-indigo-200"
+                        }`}>
+                        {item.stock} ชิ้น
+                      </span>
+                    </td>
+
+                    {/* จัดการ */}
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-center gap-2 flex-wrap min-w-max">
+                        {canAdjustStock && (
+                          <>
+                            <button
+                              onClick={() => { setAdjustProductId(item.Pid); setAdjustStockOpen(true) }}
+                              className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+                            >
+                              <ArrowDownToLine className="w-3.5 h-3.5" /> รับเข้า
+                            </button>
+                            <button
+                              onClick={() => { setDispatchProductId(item.Pid); setDispatchProductName(item.name); setDispatchOpen(true) }}
+                              className="inline-flex items-center gap-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+                            >
+                              <ArrowUpFromLine className="w-3.5 h-3.5" /> เบิกออก
+                            </button>
+                          </>
+                        )}
+
+                        <button
+                          onClick={() => {
+                            setSelectedLotProductCode(item.productCode)
+                            setSelectedLotProductId(item.Pid)
+                            setSelectedLotProductName(item.name)
+                            setLotModalOpen(true)
+                          }}
+                          className="inline-flex items-center gap-1.5 bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+                        >
+                          <Layers className="w-3.5 h-3.5" /> ล็อต
+                        </button>
+
+                        <button
+                          onClick={() => { setEditProductId(item.Pid); setEditModalOpen(true) }}
+                          className="inline-flex items-center gap-1.5 bg-white text-gray-700 hover:text-indigo-700 hover:bg-indigo-50 border border-gray-200 hover:border-indigo-200 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+                        >
+                          <Edit className="w-3.5 h-3.5" /> รายละเอียด
+                        </button>
+
+                        <button
+                          onClick={() => { setSelectedSlipId(item.Pid); setSelectedSlipName(item.name); setSlipModalOpen(true) }}
+                          className="inline-flex items-center gap-1.5 bg-white text-gray-600 hover:text-blue-600 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+                        >
+                          <FileText className="w-3.5 h-3.5" /> ประวัติ
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
         </div>
 
-        <AddProductModal
-          open={open}
-          onClose={() => setOpen(false)}
-          onSuccess={() => router.refresh()}
-        />
-
-        <ProductSlipModal
-          open={slipModalOpen}
-          productId={selectedSlipId}
-          productName={selectedSlipName}
-          onClose={() => setSlipModalOpen(false)}
-        />
-
-        <EditProductModal
-          open={editModalOpen}
-          productId={editProductId}
-          onClose={() => { setEditModalOpen(false); setEditProductId(null) }}
-          onSuccess={() => router.refresh()}
-        />
-
-        <ProductRecipeModal
-          open={recipeModalOpen}
-          onClose={() => setRecipeModalOpen(false)}
-        />
-
-        <AdjustStockModal
-          open={adjustStockOpen}
-          productId={adjustProductId}
-          onClose={() => { setAdjustStockOpen(false); setAdjustProductId(null) }}
-          onSuccess={() => router.refresh()}
-        />
-        <ReceiveProduceModal
-          open={isReceiveProduceOpen}
-          onSuccess={() => router.refresh()}
-          onClose={() => setIsReceiveProduceOpen(false)}
-        />
-
-        <ProductLotModal
-          open={lotModalOpen}
-          productCode={selectedLotProductCode}
-          productId={selectedLotProductId}
-          productName={selectedLotProductName}
-          unit={selectedUnit}
-          onClose={() => {
-            setLotModalOpen(false)
-            setSelectedLotProductId(null)
-          }}
-        />
-        {dispatchOpen && dispatchProductId && (
-          <DispatchProductModal
-            open={dispatchOpen}
-            productId={dispatchProductId}
-            productName={dispatchProductName}
-            onClose={() => { setDispatchOpen(false); setDispatchProductId(null) }}
-            onSuccess={() => router.refresh()}
-          />
+        {/* Footer */}
+        {filteredAndSorted.length > 0 && (
+          <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex justify-between items-center rounded-b-3xl">
+            <span className="text-sm font-medium text-gray-500">
+              แสดงผล <strong className="text-gray-900">{filteredAndSorted.length}</strong> จาก <strong className="text-gray-900">{data.length}</strong> รายการ
+            </span>
+          </div>
         )}
       </div>
+
+      {/* Modals */}
+      <AddProductModal open={open} onClose={() => setOpen(false)} onSuccess={() => router.refresh()} />
+      <ProductSlipModal open={slipModalOpen} productId={selectedSlipId} productName={selectedSlipName} onClose={() => setSlipModalOpen(false)} />
+      <EditProductModal open={editModalOpen} productId={editProductId} onClose={() => { setEditModalOpen(false); setEditProductId(null) }} onSuccess={() => router.refresh()} />
+      <ProductRecipeModal open={recipeModalOpen} onClose={() => setRecipeModalOpen(false)} />
+      <AdjustStockModal open={adjustStockOpen} productId={adjustProductId} onClose={() => { setAdjustStockOpen(false); setAdjustProductId(null) }} onSuccess={() => router.refresh()} />
+      <ReceiveProduceModal open={isReceiveProduceOpen} onSuccess={() => router.refresh()} onClose={() => setIsReceiveProduceOpen(false)} />
+      <ProductLotModal open={lotModalOpen} productCode={selectedLotProductCode} productId={selectedLotProductId} productName={selectedLotProductName} unit="ชิ้น" onClose={() => { setLotModalOpen(false); setSelectedLotProductId(null) }} />
+      {dispatchOpen && dispatchProductId && (
+        <DispatchProductModal open={dispatchOpen} productId={dispatchProductId} productName={dispatchProductName} onClose={() => { setDispatchOpen(false); setDispatchProductId(null) }} onSuccess={() => router.refresh()} />
+      )}
     </div>
   )
 }

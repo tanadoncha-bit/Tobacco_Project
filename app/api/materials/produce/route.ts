@@ -120,6 +120,7 @@ export async function POST(req: Request) {
               materialLotId: lot.id,
               type: "PROD_OUT",
               amount: deductAmount,
+              totalCost: deductAmount * (lot.costPerUnit ?? 0),
               note: `เบิกผลิต ${newDocNo} [Lot: ${lot.lotNumber}]`,
               profileId: profileId,
               productionOrderId: newOrder.id 

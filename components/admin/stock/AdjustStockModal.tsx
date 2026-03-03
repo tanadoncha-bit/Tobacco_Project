@@ -195,6 +195,7 @@ export default function AdjustStockModal({ open, productId, onClose, onSuccess }
   const [lotNumber, setLotNumber] = useState("")
   const [expireDate, setExpireDate] = useState("")
   const [noExpire, setNoExpire] = useState(false)
+  const [totalCost, setTotalCost] = useState("")
 
   const REASON_OPTIONS = [
     { value: "NEW_PURCHASE", label: "รับเข้าสินค้าใหม่ (ซื้อมาขายไป)" },
@@ -210,6 +211,7 @@ export default function AdjustStockModal({ open, productId, onClose, onSuccess }
       setLotNumber("")
       setExpireDate("")
       setNoExpire(false)
+      setTotalCost("")
     }
   }, [showLotSection])
 
@@ -233,6 +235,7 @@ export default function AdjustStockModal({ open, productId, onClose, onSuccess }
       setLotNumber("");
       setExpireDate("");
       setNoExpire(false);
+      setTotalCost("");
     }
   }, [open, productId])
 
@@ -256,6 +259,7 @@ export default function AdjustStockModal({ open, productId, onClose, onSuccess }
     if (!selectedVariantId) return toast.error("กรุณาเลือกตัวเลือกสินค้า")
     if (!amount || Number(amount) <= 0) return toast.error("กรุณาระบุจำนวนให้ถูกต้อง")
     if (showLotSection && !noExpire && !expireDate) return toast.error("กรุณาระบุวันหมดอายุ หรือเลือก 'ไม่มีวันหมดอายุ'")
+    if (reason === "NEW_PURCHASE" && (!totalCost || Number(totalCost) <= 0)) return toast.error("กรุณาระบุราคารวมทั้งล็อต")
 
     setIsLoading(true)
     try {
@@ -269,6 +273,7 @@ export default function AdjustStockModal({ open, productId, onClose, onSuccess }
           reason: reason,
           lotNumber: showLotSection ? (lotNumber || undefined) : undefined,
           expireDate: showLotSection ? (noExpire ? null : (expireDate || null)) : null,
+          unitCost: reason === "NEW_PURCHASE" && totalCost && Number(amount) > 0 ? Number(totalCost) / Number(amount) : undefined,
         })
       })
 
@@ -429,10 +434,36 @@ export default function AdjustStockModal({ open, productId, onClose, onSuccess }
               {/* Lot Form */}
               {showLotSection && (
                 <div className="p-4 bg-emerald-50/50 border border-emerald-100 rounded-xl space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                  {/* ราคาต้นทุน - แสดงเฉพาะซื้อมาขายไป */}
+                  {reason === "NEW_PURCHASE" && (
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">
+                        ราคารวมทั้งล็อต (฿) <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">฿</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={totalCost}
+                          onChange={(e) => setTotalCost(e.target.value)}
+                          placeholder="เช่น 1000"
+                          className="w-full border border-gray-200 rounded-xl pl-7 pr-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-white transition-all font-medium placeholder:text-gray-400"
+                        />
+                      </div>
+                      {totalCost && amount && Number(totalCost) > 0 && Number(amount) > 0 && (
+                        <p className="text-xs text-emerald-600 font-bold mt-1.5">
+                          ✓ ต้นทุน/ชิ้น = ฿{(Number(totalCost) / Number(amount)).toLocaleString("th-TH", { minimumFractionDigits: 2 })}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   {/* Lot Number */}
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">
-                      หมายเลข Lot (ไม่บังคับ)
+                      หมายเลข Lot <span className="text-gray-400 font-normal">(ไม่บังคับ)</span>
                     </label>
                     <input
                       type="text"

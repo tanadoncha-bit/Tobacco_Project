@@ -2,13 +2,12 @@ import {
   DollarSign,
   TrendingUp,
   TrendingDown,
-  ShoppingBag,
-  Package,
-  Wallet
+  Wallet,
 } from "lucide-react"
 import prisma from "@/utils/db"
+import FinanceTable from "@/components/admin/FinanceTable"
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic"
 
 export default async function AdminDashboard() {
   const incomeAgg = await prisma.order.aggregate({
@@ -17,28 +16,41 @@ export default async function AdminDashboard() {
   })
   const totalIncome = incomeAgg._sum.totalAmount || 0
 
-  const expenseAgg = await prisma.materialTransaction.aggregate({
+  const materialExpenseAgg = await prisma.materialTransaction.aggregate({
     _sum: { totalCost: true },
-    where: {
-      type: "IN",
-      totalCost: { not: null }
-    }
+    where: { type: "IN", totalCost: { not: null } }
   })
-  const totalExpense = expenseAgg._sum.totalCost || 0
 
+  const wasteLots = await prisma.stockTransaction.findMany({
+    where: { type: "ADJUST_OUT", reason: { in: ["EXPIRED", "DAMAGED"] } },
+    include: { variantLot: true }
+  })
+  const wasteExpense = wasteLots.reduce((sum, tx) => {
+    return sum + ((tx.variantLot?.unitCost || 0) * tx.amount)
+  }, 0)
+
+  const totalExpense = (materialExpenseAgg._sum.totalCost || 0) + wasteExpense
   const profit = totalIncome - totalExpense
 
   const recentOrders = await prisma.order.findMany({
     where: { status: { not: "CANCELLED" } },
-    orderBy: { createdAt: 'desc' },
-    take: 5,
+    orderBy: { createdAt: "desc" },
   })
 
   const recentMaterials = await prisma.materialTransaction.findMany({
     where: { type: "IN", totalCost: { not: null } },
-    orderBy: { createdAt: 'desc' },
-    take: 5,
+    orderBy: { createdAt: "desc" },
     include: { material: true }
+  })
+
+  const recentWaste = await prisma.stockTransaction.findMany({
+    where: { type: "ADJUST_OUT", reason: { in: ["EXPIRED", "DAMAGED"] } },
+    orderBy: { createdAt: "desc" },
+    include: {
+      variantLot: {
+        include: { variant: { include: { product: true } } }
+      }
+    }
   })
 
   const combinedTransactions = [
@@ -48,130 +60,113 @@ export default async function AdminDashboard() {
       date: order.createdAt,
       description: `ขายสินค้า (ออเดอร์)`,
       type: "income",
+      subtype: "sale",
       amount: order.totalAmount
     })),
     ...recentMaterials.map(mat => ({
       uniqueKey: `MAT-TX-${mat.id}`,
       displayCode: mat.material?.code || `MAT-${mat.id}`,
       date: mat.createdAt,
-      description: `สั่งซื้อวัตถุดิบ (${mat.material?.name || 'ไม่ระบุ'})`,
+      description: `สั่งซื้อวัตถุดิบ (${mat.material?.name || "ไม่ระบุ"})`,
       type: "expense",
+      subtype: "material",
       amount: mat.totalCost || 0
+    })),
+    ...recentWaste.map(tx => ({
+      uniqueKey: `WASTE-TX-${tx.id}`,
+      displayCode: tx.variantLot?.lotNumber || "-",
+      date: tx.createdAt,
+      description: `${tx.reason === "EXPIRED" ? "ตัดของหมดอายุ" : "ตัดของชำรุด"} (${tx.variantLot?.variant?.product?.Pname || "ไม่ระบุ"})`,
+      type: "expense",
+      subtype: tx.reason === "EXPIRED" ? "expired" : "damaged",
+      amount: (tx.variantLot?.unitCost || 0) * tx.amount
     }))
   ]
 
   combinedTransactions.sort((a, b) => b.date.getTime() - a.date.getTime())
-  const displayTransactions = combinedTransactions.slice(0, 5)
 
+  const cards = [
+    {
+      label: "รายรับทั้งหมด (Income)",
+      value: totalIncome,
+      emptyText: "ยังไม่มีรายรับ",
+      valueColor: "text-emerald-600",
+      icon: <TrendingUp className="w-6 h-6" />,
+      gradient: "from-emerald-400 to-teal-500",
+      shadow: "shadow-emerald-200",
+      sub: null,
+    },
+    {
+      label: "รายจ่ายรวม (Expenses)",
+      value: totalExpense,
+      emptyText: "ยังไม่มีรายจ่าย",
+      valueColor: "text-rose-600",
+      icon: <TrendingDown className="w-6 h-6" />,
+      gradient: "from-rose-500 to-red-600",
+      shadow: "shadow-rose-200",
+      sub: wasteExpense > 0
+        ? `รวมของเสีย ฿${wasteExpense.toLocaleString("th-TH", { minimumFractionDigits: 2 })}`
+        : null,
+    },
+    {
+      label: "กำไรสุทธิ (Net Profit)",
+      value: totalIncome === 0 && totalExpense === 0 ? null : profit,
+      emptyText: "ยังไม่มีข้อมูล",
+      valueColor: profit >= 0 ? "text-indigo-600" : "text-rose-600",
+      icon: <DollarSign className="w-6 h-6" />,
+      gradient: "from-indigo-500 to-purple-600",
+      shadow: "shadow-purple-200",
+      sub: null,
+    },
+  ]
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-          <Wallet className="w-7 h-7 text-purple-600" /> Financial Dashboard
-        </h1>
-        <p className="text-gray-500 text-sm mt-1">ภาพรวมการเงินและประวัติการทำรายการล่าสุดของร้าน</p>
-      </div>
+    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-500 mb-1">รายรับทั้งหมด (Income)</p>
-            <h2 className="text-3xl font-bold text-green-600">
-              ฿{totalIncome.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
-            </h2>
-          </div>
-          <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600">
-            <TrendingUp size={24} />
-          </div>
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-3 rounded-2xl shadow-lg shadow-purple-200">
+          <Wallet className="w-6 h-6 text-white" />
         </div>
-
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-500 mb-1">รายจ่ายวัตถุดิบ (Expenses)</p>
-            <h2 className="text-3xl font-bold text-red-500">
-              ฿{totalExpense.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
-            </h2>
-          </div>
-          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-red-500">
-            <TrendingDown size={24} />
-          </div>
-        </div>
-
-        <div className="bg-[linear-gradient(160deg,#2E4BB1_0%,#8E63CE_50%,#B07AD9_100%)] p-6 rounded-2xl shadow-md text-white flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-white/80 mb-1">กำไรสุทธิ (Net Profit)</p>
-            <h2 className="text-3xl font-bold">
-              ฿{profit.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
-            </h2>
-          </div>
-          <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-            <DollarSign size={24} />
-          </div>
+        <div>
+          <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">Financial Dashboard</h1>
+          <p className="text-[16px] text-gray-500 font-medium mt-1">ภาพรวมการเงินและประวัติการทำรายการล่าสุดของร้าน</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-          <h2 className="text-lg font-bold text-gray-800">ประวัติการเข้า-ออกของเงินล่าสุด</h2>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50 text-gray-500 text-sm border-b">
-                <th className="px-6 py-4 font-medium">วันที่</th>
-                <th className="px-6 py-4 font-medium">รหัสอ้างอิง</th>
-                <th className="px-6 py-4 font-medium">รายการ</th>
-                <th className="px-6 py-4 font-medium">ประเภท</th>
-                <th className="px-6 py-4 font-medium text-right">จำนวนเงิน (บาท)</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {displayTransactions.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                    ยังไม่มีประวัติการทำรายการในระบบ
-                  </td>
-                </tr>
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {cards.map(card => (
+          <div
+            key={card.label}
+            className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-6 flex items-center gap-5 group"
+          >
+            <div className={`bg-gradient-to-br ${card.gradient} rounded-2xl p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
+              {card.icon}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm text-gray-500 font-bold mb-1 truncate">{card.label}</p>
+              {card.value === null ? (
+                <p className="text-xl font-black text-gray-300">{card.emptyText}</p>
+              ) : card.value === 0 ? (
+                <p className="text-xl font-black text-gray-300">{card.emptyText}</p>
+              ) : (
+                <p className={`text-3xl font-black ${card.valueColor}`}>
+                  ฿{card.value.toLocaleString("th-TH", { minimumFractionDigits: 2 })}
+                </p>
               )}
-              {displayTransactions.map((trx) => (
-                <tr key={trx.uniqueKey} className="hover:bg-gray-50 transition">
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {trx.date.toLocaleString('th-TH', {
-                      day: '2-digit', month: 'short', year: 'numeric',
-                      hour: '2-digit', minute: '2-digit'
-                    })}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500 font-mono">{trx.displayCode}</td>
-
-                  <td className="px-6 py-4 text-sm text-gray-800 font-medium">
-                    <div className="flex items-center gap-2">
-                      {trx.type === "income" ? (
-                        <ShoppingBag size={16} className="text-green-500" />
-                      ) : (
-                        <Package size={16} className="text-red-400" />
-                      )}
-                      {trx.description}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${trx.type === "income" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                      }`}>
-                      {trx.type === "income" ? "รายรับ (ขาย)" : "รายจ่าย (ทุน)"}
-                    </span>
-                  </td>
-                  <td className={`px-6 py-4 text-sm font-bold text-right ${trx.type === "income" ? "text-green-600" : "text-red-500"
-                    }`}>
-                    {trx.type === "income" ? "+" : "-"}฿{trx.amount.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              {card.sub && (
+                <p className="text-xs text-rose-400 mt-1 font-medium">{card.sub}</p>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
 
+      {/* Table Section */}
+      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+        <FinanceTable transactions={combinedTransactions} />
+      </div>
     </div>
   )
 }

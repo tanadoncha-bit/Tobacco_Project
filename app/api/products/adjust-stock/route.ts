@@ -22,7 +22,8 @@ export async function POST(req: Request) {
 
     const body = await req.json();
 
-    const { variantId, amount, type, reason, note, lotNumber, expireDate } = body;
+    // ✅ เพิ่ม unitCost ตรงนี้
+    const { variantId, amount, type, reason, note, lotNumber, expireDate, unitCost } = body;
 
     if (!variantId || !amount || !type || !reason) {
       return NextResponse.json(
@@ -62,6 +63,7 @@ export async function POST(req: Request) {
               stock: Number(amount),
               expireDate: expireDate ? new Date(expireDate) : null,
               produceDate: new Date(),
+              unitCost: unitCost != null ? Number(unitCost) : null,
             }
           });
           currentLotId = newLot.id;

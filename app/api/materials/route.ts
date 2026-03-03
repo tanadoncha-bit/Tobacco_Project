@@ -25,14 +25,12 @@ export async function GET() {
   try {
     const materials = await prisma.material.findMany({
       orderBy: { name: "asc" },
-      select: { 
-        id: true, 
-        name: true, 
-        unit: true, 
-        costPerUnit: true,
-        stock: true, 
-        code: true 
-      }
+      include: {
+        MaterialLot: {
+          where: { stock: { gt: 0 } },
+          orderBy: [{ expireDate: "asc" }, { receiveDate: "asc" }],
+        },
+      },
     })
     return NextResponse.json(materials)
   } catch (error) {
