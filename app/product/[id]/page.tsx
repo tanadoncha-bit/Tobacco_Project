@@ -22,7 +22,14 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     }),
     prisma.product.findMany({
       where: { Pid: { not: productId } },
-      include: { variants: true, images: true },
+      include: {
+        variants: {
+          include: {
+            productVariantLots: true,
+          }
+        },
+        images: true,
+      },
       orderBy: { createdAt: "desc" },
       take: 4,
     }),
@@ -43,7 +50,6 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
         <ProductInteractive product={product} />
 
-        {/* Related products */}
         {relatedProducts.length > 0 && (
           <section>
             <div className="flex items-center gap-3 mb-5">
@@ -54,7 +60,9 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
               {relatedProducts.map(p => {
                 const minPrice = Math.min(...p.variants.map(v => v.price ?? 0))
                 const imageUrl = p.images[0]?.url ?? null
-                const outOfStock = p.variants.reduce((s, v) => s + v.stock, 0) <= 0
+                const outOfStock = p.variants.reduce((s, v) => {
+                  return s + v.productVariantLots.reduce((ls, lot) => ls + lot.stock, 0)
+                }, 0) <= 0
                 return (
                   <div key={p.Pid} className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group flex flex-col">
                     <div className="aspect-square bg-gray-50 overflow-hidden relative">
