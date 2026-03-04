@@ -20,9 +20,9 @@ const DropdownListMenu = () => {
 
     return (
         <div>
-            <DropdownMenu>
+            <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="hover:bg-transparent dark:hover:bg-transparent active:bg-transparent h-10 w-10 p-0 mr-4
+                    <Button variant="destructive" className="hover:bg-transparent dark:hover:bg-transparent active:bg-transparent h-10 w-10 p-0 mr-4
                         focus:ring-0 focus:outline-none 
                         focus-visible:ring-0 focus-visible:outline-none ring-0
                         cursor-pointer flex items-center justify-center">
@@ -46,7 +46,7 @@ const DropdownListMenu = () => {
                             )
                         ) : (
                             <div className="pt-1">
-                                <TextAlignJustify strokeWidth={2.5} className="text-white h-7 w-7 size-10" />
+                                <TextAlignJustify strokeWidth={2.5} className="size-6" />
                             </div>
                         )}
 
@@ -71,15 +71,6 @@ const DropdownListMenu = () => {
                             <DropdownMenuItem asChild className="cursor-pointer">
                                 <Link href="/user/OrderStatue">Order Status</Link>
                             </DropdownMenuItem>
-
-                            {/* ถ้าเป็น ADMIN ให้มีปุ่มไปหลังบ้าน
-                            {session.user.role === "ADMIN" && (
-                                <DropdownMenuItem asChild className="cursor-pointer">
-                                    <Link href="/admin">
-                                        <span>Admin Management</span>
-                                    </Link>
-                                </DropdownMenuItem>
-                            )} */}
 
                             <DropdownMenuSeparator />
                             <DropdownMenuItem

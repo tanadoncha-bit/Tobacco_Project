@@ -25,28 +25,27 @@ type Transaction = {
 }
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: "in" | "out" }> = {
-  NEW_PURCHASE: { label: "รับเข้าซื้อ",  color: "text-green-600 bg-green-50 border-green-200",    icon: "in"  },
-  PRODUCTION:   { label: "รับจากผลิต",   color: "text-teal-600 bg-teal-50 border-teal-200",      icon: "in"  },
-  RETURN:       { label: "ลูกค้าคืน",    color: "text-purple-600 bg-purple-50 border-purple-200", icon: "in"  },
-  AUDIT:        { label: "ปรับยอด",      color: "text-gray-600 bg-gray-100 border-gray-200",      icon: "out" },
-  SALE:         { label: "ขายออก",       color: "text-orange-600 bg-orange-50 border-orange-200", icon: "out" },
-  DAMAGED:      { label: "ของชำรุด",     color: "text-red-500 bg-red-50 border-red-200",          icon: "out" },
-  EXPIRED:      { label: "หมดอายุ",      color: "text-red-700 bg-red-100 border-red-300",         icon: "out" },
-  IN:           { label: "รับเข้า",      color: "text-green-600 bg-green-50 border-green-200",    icon: "in"  },
-  PROD_IN:      { label: "รับเข้าผลิต", color: "text-teal-600 bg-teal-50 border-teal-200",       icon: "in"  },
-  OUT:          { label: "เบิกออก",      color: "text-orange-600 bg-orange-50 border-orange-200", icon: "out" },
-  SALE_OUT:     { label: "ขายออก",       color: "text-orange-600 bg-orange-50 border-orange-200", icon: "out" },
-  ADJUST_OUT:   { label: "ปรับลดสต็อก", color: "text-red-600 bg-red-50 border-red-200",          icon: "out" },
-  PROD_OUT:     { label: "เบิกผลิต",     color: "text-orange-600 bg-orange-50 border-orange-200", icon: "out" },
+  // reason
+  NEW_PURCHASE:   { label: "รับเข้าซื้อ",   color: "text-green-600 bg-green-50 border-green-200",     icon: "in"  },
+  PRODUCTION:     { label: "รับจากผลิต",    color: "text-teal-600 bg-teal-50 border-teal-200",        icon: "in"  },
+  PRODUCTION_USE: { label: "เบิกผลิต",      color: "text-teal-600 bg-teal-50 border-teal-200",        icon: "out" },
+  RETURN:         { label: "ลูกค้าคืน",     color: "text-purple-600 bg-purple-50 border-purple-200",  icon: "in"  },
+  AUDIT:          { label: "ปรับยอด",       color: "text-gray-600 bg-gray-100 border-gray-200",       icon: "out" },
+  SALE:           { label: "ขายออก",        color: "text-orange-600 bg-orange-50 border-orange-200",  icon: "out" },
+  OFFLINE_SALE:   { label: "ขายหน้าร้าน",   color: "text-teal-600 bg-teal-50 border-teal-200",        icon: "out" },
+  DAMAGED:        { label: "ของชำรุด",      color: "text-red-500 bg-red-50 border-red-200",           icon: "out" },
+  EXPIRED:        { label: "หมดอายุ",       color: "text-red-700 bg-red-100 border-red-300",          icon: "out" },
+  ADJUSTMENT:     { label: "ปรับสต็อก",     color: "text-gray-600 bg-gray-100 border-gray-200",       icon: "out" },
+  PRODUCTION_RETURN: { label: "คืนวัตถุดิบ", color: "text-teal-600 bg-teal-50 border-teal-200",       icon: "in"  },
+  // type fallback
+  IN:             { label: "รับเข้า",       color: "text-green-600 bg-green-50 border-green-200",     icon: "in"  },
+  OUT:            { label: "เบิกออก",       color: "text-orange-600 bg-orange-50 border-orange-200",  icon: "out" },
 }
 
-const IN_TYPES  = ["IN", "PROD_IN"]
-const OUT_TYPES = ["OUT", "SALE_OUT", "ADJUST_OUT", "PROD_OUT"]
-
 export default function HistoryClient({ initialData }: { initialData: Transaction[] }) {
-  const [search, setSearch]               = useState("")
+  const [search, setSearch]                 = useState("")
   const [filterCategory, setFilterCategory] = useState<"ALL" | "MATERIAL" | "PRODUCT" | "PRODUCTION">("ALL")
-  const [filterType, setFilterType]       = useState<"ALL" | "IN" | "OUT">("ALL")
+  const [filterType, setFilterType]         = useState<"ALL" | "IN" | "OUT">("ALL")
 
   const filteredData = initialData.filter((tx) => {
     const s = search.toLowerCase()
@@ -57,21 +56,20 @@ export default function HistoryClient({ initialData }: { initialData: Transactio
       (tx.lotNumber && tx.lotNumber.toLowerCase().includes(s))
 
     const matchCategory =
-      filterCategory === "ALL" ? true
-      : filterCategory === "PRODUCTION" ? ["PROD_IN", "PROD_OUT"].includes(tx.type)
+      filterCategory === "ALL"        ? true
+      : filterCategory === "PRODUCTION" ? tx.productionDocNo !== null
       : tx.category === filterCategory
 
     const matchType =
       filterType === "ALL" ? true
-      : filterType === "IN"  ? IN_TYPES.includes(tx.type)
-      : OUT_TYPES.includes(tx.type)
+      : tx.type === filterType
 
     return matchSearch && matchCategory && matchType
   })
 
-  const totalIn   = initialData.filter(tx => IN_TYPES.includes(tx.type)).length
-  const totalOut  = initialData.filter(tx => OUT_TYPES.includes(tx.type)).length
-  const totalProd = initialData.filter(tx => ["PROD_IN", "PROD_OUT"].includes(tx.type)).length
+  const totalIn   = initialData.filter(tx => tx.type === "IN").length
+  const totalOut  = initialData.filter(tx => tx.type === "OUT").length
+  const totalProd = initialData.filter(tx => tx.productionDocNo !== null).length
 
   const CATEGORY_FILTERS = [
     { value: "ALL",        label: "ทั้งหมด",  count: initialData.length,                                        activeClass: "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md" },
@@ -103,7 +101,7 @@ export default function HistoryClient({ initialData }: { initialData: Transactio
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
         {[
-          { label: "รายการทั้งหมด", value: initialData.length, icon: <ClipboardList className="w-6 h-6" />, gradient: "from-indigo-500 to-purple-600", shadow: "shadow-purple-200" },
+          { label: "รายการทั้งหมด", value: initialData.length, icon: <ClipboardList className="w-6 h-6" />, gradient: "from-indigo-500 to-purple-600", shadow: "shadow-purple-200"   },
           { label: "รับเข้า",       value: totalIn,            icon: <ArrowDownToLine className="w-6 h-6" />, gradient: "from-emerald-400 to-teal-500", shadow: "shadow-emerald-200" },
           { label: "เบิกออก",       value: totalOut,           icon: <ArrowUpFromLine className="w-6 h-6" />, gradient: "from-rose-500 to-red-600",     shadow: "shadow-rose-200"    },
           { label: "การผลิต",       value: totalProd,          icon: <Factory className="w-6 h-6" />,         gradient: "from-teal-400 to-emerald-500", shadow: "shadow-teal-200"    },
@@ -127,8 +125,6 @@ export default function HistoryClient({ initialData }: { initialData: Transactio
 
         {/* Toolbar */}
         <div className="p-4 md:p-6 border-b border-gray-100 flex flex-wrap gap-3 items-center justify-between bg-gray-50/30">
-
-          {/* Search */}
           <div className="relative w-56 group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-purple-500 transition-colors" />
             <input
@@ -141,7 +137,6 @@ export default function HistoryClient({ initialData }: { initialData: Transactio
           </div>
 
           <div className="flex flex-wrap gap-3 items-center">
-            {/* Category filter */}
             <div className="inline-flex bg-gray-100/80 p-1.5 rounded-2xl items-center shadow-inner gap-1">
               {CATEGORY_FILTERS.map(opt => {
                 const isActive = filterCategory === opt.value
@@ -163,7 +158,6 @@ export default function HistoryClient({ initialData }: { initialData: Transactio
               })}
             </div>
 
-            {/* Type filter */}
             <div className="inline-flex bg-gray-100/80 p-1.5 rounded-2xl items-center shadow-inner gap-1">
               {TYPE_FILTERS.map(opt => {
                 const isActive = filterType === opt.value
@@ -211,100 +205,91 @@ export default function HistoryClient({ initialData }: { initialData: Transactio
                     </div>
                   </td>
                 </tr>
-              ) : (
-                filteredData.map(tx => {
-                  const isIn = IN_TYPES.includes(tx.type)
-                  const statusKey = tx.reason || tx.type
-                  const status = STATUS_MAP[statusKey] ?? { label: statusKey, color: "text-gray-500 bg-gray-100 border-gray-200", icon: "out" as const }
+              ) : filteredData.map(tx => {
+                const isIn = tx.type === "IN"
+                const statusKey = tx.reason || tx.type
+                const status = STATUS_MAP[statusKey] ?? { label: statusKey, color: "text-gray-500 bg-gray-100 border-gray-200", icon: "out" as const }
 
-                  return (
-                    <tr key={tx.id} className="hover:bg-indigo-50/20 transition-colors group">
+                return (
+                  <tr key={tx.id} className="hover:bg-indigo-50/20 transition-colors group">
 
-                      {/* วัน-เวลา */}
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        <div className="font-bold text-gray-800">{dayjs(tx.date).format("DD MMM YYYY")}</div>
-                        <div className="text-xs text-gray-400 mt-0.5">{dayjs(tx.date).format("HH:mm น.")}</div>
-                      </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="font-bold text-gray-800">{dayjs(tx.date).format("DD MMM YYYY")}</div>
+                      <div className="text-xs text-gray-400 mt-0.5">{dayjs(tx.date).format("HH:mm น.")}</div>
+                    </td>
 
-                      {/* ใบผลิต / ล็อต */}
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        <div className="flex flex-col gap-1">
-                          {tx.productionDocNo && (
-                            <span className="inline-flex items-center text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-100 w-fit">
-                              <Factory className="w-3 h-3 mr-1" /> {tx.productionDocNo}
-                            </span>
-                          )}
-                          {tx.lotNumber && (
-                            <span className="inline-flex items-center text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100 w-fit">
-                              LOT: {tx.lotNumber}
-                            </span>
-                          )}
-                          {!tx.productionDocNo && !tx.lotNumber && (
-                            <span className="text-[11px] text-gray-300">-</span>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* สถานะ */}
-                      <td className="px-4 py-4">
-                        <span className={`inline-flex items-center gap-1 font-bold px-2.5 py-1 rounded-lg text-xs whitespace-nowrap border ${status.color}`}>
-                          {status.icon === "in"
-                            ? <ArrowDownToLine className="w-3.5 h-3.5" />
-                            : <ArrowUpFromLine className="w-3.5 h-3.5" />}
-                          {status.label}
-                        </span>
-                      </td>
-
-                      {/* ชื่อรายการ + ประเภท + หมายเหตุ */}
-                      <td className="px-4 py-4 min-w-[200px]">
-                        <div className="flex items-center gap-1.5 mb-1">
-                          {tx.category === "MATERIAL" ? (
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-orange-50 text-orange-500 border border-orange-100">
-                              <Hammer className="w-2.5 h-2.5" /> วัตถุดิบ
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-500 border border-blue-100">
-                              <Package className="w-2.5 h-2.5" /> สินค้า
-                            </span>
-                          )}
-                        </div>
-                        <p className="font-black text-gray-900 group-hover:text-indigo-700 transition-colors">{tx.itemName}</p>
-                        {tx.note && <p className="text-xs text-gray-400 mt-0.5 leading-relaxed">{tx.note}</p>}
-                      </td>
-
-                      {/* จำนวน */}
-                      <td className="px-4 py-4 text-right whitespace-nowrap">
-                        <span className={`font-black text-base ${isIn ? "text-emerald-600" : "text-rose-600"}`}>
-                          {isIn ? "+" : "-"}{tx.amount.toLocaleString()}
-                        </span>
-                        <span className="text-gray-400 text-xs ml-1">{tx.unit}</span>
-                        {tx.totalCost && (
-                          <div className="text-xs text-gray-400 mt-0.5">฿{tx.totalCost.toLocaleString()}</div>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="flex flex-col gap-1">
+                        {tx.productionDocNo && (
+                          <span className="inline-flex items-center text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-100 w-fit">
+                            <Factory className="w-3 h-3 mr-1" /> {tx.productionDocNo}
+                          </span>
                         )}
-                      </td>
+                        {tx.lotNumber && (
+                          <span className="inline-flex items-center text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100 w-fit">
+                            LOT: {tx.lotNumber}
+                          </span>
+                        )}
+                        {!tx.productionDocNo && !tx.lotNumber && (
+                          <span className="text-[11px] text-gray-300">-</span>
+                        )}
+                      </div>
+                    </td>
 
-                      {/* ผู้ทำรายการ */}
-                      <td className="px-4 py-4 min-w-[140px]">
-                        <div className="flex items-center gap-2">
-                          {tx.creatorImage ? (
-                            <img src={tx.creatorImage} alt={tx.creatorName} className="w-7 h-7 rounded-full object-cover border border-gray-200 shadow-sm shrink-0" />
-                          ) : (
-                            <div className="w-7 h-7 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-xs font-black uppercase shrink-0">
-                              {tx.creatorName?.charAt(0) || "S"}
-                            </div>
-                          )}
-                          <span className="text-sm font-medium text-gray-700">{tx.creatorName}</span>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })
-              )}
+                    <td className="px-4 py-4">
+                      <span className={`inline-flex items-center gap-1 font-bold px-2.5 py-1 rounded-lg text-xs whitespace-nowrap border ${status.color}`}>
+                        {status.icon === "in"
+                          ? <ArrowDownToLine className="w-3.5 h-3.5" />
+                          : <ArrowUpFromLine className="w-3.5 h-3.5" />}
+                        {status.label}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-4 min-w-[200px]">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        {tx.category === "MATERIAL" ? (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-orange-50 text-orange-500 border border-orange-100">
+                            <Hammer className="w-2.5 h-2.5" /> วัตถุดิบ
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-500 border border-blue-100">
+                            <Package className="w-2.5 h-2.5" /> สินค้า
+                          </span>
+                        )}
+                      </div>
+                      <p className="font-black text-gray-900 group-hover:text-indigo-700 transition-colors">{tx.itemName}</p>
+                      {tx.note && <p className="text-xs text-gray-400 mt-0.5 leading-relaxed">{tx.note}</p>}
+                    </td>
+
+                    <td className="px-4 py-4 text-right whitespace-nowrap">
+                      <span className={`font-black text-base ${isIn ? "text-emerald-600" : "text-rose-600"}`}>
+                        {isIn ? "+" : "-"}{tx.amount.toLocaleString()}
+                      </span>
+                      <span className="text-gray-400 text-xs ml-1">{tx.unit}</span>
+                      {tx.totalCost && (
+                        <div className="text-xs text-gray-400 mt-0.5">฿{tx.totalCost.toLocaleString()}</div>
+                      )}
+                    </td>
+
+                    <td className="px-4 py-4 min-w-[140px]">
+                      <div className="flex items-center gap-2">
+                        {tx.creatorImage ? (
+                          <img src={tx.creatorImage} alt={tx.creatorName} className="w-7 h-7 rounded-full object-cover border border-gray-200 shadow-sm shrink-0" />
+                        ) : (
+                          <div className="w-7 h-7 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-xs font-black uppercase shrink-0">
+                            {tx.creatorName?.charAt(0) || "S"}
+                          </div>
+                        )}
+                        <span className="text-sm font-medium text-gray-700">{tx.creatorName}</span>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
 
-        {/* Footer */}
         {filteredData.length > 0 && (
           <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex justify-between items-center">
             <span className="text-sm font-medium text-gray-500">

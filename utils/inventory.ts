@@ -1,5 +1,5 @@
 export async function deductStockFIFO(
-    tx: any, // 🌟 รับ tx มาจากไฟล์ API
+    tx: any, 
     {
         variantId,
         amountToDeduct,
@@ -50,7 +50,7 @@ export async function deductStockFIFO(
             data: {
                 variantId: variantId,
                 variantLotId: lot.id,
-                type: "SALE_OUT",
+                type: "OUT",
                 amount: deductFromThisLot,
                 reason: "SALE",
                 note: note,
@@ -117,7 +117,7 @@ export async function returnStockToLatestLot(
         data: {
             variantId: variantId,
             variantLotId: targetLot.id,
-            type: "RESTOCK_IN",
+            type: "IN",
             amount: amountToReturn,
             reason: "CANCELLED_ORDER",
             note: note,

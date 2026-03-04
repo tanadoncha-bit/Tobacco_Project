@@ -73,18 +73,12 @@ export async function POST(req: Request) {
                 data: { status: "COMPLETED" }
             })
 
-            // อัปเดตสต๊อกรวม
-            await tx.productVariant.update({
-                where: { id: order.variantId },
-                data: { stock: { increment: finalAmount } }
-            })
-
             // บันทึกประวัติ
             const finalNote = note ? ` (${note})` : ""
             await tx.stockTransaction.create({
                 data: {
                     variantId: order.variantId,
-                    type: "PROD_IN", 
+                    type: "IN", 
                     amount: finalAmount,
                     reason: "PRODUCTION",
                     note: `รับเข้าจากบิลผลิตรายการ: ${order.docNo} [Lot: ${lotNumberForNote}]${finalNote}`,

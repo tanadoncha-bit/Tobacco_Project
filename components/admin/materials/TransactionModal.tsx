@@ -23,7 +23,7 @@ type Material = {
   id: number
   code: string | null
   name: string
-  stock: number
+  totalStock: number
   unit: string
   costPerUnit: number | null
   MaterialLot?: MaterialLot[]

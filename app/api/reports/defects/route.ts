@@ -14,21 +14,15 @@ export async function GET() {
 
         const defectLogs = await prisma.stockTransaction.findMany({
             where: {
-                type: "ADJUST_OUT",
+                type: "OUT",
                 reason: "EXPIRED"
             },
             include: {
-                variant: {
-                    include: {
-                        product: true
-                    }
-                },
+                variant: { include: { product: true } },
                 variantLot: true,
                 profile: true
             },
-            orderBy: {
-                createdAt: "desc"
-            }
+            orderBy: { createdAt: "desc" }
         })
 
         const formatted = defectLogs.map(item => ({

@@ -26,7 +26,7 @@ type Material = {
   id: number
   code: string | null
   name: string
-  stock: number
+  totalStock: number
   unit: string
   costPerUnit: number | null
   MaterialLot?: MaterialLot[]
@@ -54,12 +54,12 @@ type Stats = {
 }
 
 const SORT_OPTIONS = [
-  { value: "newest", label: "เพิ่มล่าสุด" },
-  { value: "oldest", label: "เก่าสุด" },
-  { value: "name-az", label: "ชื่อวัตถุดิบ (A-Z)" },
-  { value: "name-za", label: "ชื่อวัตถุดิบ (Z-A)" },
+  { value: "newest",     label: "เพิ่มล่าสุด" },
+  { value: "oldest",     label: "เก่าสุด" },
+  { value: "name-az",    label: "ชื่อวัตถุดิบ (A-Z)" },
+  { value: "name-za",    label: "ชื่อวัตถุดิบ (Z-A)" },
   { value: "stock-high", label: "สต็อก (มากไปน้อย)" },
-  { value: "stock-low", label: "สต็อก (น้อยไปมาก)" },
+  { value: "stock-low",  label: "สต็อก (น้อยไปมาก)" },
 ] as const
 
 type SortValue = typeof SORT_OPTIONS[number]["value"]
@@ -138,14 +138,26 @@ export default function MaterialTable({
         (m.code && m.code.toLowerCase().includes(search.toLowerCase()))
     )
     switch (sort) {
-      case "stock-high": result.sort((a, b) => b.stock - a.stock); break
-      case "stock-low": result.sort((a, b) => a.stock - b.stock); break
-      case "name-az": result.sort((a, b) => a.name.localeCompare(b.name)); break
-      case "name-za": result.sort((a, b) => b.name.localeCompare(a.name)); break
-      case "oldest": result.reverse(); break
+      case "stock-high": result.sort((a, b) => b.totalStock - a.totalStock); break
+      case "stock-low":  result.sort((a, b) => a.totalStock - b.totalStock); break
+      case "name-az":    result.sort((a, b) => a.name.localeCompare(b.name)); break
+      case "name-za":    result.sort((a, b) => b.name.localeCompare(a.name)); break
+      case "oldest":     result.reverse(); break
     }
     return result
   }, [materials, search, sort])
+
+  const refreshMaterials = async () => {
+    const refreshRes = await fetch("/api/materials")
+    if (!refreshRes.ok) return
+    const fresh = await refreshRes.json()
+    const freshList: Material[] = (fresh.data || fresh).map((m: any) => ({
+      ...m,
+      totalStock: m.MaterialLot?.reduce((sum: number, lot: MaterialLot) => sum + lot.stock, 0) ?? 0,
+    }))
+    setMaterials(freshList)
+    return freshList
+  }
 
   const handleAddMaterial = async () => {
     if (!newMat.name || !newMat.unit) return toast.error("กรุณากรอกชื่อและหน่วยนับ")
@@ -156,7 +168,8 @@ export default function MaterialTable({
         body: JSON.stringify(newMat),
       })
       if (!res.ok) throw new Error("บันทึกไม่สำเร็จ")
-      setMaterials([await res.json(), ...materials])
+      const newMaterial = await res.json()
+      setMaterials([{ ...newMaterial, totalStock: 0 }, ...materials])
       setIsAddOpen(false)
       toast.success("เพิ่มวัตถุดิบเรียบร้อย")
     } catch { toast.error("เกิดข้อผิดพลาด") }
@@ -166,7 +179,7 @@ export default function MaterialTable({
   const handleTransaction = async () => {
     const amountVal = Number(txForm.amount)
     if (amountVal <= 0) return toast.error("กรุณาระบุจำนวนให้ถูกต้อง")
-    if (txModal.type === "OUT" && txModal.mat && amountVal > txModal.mat.stock)
+    if (txModal.type === "OUT" && txModal.mat && amountVal > txModal.mat.totalStock)
       return toast.error("จำนวนเบิกออก มากกว่าสต๊อกที่มีอยู่!")
     if (txModal.type === "IN" && (!txForm.totalCost || Number(txForm.totalCost) <= 0))
       return toast.error("กรุณากรอกราคารวมล๊อตนี้")
@@ -184,18 +197,14 @@ export default function MaterialTable({
         }),
       })
       if (!res.ok) throw new Error((await res.json()).message || "อัปเดตสต๊อกไม่สำเร็จ")
-      const refreshRes = await fetch("/api/materials")
-      if (refreshRes.ok) {
-        const fresh = await refreshRes.json()
-        const freshList = fresh.data || fresh
-        setMaterials(freshList)
 
-        // ── sync LotsModal ถ้าเปิดอยู่ ──
-        if (lotsModal.isOpen && lotsModal.mat) {
-          const updatedMat = freshList.find((m: Material) => m.id === lotsModal.mat!.id)
-          if (updatedMat) setLotsModal(prev => ({ ...prev, mat: updatedMat }))
-        }
+      const freshList = await refreshMaterials()
+
+      if (lotsModal.isOpen && lotsModal.mat && freshList) {
+        const updatedMat = freshList.find((m: Material) => m.id === lotsModal.mat!.id)
+        if (updatedMat) setLotsModal(prev => ({ ...prev, mat: updatedMat }))
       }
+
       setTxModal({ isOpen: false, mat: null, type: "IN" })
       setTxForm({ amount: "", note: "", totalCost: "", materialLotId: "" })
       setLotNumber(""); setExpireDate("")
@@ -215,7 +224,7 @@ export default function MaterialTable({
         body: JSON.stringify({ variantId: Number(produceForm.variantId), produceAmount: amountVal, note: produceForm.note }),
       })
       if (!res.ok) throw new Error((await res.json()).error || "ผลิตสินค้าไม่สำเร็จ วัตถุดิบอาจไม่เพียงพอ")
-      setMaterials(await res.json())
+      await refreshMaterials()
       setIsProduceOpen(false)
       setProduceForm({ variantId: "", amount: "", note: "" })
       toast.success("เบิกวัตถุดิบเพื่อผลิตสินค้าเสร็จสิ้น")
@@ -226,7 +235,6 @@ export default function MaterialTable({
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-      {/* Header */}
       <div className="flex items-center gap-4">
         <div className="bg-gradient-to-br from-emerald-500 to-teal-600 p-3 rounded-2xl shadow-lg shadow-emerald-200">
           <FlaskConical className="w-6 h-6 text-white" />
@@ -237,13 +245,12 @@ export default function MaterialTable({
         </div>
       </div>
 
-      {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
         {[
-          { label: "วัตถุดิบทั้งหมด", value: stats.totalMaterials, unit: "รายการ", icon: <FlaskConical className="w-6 h-6" />, gradient: "from-emerald-500 to-teal-600", shadow: "shadow-emerald-200" },
-          { label: "สต็อกต่ำ (≤10)", value: stats.lowStock, unit: "รายการ", icon: <AlertTriangle className="w-6 h-6" />, gradient: "from-orange-400 to-amber-500", shadow: "shadow-orange-200" },
-          { label: "หมดสต็อก", value: stats.outOfStock, unit: "รายการ", icon: <PackageX className="w-6 h-6" />, gradient: "from-rose-500 to-red-600", shadow: "shadow-rose-200" },
-          { label: "ใกล้หมดอายุ (30 วัน)", value: stats.nearExpiry, unit: "รายการ", icon: <Timer className="w-6 h-6" />, gradient: "from-purple-500 to-indigo-600", shadow: "shadow-purple-200" },
+          { label: "วัตถุดิบทั้งหมด",     value: stats.totalMaterials, unit: "รายการ", icon: <FlaskConical className="w-6 h-6" />, gradient: "from-emerald-500 to-teal-600",  shadow: "shadow-emerald-200" },
+          { label: "สต็อกต่ำ (≤10)",      value: stats.lowStock,       unit: "รายการ", icon: <AlertTriangle className="w-6 h-6" />, gradient: "from-orange-400 to-amber-500", shadow: "shadow-orange-200" },
+          { label: "หมดสต็อก",            value: stats.outOfStock,     unit: "รายการ", icon: <PackageX className="w-6 h-6" />,     gradient: "from-rose-500 to-red-600",     shadow: "shadow-rose-200"   },
+          { label: "ใกล้หมดอายุ (30 วัน)", value: stats.nearExpiry,     unit: "รายการ", icon: <Timer className="w-6 h-6" />,        gradient: "from-purple-500 to-indigo-600", shadow: "shadow-purple-200" },
         ].map(card => (
           <div key={card.label} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-6 flex items-center gap-5 group">
             <div className={`bg-gradient-to-br ${card.gradient} rounded-2xl p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
@@ -259,10 +266,7 @@ export default function MaterialTable({
         ))}
       </div>
 
-      {/* Main Table Card */}
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100">
-
-        {/* Toolbar */}
         <div className="p-4 md:p-6 border-b border-gray-100 bg-gray-50/30 rounded-t-3xl flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative w-72 group">
@@ -275,7 +279,6 @@ export default function MaterialTable({
                 className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 bg-white transition-all shadow-sm"
               />
             </div>
-
             <div className="relative" ref={sortRef}>
               <button
                 onClick={() => setIsSortOpen(!isSortOpen)}
@@ -294,7 +297,7 @@ export default function MaterialTable({
                         className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer ${sort === opt.value
                           ? "bg-emerald-50 text-emerald-700 font-bold border-l-4 border-emerald-500"
                           : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent font-medium"
-                          }`}
+                        }`}
                       >
                         {opt.label}
                       </button>
@@ -304,7 +307,6 @@ export default function MaterialTable({
               )}
             </div>
           </div>
-
           <div className="flex gap-3 flex-wrap">
             <button
               onClick={() => setIsProduceOpen(true)}
@@ -321,15 +323,12 @@ export default function MaterialTable({
           </div>
         </div>
 
-        {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-center">
             <thead>
               <tr className="bg-gray-50/80 border-b border-gray-100">
                 {["รหัส", "ชื่อวัตถุดิบ", "คงเหลือ", "หน่วย", "ต้นทุน/หน่วย", "จัดการสต๊อก"].map(h => (
-                  <th key={h} className="px-6 py-5 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                    {h}
-                  </th>
+                  <th key={h} className="px-6 py-5 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -348,73 +347,55 @@ export default function MaterialTable({
                     </div>
                   </td>
                 </tr>
-              ) : (
-                filteredAndSorted.map(mat => (
-                  <tr key={mat.id} className="hover:bg-teal-50/20 transition-colors group">
-
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-gray-400 text-sm">{mat.code || "—"}</span>
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <p className="font-black text-gray-900 group-hover:text-teal-700 transition-colors">{mat.name}</p>
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-black text-sm border ${mat.stock === 0
-                        ? "text-rose-600 bg-rose-50 border-rose-200"
-                        : mat.stock <= 10
-                          ? "text-orange-600 bg-orange-50 border-orange-200"
-                          : "text-emerald-700 bg-emerald-50 border-emerald-200"
-                        }`}>
-                        {(mat.stock ?? 0).toLocaleString()}
-                      </span>
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <span className="text-sm text-gray-500 font-medium">{mat.unit}</span>
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <span className="text-sm font-bold text-gray-700">฿{(mat.costPerUnit ?? 0).toFixed(2)}</span>
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-2 flex-wrap">
-                        <button
-                          onClick={() => setTxModal({ isOpen: true, mat, type: "IN" })}
-                          className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
-                        >
-                          <ArrowDownToLine className="w-3.5 h-3.5" /> รับเข้า
-                        </button>
-                        <button
-                          onClick={() => setTxModal({ isOpen: true, mat, type: "OUT" })}
-                          className="inline-flex items-center gap-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
-                        >
-                          <ArrowUpFromLine className="w-3.5 h-3.5" /> เบิกออก
-                        </button>
-                        <button
-                          onClick={() => setLotsModal({ isOpen: true, mat })}
-                          className="inline-flex items-center gap-1.5 bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
-                        >
-                          <Layers className="w-3.5 h-3.5" /> ล็อต
-                        </button>
-                        <button
-                          onClick={() => { setSelectedHistoryId(mat.id); setSelectedHistoryName(mat.name); setHistoryModalOpen(true) }}
-                          className="inline-flex items-center gap-1.5 bg-white text-gray-600 hover:text-blue-600 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
-                        >
-                          <FileText className="w-3.5 h-3.5" /> ประวัติ
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
+              ) : filteredAndSorted.map(mat => (
+                <tr key={mat.id} className="hover:bg-teal-50/20 transition-colors group">
+                  <td className="px-6 py-4">
+                    <span className="font-bold text-gray-400 text-sm">{mat.code || "—"}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="font-black text-gray-900 group-hover:text-teal-700 transition-colors">{mat.name}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-black text-sm border ${
+                      mat.totalStock === 0       ? "text-rose-600 bg-rose-50 border-rose-200" :
+                      mat.totalStock <= 10       ? "text-orange-600 bg-orange-50 border-orange-200" :
+                                                   "text-emerald-700 bg-emerald-50 border-emerald-200"
+                    }`}>
+                      {(mat.totalStock ?? 0).toLocaleString()}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-sm text-gray-500 font-medium">{mat.unit}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-sm font-bold text-gray-700">฿{(mat.costPerUnit ?? 0).toFixed(2)}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-center gap-2 flex-wrap">
+                      <button onClick={() => setTxModal({ isOpen: true, mat, type: "IN" })}
+                        className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer">
+                        <ArrowDownToLine className="w-3.5 h-3.5" /> รับเข้า
+                      </button>
+                      <button onClick={() => setTxModal({ isOpen: true, mat, type: "OUT" })}
+                        className="inline-flex items-center gap-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer">
+                        <ArrowUpFromLine className="w-3.5 h-3.5" /> เบิกออก
+                      </button>
+                      <button onClick={() => setLotsModal({ isOpen: true, mat })}
+                        className="inline-flex items-center gap-1.5 bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer">
+                        <Layers className="w-3.5 h-3.5" /> ล็อต
+                      </button>
+                      <button onClick={() => { setSelectedHistoryId(mat.id); setSelectedHistoryName(mat.name); setHistoryModalOpen(true) }}
+                        className="inline-flex items-center gap-1.5 bg-white text-gray-600 hover:text-blue-600 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer">
+                        <FileText className="w-3.5 h-3.5" /> ประวัติ
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
 
-        {/* Footer */}
         {filteredAndSorted.length > 0 && (
           <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex justify-between items-center rounded-b-3xl">
             <span className="text-sm font-medium text-gray-500">
@@ -424,7 +405,6 @@ export default function MaterialTable({
         )}
       </div>
 
-      {/* Modals */}
       <AddMaterialModal
         isOpen={isAddOpen} onClose={() => setIsAddOpen(false)}
         newMat={newMat} setNewMat={setNewMat}
@@ -438,7 +418,7 @@ export default function MaterialTable({
         expireDate={expireDate} setExpireDate={setExpireDate}
         noExpire={noExpire} setNoExpire={setNoExpire}
         onSubmit={handleTransaction} isLoading={isLoading}
-        currentStock={materials.find(m => m.id === txModal.mat?.id)?.stock ?? txModal.mat?.stock ?? 0}
+        currentStock={materials.find(m => m.id === txModal.mat?.id)?.totalStock ?? txModal.mat?.totalStock ?? 0}
         currentLots={materials.find(m => m.id === txModal.mat?.id)?.MaterialLot ?? []}
       />
       <ProduceModal

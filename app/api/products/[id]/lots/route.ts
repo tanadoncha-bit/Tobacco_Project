@@ -18,15 +18,20 @@ export async function GET(
 
         const lots = await prisma.productVariantLot.findMany({
             where: {
+                variant: { Pid: Number(id) }
+            },
+            include: {
                 variant: {
-                    Pid: Number(id)
+                    include: {
+                        values: { include: { optionValue: true } }
+                    }
                 }
             },
             orderBy: [
-                { expireDate: 'asc' },
-                { stock: 'desc' },
+                { expireDate: "asc" },
+                { stock: "desc" },
             ]
-        });
+        })
 
         return NextResponse.json(lots);
 

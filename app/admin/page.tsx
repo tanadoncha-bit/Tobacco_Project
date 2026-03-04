@@ -5,19 +5,19 @@ import { ChartColumnIncreasing } from "lucide-react"
 export const dynamic = "force-dynamic"
 
 export default async function AdminDashboard() {
-  const [orders, lowStockVariants, topProducts, recentOrders, nearExpiryMaterials] =
+  const [orders, allVariants, topProducts, recentOrders, nearExpiryMaterials] =
     await Promise.all([
       prisma.order.findMany({
         where: { status: { not: "CANCELLED" } },
         select: { totalAmount: true, createdAt: true, status: true },
       }),
       prisma.productVariant.findMany({
-        where: { stock: { lt: 10 } },
         include: {
           product: { select: { Pname: true } },
           values: { include: { optionValue: true } },
+          productVariantLots: true,
         },
-        take: 5,
+        take: 20,
       }),
       prisma.orderItem.groupBy({
         by: ["variantId"],
@@ -54,12 +54,16 @@ export default async function AdminDashboard() {
   const totalOrders   = orders.length
   const pendingOrders = orders.filter(o => o.status === "PENDING" || o.status === "VERIFYING").length
 
-  const lowStockItems = lowStockVariants.map(v => ({
-    id:      v.id,
-    name:    v.product.Pname,
-    variant: v.values.map(val => val.optionValue.value).join(", "),
-    stock:   v.stock,
-  }))
+  const lowStockItems = allVariants
+    .map(v => ({
+      id:      v.id,
+      name:    v.product.Pname,
+      variant: v.values.map(val => val.optionValue.value).join(", "),
+      stock:   v.productVariantLots.reduce((sum, lot) => sum + lot.stock, 0),
+    }))
+    .filter(v => v.stock < 10)
+    .sort((a, b) => a.stock - b.stock)
+    .slice(0, 5)
 
   const topProductIds = topProducts.map(t => t.variantId)
   const topVariants   = await prisma.productVariant.findMany({

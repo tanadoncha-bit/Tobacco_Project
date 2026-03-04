@@ -40,7 +40,6 @@ export async function POST(req: Request) {
           data: {
             Pid: product.Pid,
             price: Number(v.price),
-            stock: 0,
           },
         })
 

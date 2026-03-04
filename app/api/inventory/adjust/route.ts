@@ -8,6 +8,12 @@ export async function POST(req: Request) {
         const session = await getServerSession(authOptions)
         const profileId = session?.user?.id
 
+        const defaultNote = {
+            OFFLINE_SALE: "เบิกขายหน้าร้าน",
+            DAMAGED: "ตัดของชำรุด/เสียหาย",
+            EXPIRED: "ตัดของหมดอายุ",
+        }
+
         if (!profileId) {
             return NextResponse.json({ error: "Unauthorized - กรุณาเข้าสู่ระบบ" }, { status: 401 })
         }
@@ -19,9 +25,9 @@ export async function POST(req: Request) {
         }
 
         const deductAmount = Number(amount)
+        const base = defaultNote[reason as keyof typeof defaultNote] || "ตัดสต๊อก"
 
         await prisma.$transaction(async (tx) => {
-
             const lot = await tx.productVariantLot.findUnique({
                 where: { id: lotId },
                 include: { variant: true }
@@ -31,31 +37,25 @@ export async function POST(req: Request) {
                 throw new Error("ยอดคงเหลือใน Lot นี้ไม่เพียงพอให้ตัดสต๊อก")
             }
 
-            // 1. หัก Lot
+            // หัก Lot
             await tx.productVariantLot.update({
                 where: { id: lotId },
                 data: { stock: { decrement: deductAmount } }
             })
 
-            // 2. หัก Variant โดยใช้ relation จาก lot
-            await tx.productVariant.update({
-                where: { id: lot.variantId }, 
-                data: { stock: { decrement: deductAmount } }
-            })
-
-            // 3. log
+            // log
             await tx.stockTransaction.create({
                 data: {
                     variantId: lot.variantId,
                     variantLotId: lotId,
-                    type: "ADJUST_OUT",
+                    type: "OUT",
                     amount: deductAmount,
                     reason: reason || "EXPIRED",
-                    note: note || "ตัดสต๊อก",
+                    note: note ? `${base} เนื่องจาก ${note}` : base,
                     profileId
                 }
             })
-        })
+        }, { timeout: 10000 })
 
         return NextResponse.json({ success: true, message: "ตัดสต๊อกเรียบร้อยแล้ว" })
 

@@ -33,7 +33,7 @@ export default async function ProductionPage() {
     }, 0)
 
     const lots = order.stockTransactions
-      .filter(tx => tx.type === "PROD_IN")
+      .filter(tx => tx.type === "IN" && tx.reason === "PRODUCTION")
       .map(tx => tx.variantLot?.lotNumber || "-")
 
     return {

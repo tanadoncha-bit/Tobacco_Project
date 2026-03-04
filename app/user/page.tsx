@@ -18,10 +18,16 @@ export default async function HomePage({
     prisma.banner.findMany({ where: { isActive: true }, orderBy: { createdAt: "desc" }, take: 5 }),
     prisma.product.findMany({
       where: keyword ? { Pname: { contains: keyword, mode: "insensitive" } } : {},
-      include: { variants: true, images: true },
+      include: {
+        variants: {
+          include: {
+            productVariantLots: true,
+          }
+        },
+        images: true,
+      },
       orderBy: { createdAt: "desc" },
     }),
-    // Top 4 สินค้าขายดี
     !keyword ? prisma.orderItem.groupBy({
       by: ["variantId"],
       _sum: { quantity: true },
@@ -30,7 +36,6 @@ export default async function HomePage({
     }) : Promise.resolve([]),
   ])
 
-  // hydrate top products
   const topProductIds = topVariants.map((t: any) => t.variantId)
   const topProducts = topProductIds.length > 0
     ? await prisma.productVariant.findMany({
@@ -45,12 +50,12 @@ export default async function HomePage({
 
       {/* Trust badges */}
       <div className="bg-white border-b border-gray-100">
-        <div className="container mx-auto px-4 py-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="container mx-auto px-4 py-4 grid grid-cols-2 md:flex md:justify-between gap-4">
           {[
-            { icon: <Truck className="w-5 h-5 text-purple-600" />,        label: "จัดส่งฟรี",         sub: "ทุกออเดอร์" },
-            { icon: <Shield className="w-5 h-5 text-purple-600" />,       label: "สินค้าแท้ 100%",    sub: "รับประกันคุณภาพ" },
-            { icon: <HeadphonesIcon className="w-5 h-5 text-purple-600" />,label: "ซัพพอร์ต 24/7",   sub: "พร้อมช่วยเหลือ" },
-            { icon: <TrendingUp className="w-5 h-5 text-purple-600" />,   label: "สินค้าคุณภาพสูง",  sub: "คัดสรรมาเพื่อคุณ" },
+            { icon: <Truck className="w-5 h-5 text-purple-600" />,         label: "จัดส่งฟรี",        sub: "ทุกออเดอร์" },
+            { icon: <Shield className="w-5 h-5 text-purple-600" />,        label: "สินค้าแท้ 100%",   sub: "รับประกันคุณภาพ" },
+            { icon: <HeadphonesIcon className="w-5 h-5 text-purple-600" />, label: "ซัพพอร์ต 24/7",  sub: "พร้อมช่วยเหลือ" },
+            { icon: <TrendingUp className="w-5 h-5 text-purple-600" />,    label: "สินค้าคุณภาพสูง", sub: "คัดสรรมาเพื่อคุณ" },
           ].map(item => (
             <div key={item.label} className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center shrink-0">
@@ -67,7 +72,6 @@ export default async function HomePage({
 
       <div className="container mx-auto px-4 py-10 space-y-12">
 
-        {/* Top selling — แสดงเฉพาะหน้าหลัก ไม่แสดงตอน search */}
         {!keyword && topProducts.length > 0 && (
           <section>
             <div className="flex items-center justify-between mb-6">
@@ -110,7 +114,6 @@ export default async function HomePage({
           </section>
         )}
 
-        {/* All products */}
         <section>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
             <div className="flex items-center gap-3">
@@ -150,7 +153,10 @@ export default async function HomePage({
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
               {products.map(product => {
-                const totalStock = product.variants.reduce((sum, v) => sum + (v.stock || 0), 0)
+                const totalStock = product.variants.reduce((sum, v) => {
+                  const variantStock = v.productVariantLots.reduce((s, lot) => s + lot.stock, 0)
+                  return sum + variantStock
+                }, 0)
                 const isOutOfStock = totalStock <= 0
                 const minPrice = Math.min(...product.variants.map(v => v.price || 0))
                 const imageUrl = product.images[0]?.url ?? null

@@ -1,7 +1,7 @@
 import prisma from "@/utils/db"
 import { NextResponse } from "next/server"
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic"
 
 export async function POST(req: Request) {
   try {
@@ -11,7 +11,6 @@ export async function POST(req: Request) {
         code: data.code || null,
         name: data.name,
         unit: data.unit,
-        stock: 0,
         costPerUnit: data.costPerUnit || 0,
       }
     })
@@ -27,7 +26,6 @@ export async function GET() {
       orderBy: { name: "asc" },
       include: {
         MaterialLot: {
-          where: { stock: { gt: 0 } },
           orderBy: [{ expireDate: "asc" }, { receiveDate: "asc" }],
         },
       },

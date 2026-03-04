@@ -77,7 +77,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
         if (!currentVariantId || String(currentVariantId).startsWith('new-')) {
           const newVar = await tx.productVariant.create({
-            data: { Pid: productId, price: Number(v.price), stock: 0 }
+            data: { Pid: productId, price: Number(v.price) }
           })
           currentVariantId = newVar.id
         } else {

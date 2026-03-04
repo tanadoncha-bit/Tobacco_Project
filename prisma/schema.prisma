@@ -8,6 +8,57 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+// ==================== ENUMS ====================
+
+enum TransactionType {
+  IN
+  OUT
+}
+
+enum TransactionReason {
+  // IN reasons
+  NEW_PURCHASE
+  PRODUCTION
+  RETURN
+  // OUT reasons
+  SALE
+  OFFLINE_SALE
+  DAMAGED
+  EXPIRED
+  AUDIT
+}
+
+enum MaterialTransactionType {
+  IN
+  OUT
+}
+
+enum MaterialTransactionReason {
+  // IN reasons
+  NEW_PURCHASE
+  PRODUCTION_RETURN
+  // OUT reasons
+  PRODUCTION_USE
+  ADJUSTMENT
+}
+
+enum ProductionStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+enum OrderStatus {
+  PENDING
+  VERIFYING
+  PAID
+  SHIPPED
+  COMPLETED
+  CANCELLED
+}
+
+// ==================== MODELS ====================
+
 model Profile {
   id           String  @id @default(uuid())
   email        String  @unique
@@ -19,10 +70,10 @@ model Profile {
   phonenumber  String?
   address      String?
 
-  orders Order[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
+  orders               Order[]
   materialTransactions MaterialTransaction[]
   stockTransactions    StockTransaction[]
   productSlips         ProductSlip[]
@@ -42,25 +93,26 @@ model Product {
 }
 
 model ProductImage {
-  id      Int     @id @default(autoincrement())
-  url     String
-  product Product @relation(fields: [Pid], references: [Pid], onDelete: Cascade)
+  id  Int    @id @default(autoincrement())
+  url String
+
   Pid     Int
+  product Product @relation(fields: [Pid], references: [Pid], onDelete: Cascade)
 }
 
 model ProductOption {
   id   Int     @id @default(autoincrement())
   name String?
 
-  product Product @relation(fields: [Pid], references: [Pid], onDelete: Cascade)
   Pid     Int
+  product Product @relation(fields: [Pid], references: [Pid], onDelete: Cascade)
 
   values ProductOptionValue[]
 }
 
 model ProductOptionValue {
-  id       Int    @id @default(autoincrement())
-  value    String
+  id    Int    @id @default(autoincrement())
+  value String
 
   optionId Int
   option   ProductOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
@@ -71,7 +123,6 @@ model ProductOptionValue {
 model ProductVariant {
   id    Int    @id @default(autoincrement())
   price Float?
-  stock Int    @default(0)
 
   Pid     Int
   product Product @relation(fields: [Pid], references: [Pid], onDelete: Cascade)
@@ -98,12 +149,12 @@ model ProductVariantValue {
 }
 
 model ProductSlip {
-  id      Int     @id @default(autoincrement())
-  Pid     Int
-  product Product @relation(fields: [Pid], references: [Pid], onDelete: Cascade)
-
+  id       Int    @id @default(autoincrement())
   action   String
   snapshot Json
+
+  Pid     Int
+  product Product @relation(fields: [Pid], references: [Pid], onDelete: Cascade)
 
   profileId String?
   profile   Profile? @relation(fields: [profileId], references: [id])
@@ -115,7 +166,6 @@ model Material {
   id          Int     @id @default(autoincrement())
   code        String? @unique
   name        String
-  stock       Float   @default(0)
   unit        String
   costPerUnit Float?
 
@@ -129,15 +179,15 @@ model Material {
 
 model MaterialLot {
   id         Int      @id @default(autoincrement())
-  materialId Int
-  material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
-
-  lotNumber   String    
-  stock       Float     @default(0)
+  lotNumber  String
+  stock      Float    @default(0)
   costPerUnit Float?
 
   receiveDate DateTime  @default(now())
   expireDate  DateTime?
+
+  materialId Int
+  material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
 
   transactions MaterialTransaction[]
 
@@ -146,15 +196,15 @@ model MaterialLot {
 }
 
 model MaterialTransaction {
-  id Int @id @default(autoincrement())
-
-  materialId Int
-  material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
-
-  type      String
+  id        Int                        @id @default(autoincrement())
+  type      MaterialTransactionType
+  reason    MaterialTransactionReason?
   amount    Float
   totalCost Float?
   note      String?
+
+  materialId Int
+  material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
 
   materialLotId Int?
   materialLot   MaterialLot? @relation(fields: [materialLotId], references: [id])
@@ -166,62 +216,69 @@ model MaterialTransaction {
   productionOrder   ProductionOrder? @relation(fields: [productionOrderId], references: [id])
 
   createdAt DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 model Order {
   id             String  @id @default(uuid())
-  profileId      String
-  profile        Profile @relation(fields: [profileId], references: [id])
   totalAmount    Float
-  status         String  @default("PENDING")
+  status         OrderStatus
   trackingNumber String?
   slipImage      String?
+
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   items OrderItem[]
+
   @@index([status])
 }
 
 model OrderItem {
-  id Int @id @default(autoincrement())
+  id       Int   @id @default(autoincrement())
+  quantity Int
+  price    Float
 
   orderId String
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   variantId Int
   variant   ProductVariant @relation(fields: [variantId], references: [id])
-
-  quantity Int
-  price    Float
 }
 
 model Cart {
-  id        String     @id @default(uuid())
-  profileId String     @unique
-  items     CartItem[]
+  id String @id @default(uuid())
 
-  profile Profile @relation(fields: [profileId], references: [id])
+  profileId String  @unique
+  profile   Profile @relation(fields: [profileId], references: [id])
+
+  items CartItem[]
 }
 
 model CartItem {
-  id        String @id @default(uuid())
-  cartId    String
-  variantId Int
-  quantity  Int
+  id       String @id @default(uuid())
+  quantity Int
 
-  cart    Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  variant ProductVariant @relation(fields: [variantId], references: [id])
+  cartId String
+  cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  variantId Int
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
 }
 
 model ProductRecipe {
-  id         Int            @id @default(autoincrement())
-  variantId  Int
-  variant    ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  id       Int   @id @default(autoincrement())
+  quantity Float
+
+  variantId Int
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
   materialId Int
-  material   Material       @relation(fields: [materialId], references: [id], onDelete: Cascade)
-  quantity   Float
+  material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 
@@ -229,25 +286,28 @@ model ProductRecipe {
 }
 
 model ProductVariantLot {
-  id        Int            @id @default(autoincrement())
-  variantId Int
-  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
-
-  lotNumber String   
-  stock     Int       @default(0)
-
+  id          Int       @id @default(autoincrement())
+  lotNumber   String
+  stock       Int       @default(0)
+  unitCost    Float?
   produceDate DateTime  @default(now())
   expireDate  DateTime?
 
-  unitCost    Float?
+  variantId Int
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
   transactions StockTransaction[]
 
   @@unique([variantId, lotNumber])
+  @@index([variantId])
 }
 
 model StockTransaction {
-  id Int @id @default(autoincrement())
+  id     Int               @id @default(autoincrement())
+  type   TransactionType
+  reason TransactionReason?
+  amount Int
+  note   String?
 
   variantId Int
   variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
@@ -255,10 +315,6 @@ model StockTransaction {
   variantLotId Int?
   variantLot   ProductVariantLot? @relation(fields: [variantLotId], references: [id])
 
-  type      String
-  amount    Int
-  note      String?
-  reason    String?
   profileId String?
   profile   Profile? @relation(fields: [profileId], references: [id])
 
@@ -266,6 +322,8 @@ model StockTransaction {
   productionOrder   ProductionOrder? @relation(fields: [productionOrderId], references: [id])
 
   createdAt DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 model StoreSetting {
@@ -289,20 +347,15 @@ model Banner {
   updatedAt DateTime @updatedAt
 }
 
-enum ProductionStatus {
-  PENDING
-  COMPLETED
-  CANCELLED
-}
-
 model ProductionOrder {
-  id        Int              @id @default(autoincrement())
-  docNo     String           @unique
+  id     Int              @id @default(autoincrement())
+  docNo  String           @unique
+  amount Int
+  status ProductionStatus @default(PENDING)
+  note   String?
+
   variantId Int
-  variant   ProductVariant   @relation(fields: [variantId], references: [id])
-  amount    Int
-  status    ProductionStatus @default(PENDING)
-  note      String?
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
