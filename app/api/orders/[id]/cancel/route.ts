@@ -50,17 +50,33 @@ export async function PATCH(
             })
 
             for (const item of existingOrder.items) {
-                await tx.productVariant.update({
-                    where: { id: item.variantId },
-                    data: {
-                        stock: { increment: item.quantity }
-                    }
+                // หา lot ล่าสุดของ variant นี้
+                const latestLot = await tx.productVariantLot.findFirst({
+                    where: { variantId: item.variantId },
+                    orderBy: { produceDate: "desc" }
                 })
+
+                if (latestLot) {
+                    await tx.productVariantLot.update({
+                        where: { id: latestLot.id },
+                        data: { stock: { increment: item.quantity } }
+                    })
+                } else {
+                    // ถ้าไม่มี lot เลย สร้าง lot ใหม่
+                    await tx.productVariantLot.create({
+                        data: {
+                            variantId: item.variantId,
+                            lotNumber: `RETURN-${orderId.substring(0, 8).toUpperCase()}`,
+                            stock: item.quantity,
+                        }
+                    })
+                }
 
                 await tx.stockTransaction.create({
                     data: {
                         variantId: item.variantId,
                         type: "IN",
+                        reason: "RETURN",
                         amount: item.quantity,
                         note: `คืนสต๊อกจากการยกเลิกออเดอร์ ORD-${shortOrderId}`,
                         profileId: session.user.id
