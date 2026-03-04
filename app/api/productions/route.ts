@@ -52,6 +52,16 @@ export async function POST(req: Request) {
     }
     const newDocNo = `PD-${datePrefix}-${runningNumber.toString().padStart(3, "0")}`
 
+    // ดึง lots ทั้งหมดก่อน — ทำนอก transaction
+    const lotsMap = new Map<number, any[]>()
+    for (const recipe of recipes) {
+      const lots = await prisma.materialLot.findMany({
+        where: { materialId: recipe.materialId, stock: { gt: 0 } },
+        orderBy: { receiveDate: "asc" }
+      })
+      lotsMap.set(recipe.materialId, lots)
+    }
+
     const result = await prisma.$transaction(async (tx) => {
       const newOrder = await tx.productionOrder.create({
         data: { docNo: newDocNo, variantId: Number(variantId), amount: finalAmount, note, status: "PENDING" }
@@ -59,11 +69,7 @@ export async function POST(req: Request) {
 
       for (const recipe of recipes) {
         let remaining = recipe.quantity * finalAmount
-
-        const lots = await tx.materialLot.findMany({
-          where: { materialId: recipe.materialId, stock: { gt: 0 } },
-          orderBy: { receiveDate: "asc" }
-        })
+        const lots = lotsMap.get(recipe.materialId) || []
 
         for (const lot of lots) {
           if (remaining <= 0) break
