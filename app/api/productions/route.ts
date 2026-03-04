@@ -52,7 +52,6 @@ export async function POST(req: Request) {
     }
     const newDocNo = `PD-${datePrefix}-${runningNumber.toString().padStart(3, "0")}`
 
-    // ดึง lots ทั้งหมดก่อน — ทำนอก transaction
     const lotsMap = new Map<number, any[]>()
     for (const recipe of recipes) {
       const lots = await prisma.materialLot.findMany({
@@ -62,11 +61,12 @@ export async function POST(req: Request) {
       lotsMap.set(recipe.materialId, lots)
     }
 
-    const result = await prisma.$transaction(async (tx) => {
-      const newOrder = await tx.productionOrder.create({
-        data: { docNo: newDocNo, variantId: Number(variantId), amount: finalAmount, note, status: "PENDING" }
-      })
+    // สร้าง order ก่อน
+    const newOrder = await prisma.productionOrder.create({
+      data: { docNo: newDocNo, variantId: Number(variantId), amount: finalAmount, note, status: "PENDING" }
+    })
 
+    try {
       for (const recipe of recipes) {
         let remaining = recipe.quantity * finalAmount
         const lots = lotsMap.get(recipe.materialId) || []
@@ -75,12 +75,12 @@ export async function POST(req: Request) {
           if (remaining <= 0) break
           const deduct = Math.min(lot.stock, remaining)
 
-          await tx.materialLot.update({
+          await prisma.materialLot.update({
             where: { id: lot.id },
             data: { stock: { decrement: deduct } }
           })
 
-          await tx.materialTransaction.create({
+          await prisma.materialTransaction.create({
             data: {
               materialId: recipe.materialId,
               materialLotId: lot.id,
@@ -97,14 +97,13 @@ export async function POST(req: Request) {
           remaining -= deduct
         }
       }
+    } catch (err) {
+      // rollback — ลบ order ที่สร้างไปแล้ว
+      await prisma.productionOrder.delete({ where: { id: newOrder.id } })
+      throw err
+    }
 
-      return newOrder
-    }, {
-      maxWait: 10000,
-      timeout: 30000
-    })
-
-    return NextResponse.json({ message: "สั่งผลิตสำเร็จ", docNo: result.docNo })
+    return NextResponse.json({ message: "สั่งผลิตสำเร็จ", docNo: newOrder.docNo })
 
   } catch (error: any) {
     console.error("Create Production Error:", error)
