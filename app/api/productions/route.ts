@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/utils/authOptions"
 import prisma from "@/utils/db"
 
+export const preferredRegion = "sin1"
+
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions)

@@ -4,6 +4,7 @@ import { authOptions } from "@/utils/authOptions"
 import prisma from "@/utils/db"
 
 export const dynamic = "force-dynamic"
+export const preferredRegion = "sin1"
 
 export async function POST(req: Request) {
   try {
