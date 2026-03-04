@@ -9,7 +9,7 @@ export async function POST(req: Request) {
     const profileId = session?.user?.id
 
     if (!profileId) {
-      return NextResponse.json({ error: "Unauthorized - กรุณาเข้าสู่ระบบ" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const body = await req.json()
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     })
 
     if (recipes.length === 0) {
-      return NextResponse.json({ error: "ไม่พบสูตรการผลิตของสินค้านี้ กรุณาตั้งค่าสูตรก่อน" }, { status: 400 })
+      return NextResponse.json({ error: "ไม่พบสูตรการผลิต" }, { status: 400 })
     }
 
     for (const recipe of recipes) {
@@ -47,8 +47,7 @@ export async function POST(req: Request) {
     })
     let runningNumber = 1
     if (lastOrder) {
-      const lastRunningStr = lastOrder.docNo.split("-")[2]
-      runningNumber = parseInt(lastRunningStr) + 1
+      runningNumber = parseInt(lastOrder.docNo.split("-")[2]) + 1
     }
     const newDocNo = `PD-${datePrefix}-${runningNumber.toString().padStart(3, "0")}`
 
@@ -61,7 +60,6 @@ export async function POST(req: Request) {
       lotsMap.set(recipe.materialId, lots)
     }
 
-    // สร้าง order ก่อน
     const newOrder = await prisma.productionOrder.create({
       data: { docNo: newDocNo, variantId: Number(variantId), amount: finalAmount, note, status: "PENDING" }
     })
@@ -98,7 +96,6 @@ export async function POST(req: Request) {
         }
       }
     } catch (err) {
-      // rollback — ลบ order ที่สร้างไปแล้ว
       await prisma.productionOrder.delete({ where: { id: newOrder.id } })
       throw err
     }
@@ -107,6 +104,6 @@ export async function POST(req: Request) {
 
   } catch (error: any) {
     console.error("Create Production Error:", error)
-    return NextResponse.json({ error: error.message || "เกิดข้อผิดพลาดในการสั่งผลิต" }, { status: 500 })
+    return NextResponse.json({ error: error.message || "เกิดข้อผิดพลาด" }, { status: 500 })
   }
 }
