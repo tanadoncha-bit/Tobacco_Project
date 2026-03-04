@@ -30,7 +30,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "ไม่พบสูตรการผลิตของสินค้านี้ กรุณาตั้งค่าสูตรก่อน" }, { status: 400 })
     }
 
-    // validate stock จาก lot
     for (const recipe of recipes) {
       const required = recipe.quantity * finalAmount
       const totalLotStock = recipe.material.MaterialLot.reduce((sum, lot) => sum + lot.stock, 0)
@@ -91,10 +90,12 @@ export async function POST(req: Request) {
 
           remaining -= deduct
         }
-        // ไม่ update material.stock แล้ว — คำนวณจาก lot แทน
       }
 
       return newOrder
+    }, {
+      maxWait: 10000,
+      timeout: 30000
     })
 
     return NextResponse.json({ message: "สั่งผลิตสำเร็จ", docNo: result.docNo })
