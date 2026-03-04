@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     const { variantId, produceAmount, note } = body
 
     if (!variantId || !produceAmount || produceAmount <= 0) {
-      return NextResponse.json({ error: "ข้อมูลไม่ถูกต้อง กรุณาระบุตัวเลือกสินค้า (Variant)" }, { status: 400 })
+      return NextResponse.json({ error: "ข้อมูลไม่ถูกต้อง" }, { status: 400 })
     }
 
     const variant = await prisma.productVariant.findUnique({
@@ -22,65 +22,65 @@ export async function POST(req: Request) {
       include: { recipes: true, product: true }
     })
 
-    if (!variant) return NextResponse.json({ error: "ไม่พบข้อมูลสินค้าย่อย (Variant)" }, { status: 404 })
+    if (!variant) return NextResponse.json({ error: "ไม่พบข้อมูลสินค้าย่อย" }, { status: 404 })
     if (!variant.recipes || variant.recipes.length === 0) {
-      return NextResponse.json({ error: "ไม่พบสูตรการผลิตสำหรับสินค้านี้ กรุณาตั้งค่าสูตรก่อน" }, { status: 400 })
+      return NextResponse.json({ error: "ไม่พบสูตรการผลิต" }, { status: 400 })
     }
 
-    const result = await prisma.$transaction(async (tx) => {
-      const today = new Date()
+    const today = new Date()
 
-      // ── Validate stock ──────────────────────────────
-      for (const recipe of variant.recipes) {
-        const requiredAmount = recipe.quantity * Number(produceAmount)
-        const availableLots = await tx.materialLot.findMany({
-          where: {
-            materialId: recipe.materialId,
-            stock: { gt: 0 },
-            OR: [{ expireDate: { gt: today } }, { expireDate: null }]
-          }
-        })
-        const totalValidStock = availableLots.reduce((sum, l) => sum + l.stock, 0)
-        if (totalValidStock < requiredAmount) {
-          const mat = await tx.material.findUnique({ where: { id: recipe.materialId } })
-          throw new Error(`วัตถุดิบ "${mat?.name}" ไม่เพียงพอ (ต้องการ ${requiredAmount} แต่มีล๊อตที่ใช้งานได้แค่ ${totalValidStock})`)
-        }
-      }
-
-      // ── Generate docNo ──────────────────────────────
-      const yy = today.getFullYear().toString().slice(2)
-      const mm = String(today.getMonth() + 1).padStart(2, "0")
-      const dd = String(today.getDate()).padStart(2, "0")
-      const datePrefix = `${yy}${mm}${dd}`
-
-      const lastOrder = await tx.productionOrder.findFirst({
-        where: { docNo: { startsWith: `PD-${datePrefix}` } },
-        orderBy: { id: "desc" }
-      })
-
-      let runningNumber = 1
-      if (lastOrder) {
-        const parts = lastOrder.docNo.split("-")
-        if (parts.length === 3) runningNumber = parseInt(parts[2], 10) + 1
-      }
-      const newDocNo = `PD-${datePrefix}-${String(runningNumber).padStart(3, "0")}`
-
-      const newOrder = await tx.productionOrder.create({
-        data: {
-          docNo: newDocNo,
-          variantId: Number(variantId),
-          amount: Number(produceAmount),
-          status: "PENDING",
-          note: note || null
+    // validate stock ก่อน
+    for (const recipe of variant.recipes) {
+      const requiredAmount = recipe.quantity * Number(produceAmount)
+      const availableLots = await prisma.materialLot.findMany({
+        where: {
+          materialId: recipe.materialId,
+          stock: { gt: 0 },
+          OR: [{ expireDate: { gt: today } }, { expireDate: null }]
         }
       })
+      const totalValidStock = availableLots.reduce((sum, l) => sum + l.stock, 0)
+      if (totalValidStock < requiredAmount) {
+        const mat = await prisma.material.findUnique({ where: { id: recipe.materialId } })
+        return NextResponse.json({
+          error: `วัตถุดิบ "${mat?.name}" ไม่เพียงพอ (ต้องการ ${requiredAmount} แต่มีแค่ ${totalValidStock})`
+        }, { status: 400 })
+      }
+    }
 
-      // ── Deduct materials ────────────────────────────
+    // generate docNo
+    const yy = today.getFullYear().toString().slice(2)
+    const mm = String(today.getMonth() + 1).padStart(2, "0")
+    const dd = String(today.getDate()).padStart(2, "0")
+    const datePrefix = `${yy}${mm}${dd}`
+
+    const lastOrder = await prisma.productionOrder.findFirst({
+      where: { docNo: { startsWith: `PD-${datePrefix}` } },
+      orderBy: { id: "desc" }
+    })
+
+    let runningNumber = 1
+    if (lastOrder) {
+      const parts = lastOrder.docNo.split("-")
+      if (parts.length === 3) runningNumber = parseInt(parts[2], 10) + 1
+    }
+    const newDocNo = `PD-${datePrefix}-${String(runningNumber).padStart(3, "0")}`
+
+    const newOrder = await prisma.productionOrder.create({
+      data: {
+        docNo: newDocNo,
+        variantId: Number(variantId),
+        amount: Number(produceAmount),
+        status: "PENDING",
+        note: note || null
+      }
+    })
+
+    try {
       for (const recipe of variant.recipes) {
-        const totalNeeded = recipe.quantity * Number(produceAmount)
-        let remainingToDeduct = totalNeeded
+        let remainingToDeduct = recipe.quantity * Number(produceAmount)
 
-        const lots = await tx.materialLot.findMany({
+        const lots = await prisma.materialLot.findMany({
           where: {
             materialId: recipe.materialId,
             stock: { gt: 0 },
@@ -93,12 +93,12 @@ export async function POST(req: Request) {
           if (remainingToDeduct <= 0) break
           const deductAmount = Math.min(lot.stock, remainingToDeduct)
 
-          await tx.materialLot.update({
+          await prisma.materialLot.update({
             where: { id: lot.id },
             data: { stock: { decrement: deductAmount } }
           })
 
-          await tx.materialTransaction.create({
+          await prisma.materialTransaction.create({
             data: {
               materialId: recipe.materialId,
               materialLotId: lot.id,
@@ -107,7 +107,7 @@ export async function POST(req: Request) {
               amount: deductAmount,
               totalCost: deductAmount * (lot.costPerUnit ?? 0),
               note: `เบิกผลิต ${newDocNo} [Lot: ${lot.lotNumber}]`,
-              profileId: profileId,
+              profileId,
               productionOrderId: newOrder.id
             }
           })
@@ -115,11 +115,11 @@ export async function POST(req: Request) {
           remainingToDeduct -= deductAmount
         }
       }
+    } catch (err) {
+      await prisma.productionOrder.delete({ where: { id: newOrder.id } })
+      throw err
+    }
 
-      return { newDocNo }
-    })
-
-    // return materials พร้อม lot
     const updatedMaterials = await prisma.material.findMany({
       orderBy: { name: "asc" },
       include: {
@@ -134,7 +134,7 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("Produce Error:", error)
     return NextResponse.json(
-      { error: error.message || "เกิดข้อผิดพลาดในการผลิต" },
+      { error: error.message || "เกิดข้อผิดพลาด" },
       { status: error.message?.includes("ไม่เพียงพอ") ? 400 : 500 }
     )
   }
