@@ -19,13 +19,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    const { image } = await req.json()
-    if (!image) {
+    const { imageUrl } = await req.json()
+    if (!imageUrl) {
       return NextResponse.json({ message: "No image provided" }, { status: 400 })
     }
 
-    const uploadResponse = await cloudinary.uploader.upload(image, {
-      folder: "next_shop_avatars", 
+    const uploadResponse = await cloudinary.uploader.upload(imageUrl, {
+      folder: "next_shop_avatars",
       transformation: [{ width: 500, height: 500, crop: "fill" }]
     })
 
