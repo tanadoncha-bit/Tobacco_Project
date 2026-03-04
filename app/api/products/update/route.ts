@@ -53,12 +53,12 @@ export async function PUT(req: Request) {
         if (v.id) {
           currentVariant = await tx.productVariant.update({
             where: { id: v.id },
-            data: { price: Number(v.price), stock: Number(v.stock) },
+            data: { price: Number(v.price) },
           });
           await tx.productVariantValue.deleteMany({ where: { variantId: v.id } });
         } else {
           currentVariant = await tx.productVariant.create({
-            data: { Pid, price: Number(v.price), stock: Number(v.stock) },
+            data: { Pid, price: Number(v.price) },
           });
         }
 
