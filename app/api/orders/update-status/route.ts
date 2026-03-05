@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import prisma from "@/utils/db"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/utils/authOptions"
-import { returnStockToLatestLot } from "@/utils/inventory"
+import { returnStockByOrderItem } from "@/utils/inventory"
 
 export const dynamic = "force-dynamic";
 
@@ -26,34 +26,25 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "ไม่พบออเดอร์นี้" }, { status: 404 })
     }
 
-    const closingStatuses = ["SHIPPED", "COMPLETED", "PENDING", "VERIFYING", "PAID"]
-
-    const shouldDeductStock =
-      closingStatuses.includes(status) &&
-      !closingStatuses.includes(existingOrder.status)
-
+    const stockDeductedStatuses = ["PENDING", "VERIFYING", "PAID", "SHIPPED", "COMPLETED"]
     const shouldRestock =
-      !closingStatuses.includes(status) &&
-      closingStatuses.includes(existingOrder.status)
+      status === "CANCELLED" &&
+      stockDeductedStatuses.includes(existingOrder.status)
 
     const result = await prisma.$transaction(async (tx) => {
       const updatedOrder = await tx.order.update({
         where: { id: orderId },
-        data: { status: status },
+        data: { status },
       })
 
-      const shortOrderId = orderId.substring(0, 8).toUpperCase()
-
       if (shouldRestock) {
+        const shortOrderId = orderId.substring(0, 8).toUpperCase()
         for (const item of existingOrder.items) {
-
-          await returnStockToLatestLot(tx, {
-            variantId: item.variantId,
-            amountToReturn: item.quantity,
-            profileId: profileId,
-            note: `คืนสต๊อกเนื่องจากยกเลิก/เปลี่ยนสถานะออเดอร์ ORD-${shortOrderId}`
+          await returnStockByOrderItem(tx, {
+            orderItemId: item.id,
+            profileId,
+            note: `คืนสต๊อกเนื่องจากยกเลิกออเดอร์ ORD-${shortOrderId}`
           })
-
         }
       }
 

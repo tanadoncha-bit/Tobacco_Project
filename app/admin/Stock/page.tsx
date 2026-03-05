@@ -23,7 +23,9 @@ export default async function StockPage() {
 
   const data = products.map((product) => {
     const totalStock = product.variants.reduce((sum, v) => {
-      const variantStock = v.productVariantLots.reduce((s, lot) => s + lot.stock, 0)
+      const variantStock = v.productVariantLots
+        .filter(lot => !lot.expireDate || lot.expireDate > new Date())
+        .reduce((s, lot) => s + lot.stock, 0)
       return sum + variantStock
     }, 0)
     return {
@@ -36,9 +38,9 @@ export default async function StockPage() {
   })
 
   const totalProducts = data.length
-  const outOfStock    = data.filter(p => p.stock === 0).length
-  const lowStock      = data.filter(p => p.stock > 0 && p.stock <= 5).length
-  const totalStock    = data.reduce((sum, p) => sum + p.stock, 0)
+  const outOfStock = data.filter(p => p.stock === 0).length
+  const lowStock = data.filter(p => p.stock > 0 && p.stock <= 5).length
+  const totalStock = data.reduce((sum, p) => sum + p.stock, 0)
 
   return (
     <StockTable

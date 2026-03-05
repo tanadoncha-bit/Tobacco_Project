@@ -65,13 +65,13 @@ export default function DispatchProductModal({ open, productId, productName, onC
   const availableLots = useMemo(() => lots.filter(lot => {
     if (!selectedVariantId || lot.variantId !== selectedVariantId) return false
     if (Number(lot.stock) <= 0) return false
-    if (lot.expireDate) {
+    if (form.reason !== "DAMAGED" && lot.expireDate) {
       const today = new Date(); today.setHours(0, 0, 0, 0)
       const expDate = new Date(lot.expireDate); expDate.setHours(0, 0, 0, 0)
       if (expDate <= today) return false
     }
     return true
-  }), [lots, selectedVariantId])
+  }), [lots, selectedVariantId, form.reason])
 
   const totalStock = lots.reduce((sum, lot) => sum + Number(lot.stock), 0)
   const selectedVariantStock = selectedVariantId
@@ -179,7 +179,7 @@ export default function DispatchProductModal({ open, productId, productName, onC
               <div className="absolute z-[70] mt-2 w-full bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2">
                 {[
                   { value: "OFFLINE_SALE", label: "เบิกไปขายหน้าร้าน", check: "text-emerald-600" },
-                  { value: "DAMAGED",      label: "ตัดของชำรุด / เสียหาย", check: "text-orange-500" },
+                  { value: "DAMAGED", label: "ตัดของชำรุด / เสียหาย", check: "text-orange-500" },
                 ].map((opt, i) => (
                   <div key={opt.value}>
                     {i > 0 && <div className="h-px bg-gray-50" />}

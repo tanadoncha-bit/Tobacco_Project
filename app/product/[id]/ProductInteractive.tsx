@@ -21,16 +21,25 @@ export default function ProductInteractive({ product }: { product: any }) {
 
   const currentVariant = useMemo(() => {
     if (!product.variants?.length) return null
-    if (!product.Option?.length)   return product.variants[0]
+    if (!product.Option?.length) return product.variants[0]
+
+    const exact = product.variants.find((v: any) => {
+      const vals = v.values.map((val: any) => val.optionValue.value)
+      const sel = Object.values(selectedOptions)
+      return sel.every(s => vals.includes(s)) && vals.length === sel.length
+    })
+    if (exact) return exact
+
     return product.variants.find((v: any) => {
       const vals = v.values.map((val: any) => val.optionValue.value)
-      const sel  = Object.values(selectedOptions)
-      return sel.every(s => vals.includes(s)) && sel.length === vals.length
-    })
+      return Object.values(selectedOptions).every(s => vals.includes(s))
+    }) ?? null
   }, [selectedOptions, product.variants, product.Option])
 
-  const price    = currentVariant?.price ?? 0
-  const stock    = currentVariant?.stock ?? 0
+  const price = currentVariant?.price ?? 0
+  const stock = (currentVariant?.productVariantLots ?? [])
+    .filter((lot: any) => !lot.expireDate || new Date(lot.expireDate) > new Date())
+    .reduce((sum: number, lot: any) => sum + lot.stock, 0)
   const variantId = currentVariant?.id ?? 0
 
   return (
@@ -79,7 +88,6 @@ export default function ProductInteractive({ product }: { product: any }) {
             )}
           </div>
 
-          {/* Thumbnail strip */}
           {images.length > 1 && (
             <div className="flex gap-2 p-3 overflow-x-auto">
               {images.map((img: any, i: number) => (
@@ -95,7 +103,6 @@ export default function ProductInteractive({ product }: { product: any }) {
         {/* ── รายละเอียด ──────────────────────────────────── */}
         <div className="p-6 md:p-8 flex flex-col justify-between gap-6">
           <div className="space-y-4">
-
             <div>
               <span className="text-xs font-bold text-purple-600 bg-purple-50 border border-purple-100 px-3 py-1 rounded-full">
                 สินค้าแนะนำ
@@ -112,24 +119,67 @@ export default function ProductInteractive({ product }: { product: any }) {
 
             <div className="h-px bg-gray-100" />
 
-            {/* Options */}
             {product.Option?.length > 0 && (
               <div className="space-y-4">
                 {product.Option.map((opt: any) => (
                   <div key={opt.id}>
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{opt.name}</h3>
                     <div className="flex flex-wrap gap-2">
-                      {opt.values.map((val: any) => {
+                      {opt.values.filter((val: any) => val.value && val.value.trim() !== "").map((val: any) => {
                         const isSelected = selectedOptions[opt.name] === val.value
+
+                        const hypothetical: Record<string, string> = { ...selectedOptions, [opt.name]: val.value }
+                        const isAvailable = opt === product.Option[0]
+                          ? true
+                          : product.variants?.some((v: any) => {
+                            const vals = v.values.map((vv: any) => vv.optionValue.value)
+                            return Object.entries(hypothetical).every(([k, s]) => {
+                              if (k === opt.name) return vals.includes(s)
+                              const variantHasThisOption = product.Option?.find((o: any) => o.name === k)
+                                ?.values?.some((vv: any) => vals.includes(vv.value))
+                              if (!variantHasThisOption) return true
+                              return vals.includes(s)
+                            })
+                          })
+
                         return (
                           <button
                             key={val.id}
-                            onClick={() => setSelectedOptions(prev => ({ ...prev, [opt.name]: val.value }))}
-                            className={`px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all cursor-pointer ${
-                              isSelected
+                            onClick={() => {
+                              if (!isAvailable) return
+
+                              const newSelected: Record<string, string> = { ...selectedOptions, [opt.name]: val.value }
+
+                              product.Option?.forEach((o: any) => {
+                                if (o.name === opt.name) return
+                                const currentVal = newSelected[o.name]
+
+                                const stillValid = currentVal && product.variants?.some((v: any) => {
+                                  const vals = v.values.map((vv: any) => vv.optionValue.value)
+                                  return vals.includes(val.value) && vals.includes(currentVal)
+                                })
+
+                                if (!stillValid) {
+                                  const firstValid = o.values.find((ov: any) =>
+                                    ov.value?.trim() !== "" &&
+                                    product.variants?.some((v: any) => {
+                                      const vals = v.values.map((vv: any) => vv.optionValue.value)
+                                      return vals.includes(val.value) && vals.includes(ov.value)
+                                    })
+                                  )
+                                  if (firstValid) newSelected[o.name] = firstValid.value
+                                  else delete newSelected[o.name]
+                                }
+                              })
+
+                              setSelectedOptions(newSelected)
+                            }}
+                            className={`px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all ${isSelected
                                 ? "border-purple-500 bg-purple-500 text-white shadow-md shadow-purple-200"
-                                : "border-gray-200 text-gray-600 hover:border-purple-300 hover:text-purple-600"
-                            }`}
+                                : isAvailable
+                                  ? "border-gray-200 text-gray-600 hover:border-purple-300 hover:text-purple-600 cursor-pointer"
+                                  : "border-gray-100 text-gray-300 bg-gray-50 cursor-not-allowed"
+                              }`}
                           >
                             {val.value}
                           </button>
@@ -142,18 +192,16 @@ export default function ProductInteractive({ product }: { product: any }) {
             )}
           </div>
 
-          {/* AddToCart */}
           <div>
             <AddToCart variantId={variantId} stock={stock} price={price} />
           </div>
 
-          {/* Trust badges */}
           <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100">
             {[
-              { icon: <Truck className="w-3.5 h-3.5" />,      label: "จัดส่งฟรี" },
-              { icon: <Shield className="w-3.5 h-3.5" />,     label: "สินค้าแท้ 100%" },
-              { icon: <RotateCcw className="w-3.5 h-3.5" />,  label: "คืนสินค้าได้" },
-              { icon: <Tag className="w-3.5 h-3.5" />,        label: "ราคาดีที่สุด" },
+              { icon: <Truck className="w-3.5 h-3.5" />, label: "จัดส่งฟรี" },
+              { icon: <Shield className="w-3.5 h-3.5" />, label: "สินค้าแท้ 100%" },
+              { icon: <RotateCcw className="w-3.5 h-3.5" />, label: "คืนสินค้าได้" },
+              { icon: <Tag className="w-3.5 h-3.5" />, label: "ราคาดีที่สุด" },
             ].map(b => (
               <div key={b.label} className="flex items-center gap-2 text-xs text-gray-500 font-medium">
                 <span className="text-purple-500">{b.icon}</span>

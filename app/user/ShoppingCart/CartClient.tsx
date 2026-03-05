@@ -84,7 +84,7 @@ export default function CartClient({
             : null
           return (
             <div key={item.id} className="flex items-center gap-4 bg-white p-4 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all group">
-              <div className="w-18 h-18 w-16 h-16 rounded-2xl bg-gray-50 border border-gray-100 overflow-hidden shrink-0">
+              <div className="w-16 h-16 rounded-2xl bg-gray-50 border border-gray-100 overflow-hidden shrink-0">
                 {imageUrl
                   ? <img src={imageUrl} alt={item.variant.product.Pname} className="w-full h-full object-cover" />
                   : <div className="w-full h-full flex items-center justify-center"><Package className="w-5 h-5 text-gray-300" /></div>

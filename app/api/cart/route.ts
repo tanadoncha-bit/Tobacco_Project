@@ -24,7 +24,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "ไม่พบสินค้านี้ในระบบ" }, { status: 404 })
     }
 
-    const totalStock = variant.productVariantLots.reduce((sum, lot) => sum + lot.stock, 0)
+    const totalStock = variant.productVariantLots
+      .filter(lot => !lot.expireDate || new Date(lot.expireDate) > new Date())
+      .reduce((sum, lot) => sum + lot.stock, 0)
     if (totalStock < quantity) {
       return NextResponse.json({ message: `สินค้ามีไม่พอ (เหลือ ${totalStock} ชิ้น)` }, { status: 400 })
     }

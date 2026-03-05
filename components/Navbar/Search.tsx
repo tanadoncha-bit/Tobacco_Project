@@ -1,4 +1,4 @@
-"use client" 
+"use client"
 
 import { useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
@@ -11,29 +11,28 @@ const Search = () => {
   const pathname = usePathname()
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    
     if (searchTerm.trim()) {
-      router.push(`${pathname}?search=${encodeURIComponent(searchTerm.trim())}`)
+      router.push(`/user?search=${encodeURIComponent(searchTerm.trim())}`)
     } else {
-      router.push(pathname)
+      router.push("/user")
     }
   }
 
   return (
-    <form 
-      onSubmit={handleSearch} 
+    <form
+      onSubmit={handleSearch}
       className="flex-1 relative w-full max-w-6xl flex justify-center"
     >
-      <Input 
-        type="text" 
-        placeholder="ค้นหาสินค้า" 
+      <Input
+        type="text"
+        placeholder="ค้นหาสินค้า"
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         className="w-full bg-white text-black rounded-full dark:bg-white pr-12"
       />
-      
-      <button 
-        type="submit" 
+
+      <button
+        type="submit"
         className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-purple-800 transition-colors cursor-pointer"
         aria-label="ค้นหา"
       >

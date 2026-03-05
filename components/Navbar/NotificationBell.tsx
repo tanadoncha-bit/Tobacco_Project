@@ -14,10 +14,10 @@ type Notification = {
 }
 
 const STATUS_INFO: Record<string, { label: string; icon: any; color: string }> = {
-  VERIFYING: { label: "รอตรวจสอบสลิป",  icon: Package,     color: "text-orange-500" },
-  PAID:      { label: "ชำระเงินแล้ว",    icon: CheckCircle, color: "text-blue-500"   },
-  SHIPPED:   { label: "จัดส่งแล้ว",      icon: Truck,       color: "text-purple-500" },
-  COMPLETED: { label: "สำเร็จแล้ว",      icon: CheckCircle, color: "text-emerald-500"},
+  VERIFYING: { label: "รอตรวจสอบสลิป", icon: Package, color: "text-orange-500" },
+  PAID: { label: "ชำระเงินแล้ว", icon: CheckCircle, color: "text-blue-500" },
+  SHIPPED: { label: "จัดส่งแล้ว", icon: Truck, color: "text-purple-500" },
+  COMPLETED: { label: "สำเร็จแล้ว", icon: CheckCircle, color: "text-emerald-500" },
 }
 
 export default function NotificationBell() {
@@ -29,10 +29,15 @@ export default function NotificationBell() {
 
   useEffect(() => {
     if (!session) return
-    fetch("/api/user/notifications")
-      .then(r => r.ok ? r.json() : [])
-      .then(setNotifications)
-      .catch(console.error)
+    const fetchNotifications = () =>
+      fetch("/api/user/notifications")
+        .then(r => r.ok ? r.json() : [])
+        .then(setNotifications)
+        .catch(console.error)
+
+    fetchNotifications()
+    const interval = setInterval(fetchNotifications, 60_000) // ทุก 1 นาที
+    return () => clearInterval(interval)
   }, [session])
 
   useEffect(() => {

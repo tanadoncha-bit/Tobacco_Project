@@ -8,19 +8,15 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// ==================== ENUMS ====================
-
 enum TransactionType {
   IN
   OUT
 }
 
 enum TransactionReason {
-  // IN reasons
   NEW_PURCHASE
   PRODUCTION
   RETURN
-  // OUT reasons
   SALE
   OFFLINE_SALE
   DAMAGED
@@ -34,10 +30,8 @@ enum MaterialTransactionType {
 }
 
 enum MaterialTransactionReason {
-  // IN reasons
   NEW_PURCHASE
   PRODUCTION_RETURN
-  // OUT reasons
   PRODUCTION_USE
   ADJUSTMENT
 }
@@ -56,8 +50,6 @@ enum OrderStatus {
   COMPLETED
   CANCELLED
 }
-
-// ==================== MODELS ====================
 
 model Profile {
   id           String  @id @default(uuid())
@@ -178,9 +170,9 @@ model Material {
 }
 
 model MaterialLot {
-  id         Int      @id @default(autoincrement())
-  lotNumber  String
-  stock      Float    @default(0)
+  id          Int      @id @default(autoincrement())
+  lotNumber   String
+  stock       Float    @default(0)
   costPerUnit Float?
 
   receiveDate DateTime  @default(now())
@@ -221,7 +213,7 @@ model MaterialTransaction {
 }
 
 model Order {
-  id             String  @id @default(uuid())
+  id             String      @id @default(uuid())
   totalAmount    Float
   status         OrderStatus
   trackingNumber String?
@@ -248,6 +240,22 @@ model OrderItem {
 
   variantId Int
   variant   ProductVariant @relation(fields: [variantId], references: [id])
+
+  lotDeductions OrderItemLot[]
+}
+
+model OrderItemLot {
+  id       Int @id @default(autoincrement())
+  quantity Int
+
+  orderItemId Int
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+
+  lotId Int
+  lot   ProductVariantLot @relation(fields: [lotId], references: [id])
+
+  @@unique([orderItemId, lotId])
+  @@index([orderItemId])
 }
 
 model Cart {
@@ -296,14 +304,15 @@ model ProductVariantLot {
   variantId Int
   variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
-  transactions StockTransaction[]
+  transactions  StockTransaction[]
+  orderItemLots OrderItemLot[]      // ใหม่
 
   @@unique([variantId, lotNumber])
   @@index([variantId])
 }
 
 model StockTransaction {
-  id     Int               @id @default(autoincrement())
+  id     Int                @id @default(autoincrement())
   type   TransactionType
   reason TransactionReason?
   amount Int

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { Plus, Trash2, BookOpen, X, ChevronDown, AlertTriangle } from "lucide-react"
 import { toast } from "sonner"
+import { createPortal } from "react-dom"
 
 type Variant = {
   id: number
@@ -50,6 +51,21 @@ export default function ProductRecipeModal({ open, onClose }: Props) {
   const materialDropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    if (open) {
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
+      document.body.style.overflow = 'hidden'
+      document.body.style.paddingRight = `${scrollbarWidth}px`
+    } else {
+      document.body.style.overflow = ''
+      document.body.style.paddingRight = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+      document.body.style.paddingRight = ''
+    }
+  }, [open])
+
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (variantDropdownRef.current && !variantDropdownRef.current.contains(event.target as Node)) {
         setIsVariantDropdownOpen(false)
@@ -63,11 +79,11 @@ export default function ProductRecipeModal({ open, onClose }: Props) {
   }, [open])
 
   useEffect(() => {
-    if (!open) return 
+    if (!open) return
     const fetchData = async () => {
       try {
         const [variantsRes, materialsRes] = await Promise.all([
-          fetch("/api/variants"), 
+          fetch("/api/variants"),
           fetch("/api/materials")
         ])
         if (variantsRes.ok) setVariants(await variantsRes.json())
@@ -107,12 +123,12 @@ export default function ProductRecipeModal({ open, onClose }: Props) {
     return `${v.product.Pname} - ${optionsStr}`
   }
 
-  const selectedVariantLabel = selectedVariantId 
-    ? getVariantLabel(variants.find(v => v.id.toString() === selectedVariantId)!) 
+  const selectedVariantLabel = selectedVariantId
+    ? getVariantLabel(variants.find(v => v.id.toString() === selectedVariantId)!)
     : "-- เลือกสินค้า --"
 
-  const selectedMaterialLabel = form.materialId 
-    ? materials.find(m => m.id.toString() === form.materialId)?.name 
+  const selectedMaterialLabel = form.materialId
+    ? materials.find(m => m.id.toString() === form.materialId)?.name
     : "-- เลือกวัตถุดิบ --"
 
   const handleAddRecipe = async () => {
@@ -160,11 +176,11 @@ export default function ProductRecipeModal({ open, onClose }: Props) {
 
   if (!open) return null
 
-  return (
+  return createPortal(
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 transition-opacity duration-300">
-        <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col relative overflow-hidden">
-          
+      <div className="fixed inset-0 z-50 bg-black/50 overflow-hidden">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+
           <div className="flex justify-between items-center px-6 py-5 border-b border-gray-100 bg-white">
             <div className="flex items-center gap-3">
               <div className="bg-purple-100 p-2 rounded-lg">
@@ -172,7 +188,7 @@ export default function ProductRecipeModal({ open, onClose }: Props) {
               </div>
               <h2 className="text-xl font-bold text-gray-800">จัดการสูตรการผลิต</h2>
             </div>
-            <button 
+            <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded-lg transition-colors cursor-pointer"
             >
@@ -182,13 +198,13 @@ export default function ProductRecipeModal({ open, onClose }: Props) {
 
           <div className="p-6 overflow-y-auto bg-gray-50/30">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              
+
               <div className="md:col-span-1">
                 <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
                   <span className="bg-purple-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs">1</span>
                   เลือกสินค้าที่จะตั้งสูตร
                 </label>
-                
+
                 <div className="relative" ref={variantDropdownRef}>
                   <button
                     type="button"
@@ -208,11 +224,10 @@ export default function ProductRecipeModal({ open, onClose }: Props) {
                             setSelectedVariantId(v.id.toString())
                             setIsVariantDropdownOpen(false)
                           }}
-                          className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer ${
-                            selectedVariantId === v.id.toString()
-                              ? "bg-purple-50 text-purple-700 font-bold border-l-4 border-purple-500"
-                              : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent font-medium"
-                          }`}
+                          className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer ${selectedVariantId === v.id.toString()
+                            ? "bg-purple-50 text-purple-700 font-bold border-l-4 border-purple-500"
+                            : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent font-medium"
+                            }`}
                         >
                           {getVariantLabel(v)}
                         </button>
@@ -228,7 +243,7 @@ export default function ProductRecipeModal({ open, onClose }: Props) {
                       เพิ่มวัตถุดิบเข้าสูตร
                     </label>
                     <div className="space-y-4">
-                      
+
                       <div className="relative" ref={materialDropdownRef}>
                         <button
                           type="button"
@@ -245,14 +260,13 @@ export default function ProductRecipeModal({ open, onClose }: Props) {
                               <button
                                 key={m.id}
                                 onClick={() => {
-                                  setForm({...form, materialId: m.id.toString()})
+                                  setForm({ ...form, materialId: m.id.toString() })
                                   setIsMaterialDropdownOpen(false)
                                 }}
-                                className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer ${
-                                  form.materialId === m.id.toString()
-                                    ? "bg-purple-50 text-purple-700 font-bold"
-                                    : "text-gray-600 hover:bg-gray-50"
-                                }`}
+                                className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer ${form.materialId === m.id.toString()
+                                  ? "bg-purple-50 text-purple-700 font-bold"
+                                  : "text-gray-600 hover:bg-gray-50"
+                                  }`}
                               >
                                 {m.name} <span className="text-gray-400 text-xs ml-1">({m.unit})</span>
                               </button>
@@ -262,16 +276,16 @@ export default function ProductRecipeModal({ open, onClose }: Props) {
                       </div>
 
                       <div className="relative">
-                        <input 
+                        <input
                           type="number"
                           placeholder="จำนวนที่ใช้ต่อ 1 ชิ้น"
                           value={form.quantity}
-                          onChange={(e) => setForm({...form, quantity: e.target.value})}
+                          onChange={(e) => setForm({ ...form, quantity: e.target.value })}
                           className="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-purple-500 bg-gray-50 hover:bg-white focus:bg-white transition-all"
                         />
                       </div>
-                      
-                      <button 
+
+                      <button
                         onClick={handleAddRecipe}
                         disabled={isLoading}
                         className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2.5 rounded-xl text-sm font-bold flex justify-center items-center gap-2 transition-all disabled:opacity-50 mt-4 shadow-sm hover:shadow cursor-pointer"
@@ -295,7 +309,7 @@ export default function ProductRecipeModal({ open, onClose }: Props) {
                         {recipes.length} รายการ
                       </span>
                     </h3>
-                    
+
                     {recipes.length > 0 ? (
                       <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm flex-1">
                         <table className="w-full text-sm text-left">
@@ -314,7 +328,7 @@ export default function ProductRecipeModal({ open, onClose }: Props) {
                                 <td className="px-6 py-4 text-right font-bold text-purple-600 text-base">{r.quantity}</td>
                                 <td className="px-6 py-4 text-gray-500 font-medium">{r.material.unit}</td>
                                 <td className="px-6 py-4 text-center">
-                                  <button 
+                                  <button
                                     onClick={() => setRecipeToDelete(r.id)}
                                     className="text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-xl transition-all opacity-50 group-hover:opacity-100"
                                   >
@@ -353,7 +367,7 @@ export default function ProductRecipeModal({ open, onClose }: Props) {
 
       {/* MODAL ยืนยันการลบแบบสวยงาม */}
       {recipeToDelete !== null && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center animate-in zoom-in-95 duration-200">
             <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-red-50 mb-4 border-4 border-red-100">
               <AlertTriangle className="h-6 w-6 text-red-500" />
@@ -380,6 +394,7 @@ export default function ProductRecipeModal({ open, onClose }: Props) {
           </div>
         </div>
       )}
-    </>
+    </>,
+    document.body
   )
 }

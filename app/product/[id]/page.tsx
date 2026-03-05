@@ -17,7 +17,12 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       include: {
         images: true,
         Option: { include: { values: true } },
-        variants: { include: { values: { include: { optionValue: true } } } },
+        variants: {
+          include: {
+            values: { include: { optionValue: true } },
+            productVariantLots: true,
+          }
+        },
       },
     }),
     prisma.product.findMany({
@@ -61,7 +66,9 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                 const minPrice = Math.min(...p.variants.map(v => v.price ?? 0))
                 const imageUrl = p.images[0]?.url ?? null
                 const outOfStock = p.variants.reduce((s, v) => {
-                  return s + v.productVariantLots.reduce((ls, lot) => ls + lot.stock, 0)
+                  return s + v.productVariantLots
+                    .filter(lot => !lot.expireDate || new Date(lot.expireDate) > new Date())
+                    .reduce((ls, lot) => ls + lot.stock, 0)
                 }, 0) <= 0
                 return (
                   <div key={p.Pid} className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group flex flex-col">

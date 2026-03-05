@@ -223,15 +223,6 @@ export default function OrderTable({ initialOrders }: { initialOrders: Order[] }
                           </div>
                         )}
                       </td>
-                      {/* <td className="px-6 py-5">
-                        <p className="font-black text-gray-900 text-base">{item.name}</p>
-                        {item.category && (
-                          <p className="text-xs font-medium text-gray-500 mt-1 flex items-center justify-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
-                            {item.category}
-                          </p>
-                        )}
-                      </td> */}
 
                       <td className="px-6 py-4 text-gray-500 text-sm font-medium">
                         {new Date(order.createdAt).toLocaleDateString("th-TH", { day: "2-digit", month: "short", year: "numeric" })}

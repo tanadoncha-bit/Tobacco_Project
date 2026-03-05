@@ -147,7 +147,7 @@ export default function StockTable({
 
           {/* Left: Search + Sort */}
           <div className="flex flex-wrap items-center gap-3">
-            <div className="relative w-72 group">
+            <div className="relative w-full sm:w-72 group">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-purple-500 transition-colors" />
               <input
                 type="text"
@@ -175,8 +175,8 @@ export default function StockTable({
                         key={opt.value}
                         onClick={() => { setSort(opt.value); setIsSortOpen(false) }}
                         className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer ${sort === opt.value
-                            ? "bg-purple-50 text-purple-700 font-bold border-l-4 border-purple-500"
-                            : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent font-medium"
+                          ? "bg-purple-50 text-purple-700 font-bold border-l-4 border-purple-500"
+                          : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent font-medium"
                           }`}
                       >
                         {opt.label}
@@ -268,10 +268,10 @@ export default function StockTable({
                     {/* สต็อกรวม */}
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-3 py-1.5 rounded-xl font-black text-sm border ${item.stock === 0
-                          ? "text-rose-600 bg-rose-50 border-rose-200"
-                          : item.stock <= 5
-                            ? "text-orange-600 bg-orange-50 border-orange-200"
-                            : "text-indigo-700 bg-indigo-50 border-indigo-200"
+                        ? "text-rose-600 bg-rose-50 border-rose-200"
+                        : item.stock <= 5
+                          ? "text-orange-600 bg-orange-50 border-orange-200"
+                          : "text-indigo-700 bg-indigo-50 border-indigo-200"
                         }`}>
                         {item.stock} ชิ้น
                       </span>
@@ -323,6 +323,17 @@ export default function StockTable({
                           <FileText className="w-3.5 h-3.5" /> ประวัติ
                         </button>
                       </div>
+                      <div className="md:hidden flex justify-center">
+                        <MobileActionMenu
+                          item={item}
+                          canAdjustStock={canAdjustStock}
+                          onAdjust={() => { setAdjustProductId(item.Pid); setAdjustStockOpen(true) }}
+                          onDispatch={() => { setDispatchProductId(item.Pid); setDispatchProductName(item.name); setDispatchOpen(true) }}
+                          onLot={() => { setSelectedLotProductCode(item.productCode); setSelectedLotProductId(item.Pid); setSelectedLotProductName(item.name); setLotModalOpen(true) }}
+                          onEdit={() => { setEditProductId(item.Pid); setEditModalOpen(true) }}
+                          onSlip={() => { setSelectedSlipId(item.Pid); setSelectedSlipName(item.name); setSlipModalOpen(true) }}
+                        />
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -351,6 +362,59 @@ export default function StockTable({
       <ProductLotModal open={lotModalOpen} productCode={selectedLotProductCode} productId={selectedLotProductId} productName={selectedLotProductName} unit="ชิ้น" onClose={() => { setLotModalOpen(false); setSelectedLotProductId(null) }} />
       {dispatchOpen && dispatchProductId && (
         <DispatchProductModal open={dispatchOpen} productId={dispatchProductId} productName={dispatchProductName} onClose={() => { setDispatchOpen(false); setDispatchProductId(null) }} onSuccess={() => router.refresh()} />
+      )}
+    </div>
+  )
+}
+
+function MobileActionMenu({ item, canAdjustStock, onAdjust, onDispatch, onLot, onEdit, onSlip }: any) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [])
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="p-2 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100 cursor-pointer"
+      >
+        <ChevronDown className="w-4 h-4" />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 mt-2 w-44 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+          {canAdjustStock && (
+            <>
+              <button onClick={() => { onAdjust(); setOpen(false) }}
+                className="w-full flex items-center gap-2 px-4 py-3 text-sm font-bold text-emerald-700 hover:bg-emerald-50 cursor-pointer">
+                <ArrowDownToLine className="w-4 h-4" /> รับเข้า
+              </button>
+              <button onClick={() => { onDispatch(); setOpen(false) }}
+                className="w-full flex items-center gap-2 px-4 py-3 text-sm font-bold text-rose-700 hover:bg-rose-50 cursor-pointer">
+                <ArrowUpFromLine className="w-4 h-4" /> เบิกออก
+              </button>
+            </>
+          )}
+          <button onClick={() => { onLot(); setOpen(false) }}
+            className="w-full flex items-center gap-2 px-4 py-3 text-sm font-bold text-purple-700 hover:bg-purple-50 cursor-pointer">
+            <Layers className="w-4 h-4" /> ล็อต
+          </button>
+          <button onClick={() => { onEdit(); setOpen(false) }}
+            className="w-full flex items-center gap-2 px-4 py-3 text-sm font-bold text-gray-700 hover:bg-gray-50 cursor-pointer">
+            <Edit className="w-4 h-4" /> รายละเอียด
+          </button>
+          <button onClick={() => { onSlip(); setOpen(false) }}
+            className="w-full flex items-center gap-2 px-4 py-3 text-sm font-bold text-blue-700 hover:bg-blue-50 cursor-pointer">
+            <FileText className="w-4 h-4" /> ประวัติ
+          </button>
+        </div>
       )}
     </div>
   )

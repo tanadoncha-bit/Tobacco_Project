@@ -25,27 +25,25 @@ type Transaction = {
 }
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: "in" | "out" }> = {
-  // reason
-  NEW_PURCHASE:   { label: "รับเข้าซื้อ",   color: "text-green-600 bg-green-50 border-green-200",     icon: "in"  },
-  PRODUCTION:     { label: "รับจากผลิต",    color: "text-teal-600 bg-teal-50 border-teal-200",        icon: "in"  },
-  PRODUCTION_USE: { label: "เบิกผลิต",      color: "text-teal-600 bg-teal-50 border-teal-200",        icon: "out" },
-  RETURN:         { label: "ลูกค้าคืน",     color: "text-purple-600 bg-purple-50 border-purple-200",  icon: "in"  },
-  AUDIT:          { label: "ปรับยอด",       color: "text-gray-600 bg-gray-100 border-gray-200",       icon: "out" },
-  SALE:           { label: "ขายออก",        color: "text-orange-600 bg-orange-50 border-orange-200",  icon: "out" },
-  OFFLINE_SALE:   { label: "ขายหน้าร้าน",   color: "text-teal-600 bg-teal-50 border-teal-200",        icon: "out" },
-  DAMAGED:        { label: "ของชำรุด",      color: "text-red-500 bg-red-50 border-red-200",           icon: "out" },
-  EXPIRED:        { label: "หมดอายุ",       color: "text-red-700 bg-red-100 border-red-300",          icon: "out" },
-  ADJUSTMENT:     { label: "ปรับสต็อก",     color: "text-gray-600 bg-gray-100 border-gray-200",       icon: "out" },
-  PRODUCTION_RETURN: { label: "คืนวัตถุดิบ", color: "text-teal-600 bg-teal-50 border-teal-200",       icon: "in"  },
-  // type fallback
-  IN:             { label: "รับเข้า",       color: "text-green-600 bg-green-50 border-green-200",     icon: "in"  },
-  OUT:            { label: "เบิกออก",       color: "text-orange-600 bg-orange-50 border-orange-200",  icon: "out" },
+  NEW_PURCHASE: { label: "รับเข้าซื้อ", color: "text-green-600 bg-green-50 border-green-200", icon: "in" },
+  PRODUCTION: { label: "รับจากผลิต", color: "text-teal-600 bg-teal-50 border-teal-200", icon: "in" },
+  PRODUCTION_USE: { label: "เบิกผลิต", color: "text-teal-600 bg-teal-50 border-teal-200", icon: "out" },
+  RETURN: { label: "คืนสต็อก (ยกเลิกออเดอร์)", color: "text-purple-600 bg-purple-50 border-purple-200", icon: "in" },
+  AUDIT: { label: "ปรับยอด", color: "text-gray-600 bg-gray-100 border-gray-200", icon: "out" },
+  SALE: { label: "ขายออก", color: "text-orange-600 bg-orange-50 border-orange-200", icon: "out" },
+  OFFLINE_SALE: { label: "ขายหน้าร้าน", color: "text-teal-600 bg-teal-50 border-teal-200", icon: "out" },
+  DAMAGED: { label: "ของชำรุด", color: "text-red-500 bg-red-50 border-red-200", icon: "out" },
+  EXPIRED: { label: "หมดอายุ", color: "text-red-700 bg-red-100 border-red-300", icon: "out" },
+  ADJUSTMENT: { label: "ปรับสต็อก", color: "text-gray-600 bg-gray-100 border-gray-200", icon: "out" },
+  PRODUCTION_RETURN: { label: "คืนวัตถุดิบ", color: "text-teal-600 bg-teal-50 border-teal-200", icon: "in" },
+  IN: { label: "รับเข้า", color: "text-green-600 bg-green-50 border-green-200", icon: "in" },
+  OUT: { label: "เบิกออก", color: "text-orange-600 bg-orange-50 border-orange-200", icon: "out" },
 }
 
 export default function HistoryClient({ initialData }: { initialData: Transaction[] }) {
-  const [search, setSearch]                 = useState("")
+  const [search, setSearch] = useState("")
   const [filterCategory, setFilterCategory] = useState<"ALL" | "MATERIAL" | "PRODUCT" | "PRODUCTION">("ALL")
-  const [filterType, setFilterType]         = useState<"ALL" | "IN" | "OUT">("ALL")
+  const [filterType, setFilterType] = useState<"ALL" | "IN" | "OUT">("ALL")
 
   const filteredData = initialData.filter((tx) => {
     const s = search.toLowerCase()
@@ -56,32 +54,32 @@ export default function HistoryClient({ initialData }: { initialData: Transactio
       (tx.lotNumber && tx.lotNumber.toLowerCase().includes(s))
 
     const matchCategory =
-      filterCategory === "ALL"        ? true
-      : filterCategory === "PRODUCTION" ? tx.productionDocNo !== null
-      : tx.category === filterCategory
+      filterCategory === "ALL" ? true
+        : filterCategory === "PRODUCTION" ? tx.productionDocNo !== null
+          : tx.category === filterCategory
 
     const matchType =
       filterType === "ALL" ? true
-      : tx.type === filterType
+        : tx.type === filterType
 
     return matchSearch && matchCategory && matchType
   })
 
-  const totalIn   = initialData.filter(tx => tx.type === "IN").length
-  const totalOut  = initialData.filter(tx => tx.type === "OUT").length
+  const totalIn = initialData.filter(tx => tx.type === "IN").length
+  const totalOut = initialData.filter(tx => tx.type === "OUT").length
   const totalProd = initialData.filter(tx => tx.productionDocNo !== null).length
 
   const CATEGORY_FILTERS = [
-    { value: "ALL",        label: "ทั้งหมด",  count: initialData.length,                                        activeClass: "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md" },
-    { value: "MATERIAL",   label: "วัตถุดิบ", count: initialData.filter(t => t.category === "MATERIAL").length, activeClass: "bg-gradient-to-r from-orange-400 to-amber-500 text-white shadow-md", icon: <Hammer className="w-3.5 h-3.5" /> },
-    { value: "PRODUCT",    label: "สินค้า",   count: initialData.filter(t => t.category === "PRODUCT").length,  activeClass: "bg-gradient-to-r from-blue-400 to-indigo-500 text-white shadow-md",  icon: <Package className="w-3.5 h-3.5" /> },
-    { value: "PRODUCTION", label: "การผลิต",  count: totalProd,                                                 activeClass: "bg-gradient-to-r from-teal-400 to-emerald-500 text-white shadow-md", icon: <Factory className="w-3.5 h-3.5" /> },
+    { value: "ALL", label: "ทั้งหมด", count: initialData.length, activeClass: "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md" },
+    { value: "MATERIAL", label: "วัตถุดิบ", count: initialData.filter(t => t.category === "MATERIAL").length, activeClass: "bg-gradient-to-r from-orange-400 to-amber-500 text-white shadow-md", icon: <Hammer className="w-3.5 h-3.5" /> },
+    { value: "PRODUCT", label: "สินค้า", count: initialData.filter(t => t.category === "PRODUCT").length, activeClass: "bg-gradient-to-r from-blue-400 to-indigo-500 text-white shadow-md", icon: <Package className="w-3.5 h-3.5" /> },
+    { value: "PRODUCTION", label: "การผลิต", count: totalProd, activeClass: "bg-gradient-to-r from-teal-400 to-emerald-500 text-white shadow-md", icon: <Factory className="w-3.5 h-3.5" /> },
   ] as const
 
   const TYPE_FILTERS = [
     { value: "ALL", label: "เข้า/ออก", activeClass: "bg-gradient-to-r from-gray-500 to-gray-600 text-white shadow-md" },
-    { value: "IN",  label: "รับเข้า",  activeClass: "bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-md", icon: <ArrowDownToLine className="w-3.5 h-3.5" /> },
-    { value: "OUT", label: "เบิกออก",  activeClass: "bg-gradient-to-r from-rose-400 to-red-500 text-white shadow-md",    icon: <ArrowUpFromLine className="w-3.5 h-3.5" /> },
+    { value: "IN", label: "รับเข้า", activeClass: "bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-md", icon: <ArrowDownToLine className="w-3.5 h-3.5" /> },
+    { value: "OUT", label: "เบิกออก", activeClass: "bg-gradient-to-r from-rose-400 to-red-500 text-white shadow-md", icon: <ArrowUpFromLine className="w-3.5 h-3.5" /> },
   ] as const
 
   return (
@@ -101,10 +99,10 @@ export default function HistoryClient({ initialData }: { initialData: Transactio
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
         {[
-          { label: "รายการทั้งหมด", value: initialData.length, icon: <ClipboardList className="w-6 h-6" />, gradient: "from-indigo-500 to-purple-600", shadow: "shadow-purple-200"   },
-          { label: "รับเข้า",       value: totalIn,            icon: <ArrowDownToLine className="w-6 h-6" />, gradient: "from-emerald-400 to-teal-500", shadow: "shadow-emerald-200" },
-          { label: "เบิกออก",       value: totalOut,           icon: <ArrowUpFromLine className="w-6 h-6" />, gradient: "from-rose-500 to-red-600",     shadow: "shadow-rose-200"    },
-          { label: "การผลิต",       value: totalProd,          icon: <Factory className="w-6 h-6" />,         gradient: "from-teal-400 to-emerald-500", shadow: "shadow-teal-200"    },
+          { label: "รายการทั้งหมด", value: initialData.length, icon: <ClipboardList className="w-6 h-6" />, gradient: "from-indigo-500 to-purple-600", shadow: "shadow-purple-200" },
+          { label: "รับเข้า", value: totalIn, icon: <ArrowDownToLine className="w-6 h-6" />, gradient: "from-emerald-400 to-teal-500", shadow: "shadow-emerald-200" },
+          { label: "เบิกออก", value: totalOut, icon: <ArrowUpFromLine className="w-6 h-6" />, gradient: "from-rose-500 to-red-600", shadow: "shadow-rose-200" },
+          { label: "การผลิต", value: totalProd, icon: <Factory className="w-6 h-6" />, gradient: "from-teal-400 to-emerald-500", shadow: "shadow-teal-200" },
         ].map(card => (
           <div key={card.label} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-6 flex items-center gap-5 group">
             <div className={`bg-gradient-to-br ${card.gradient} rounded-2xl p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
@@ -144,9 +142,8 @@ export default function HistoryClient({ initialData }: { initialData: Transactio
                   <button
                     key={opt.value}
                     onClick={() => setFilterCategory(opt.value as any)}
-                    className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-1.5 cursor-pointer ${
-                      isActive ? opt.activeClass : "text-gray-500 hover:text-gray-800 hover:bg-gray-200/50"
-                    }`}
+                    className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-1.5 cursor-pointer ${isActive ? opt.activeClass : "text-gray-500 hover:text-gray-800 hover:bg-gray-200/50"
+                      }`}
                   >
                     {"icon" in opt ? opt.icon : null}
                     {opt.label}
@@ -165,9 +162,8 @@ export default function HistoryClient({ initialData }: { initialData: Transactio
                   <button
                     key={opt.value}
                     onClick={() => setFilterType(opt.value as any)}
-                    className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-1.5 cursor-pointer ${
-                      isActive ? opt.activeClass : "text-gray-500 hover:text-gray-800 hover:bg-gray-200/50"
-                    }`}
+                    className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-1.5 cursor-pointer ${isActive ? opt.activeClass : "text-gray-500 hover:text-gray-800 hover:bg-gray-200/50"
+                      }`}
                   >
                     {"icon" in opt ? opt.icon : null}
                     {opt.label}

@@ -17,13 +17,17 @@ export default async function AdminDashboard() {
           values: { include: { optionValue: true } },
           productVariantLots: true,
         },
-        take: 20,
       }),
       prisma.orderItem.groupBy({
         by: ["variantId"],
         _sum: { quantity: true },
         orderBy: { _sum: { quantity: "desc" } },
         take: 5,
+        where: {
+          order: {
+            status: { not: "CANCELLED" }
+          }
+        }
       }),
       prisma.order.findMany({
         orderBy: { createdAt: "desc" },
@@ -50,23 +54,23 @@ export default async function AdminDashboard() {
       }),
     ])
 
-  const totalRevenue  = orders.reduce((s, o) => s + o.totalAmount, 0)
-  const totalOrders   = orders.length
+  const totalRevenue = orders.reduce((s, o) => s + o.totalAmount, 0)
+  const totalOrders = orders.length
   const pendingOrders = orders.filter(o => o.status === "PENDING" || o.status === "VERIFYING").length
 
   const lowStockItems = allVariants
     .map(v => ({
-      id:      v.id,
-      name:    v.product.Pname,
+      id: v.id,
+      name: v.product.Pname,
       variant: v.values.map(val => val.optionValue.value).join(", "),
-      stock:   v.productVariantLots.reduce((sum, lot) => sum + lot.stock, 0),
+      stock: v.productVariantLots.reduce((sum, lot) => sum + lot.stock, 0),
     }))
     .filter(v => v.stock < 10)
     .sort((a, b) => a.stock - b.stock)
     .slice(0, 5)
 
   const topProductIds = topProducts.map(t => t.variantId)
-  const topVariants   = await prisma.productVariant.findMany({
+  const topVariants = await prisma.productVariant.findMany({
     where: { id: { in: topProductIds } },
     include: {
       product: {
@@ -81,29 +85,29 @@ export default async function AdminDashboard() {
   const topProductItems = topProducts.map((t, i) => {
     const v = topVariants.find(v => v.id === t.variantId)
     return {
-      rank:     i + 1,
-      name:     v?.product.Pname ?? "—",
-      variant:  v?.values.map(val => val.optionValue.value).join(", ") ?? "",
-      image:    v?.product.images?.[0]?.url ?? null,
+      rank: i + 1,
+      name: v?.product.Pname ?? "—",
+      variant: v?.values.map(val => val.optionValue.value).join(", ") ?? "",
+      image: v?.product.images?.[0]?.url ?? null,
       quantity: t._sum.quantity ?? 0,
     }
   })
 
   const recentOrderItems = recentOrders.map(o => ({
-    id:           o.id,
-    totalAmount:  o.totalAmount,
-    status:       o.status,
-    createdAt:    o.createdAt.toISOString(),
+    id: o.id,
+    totalAmount: o.totalAmount,
+    status: o.status,
+    createdAt: o.createdAt.toISOString(),
     customerName: `${o.profile.firstname} ${o.profile.lastname}`,
   }))
 
   const nearExpiryItems = nearExpiryMaterials.map(lot => ({
-    id:           lot.id,
+    id: lot.id,
     materialName: lot.material.name,
-    unit:         lot.material.unit,
-    lotNumber:    lot.lotNumber,
-    stock:        lot.stock,
-    expireDate:   lot.expireDate!.toISOString(),
+    unit: lot.material.unit,
+    lotNumber: lot.lotNumber,
+    stock: lot.stock,
+    expireDate: lot.expireDate!.toISOString(),
   }))
 
   const last7Days = Array.from({ length: 7 }).map((_, i) => {
@@ -115,7 +119,7 @@ export default async function AdminDashboard() {
     const daily = orders.filter(o => o.createdAt.toISOString().split("T")[0] === dateStr)
     const d = new Date(dateStr)
     return {
-      date:    `${d.getDate()} ${d.toLocaleString("th-TH", { month: "short" })}`,
+      date: `${d.getDate()} ${d.toLocaleString("th-TH", { month: "short" })}`,
       ยอดขาย: daily.reduce((s, o) => s + o.totalAmount, 0),
     }
   })

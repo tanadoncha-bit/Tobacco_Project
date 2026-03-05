@@ -1,12 +1,17 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, usePathname } from "next/navigation"
 import { ShoppingCart, Loader2 } from "lucide-react"
 
 export default function ProductButton({ productId }: { productId: number }) {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const pathname = usePathname()
+
+  useEffect(() => {
+    setIsLoading(false)
+  }, [pathname])
 
   const handleClick = () => {
     setIsLoading(true)

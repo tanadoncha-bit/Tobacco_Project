@@ -54,14 +54,28 @@ export default async function AdminDashboard() {
   const profit = totalIncome - totalExpense
 
   const recentOrders = await prisma.order.findMany({
-    where: { status: { not: "CANCELLED" } },
     orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      totalAmount: true,
+      status: true,
+      createdAt: true,
+    }
   })
 
   const recentMaterials = await prisma.materialTransaction.findMany({
     where: { type: MaterialTransactionType.IN, totalCost: { not: null } },
     orderBy: { createdAt: "desc" },
     include: { material: true }
+  })
+
+  const returnTxs = await prisma.stockTransaction.findMany({
+    where: { type: TransactionType.IN, reason: TransactionReason.RETURN },
+    orderBy: { createdAt: "desc" },
+    include: {
+      variant: { include: { product: true } },
+      variantLot: true,
+    }
   })
 
   const recentWaste = await prisma.stockTransaction.findMany({
@@ -104,7 +118,7 @@ export default async function AdminDashboard() {
     })),
     ...offlineSaleTxs.map(tx => ({
       uniqueKey: `OFFLINE-TX-${tx.id}`,
-      displayCode: "-",
+      displayCode: `OFF-${tx.id.toString().padStart(6, '0')}`,
       date: tx.createdAt,
       description: `ขายหน้าร้าน`,
       type: "income",
@@ -113,11 +127,20 @@ export default async function AdminDashboard() {
     })),
     ...productTxs.map(tx => ({
       uniqueKey: `PRO-TX-${tx.id}`,
-      displayCode: "-",
+      displayCode: `STK-${tx.id.toString().padStart(6, '0')}`,
       date: tx.createdAt,
       description: `สั่งซื้อสินค้าเข้าคลัง`,
       type: "expense",
       subtype: "product",
+      amount: (tx.variant.price ?? 0) * tx.amount
+    })),
+    ...returnTxs.map(tx => ({
+      uniqueKey: `RETURN-TX-${tx.id}`,
+      displayCode: `RET-${tx.id.toString().padStart(6, '0')}`,
+      date: tx.createdAt,
+      description: `คืนสต็อก (ยกเลิกออเดอร์) - ${tx.variant.product.Pname}`,
+      type: "return",
+      subtype: "return",
       amount: (tx.variant.price ?? 0) * tx.amount
     })),
   ]

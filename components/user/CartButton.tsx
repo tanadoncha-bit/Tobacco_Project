@@ -55,10 +55,10 @@ export default function CartButton() {
       </button>
 
       {isHovered && items.length > 0 && (
-        <div className="absolute top-full right-0 mt-1 w-[400px] bg-white text-black shadow-[0_4px_12px_rgba(0,0,0,0.15)] border border-gray-100 z-50 rounded-sm cursor-default">
+        <div className="absolute top-full right-0 mt-1 w-[400px] bg-white text-black shadow-2xl border border-gray-100 z-50 rounded-2xl overflow-hidden cursor-default">
 
           {/* หัวข้อ */}
-          <div className="text-gray-400 text-sm p-3 font-medium">
+          <div className="text-gray-400 text-sm px-4 py-3 font-medium border-b border-gray-100">
             สินค้าที่เพิ่งเพิ่มเข้าไป
           </div>
 
@@ -71,19 +71,14 @@ export default function CartButton() {
               const itemImage = item.variant?.product?.images?.[0]?.url || item.image || "https://placehold.co/100x100?text=No+Image"
 
               return (
-                <div key={item.id} className="flex items-center gap-3 p-3 hover:bg-gray-50 transition border-b border-gray-50 last:border-0">
-                  {/* รูปภาพ */}
-                  <div className="w-12 h-12 flex-shrink-0 border border-gray-200 rounded-sm overflow-hidden bg-gray-100">
+                <div key={item.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition border-b border-gray-50 last:border-0">
+                  <div className="w-12 h-12 flex-shrink-0 border border-gray-100 rounded-xl overflow-hidden bg-gray-100">
                     <img src={itemImage} alt={itemName} className="w-full h-full object-cover" />
                   </div>
-
-                  {/* ชื่อสินค้า (ใช้ truncate ให้ตัดจบด้วย ... ถ้าชื่อยาวไป) */}
-                  <span className="text-gray-700 text-sm flex-1 truncate" title={itemName}>
+                  <span className="text-gray-700 text-sm flex-1 truncate font-medium" title={itemName}>
                     {itemName}
                   </span>
-
-                  {/* ราคา (สีส้ม/แดง แบบในรูป) */}
-                  <span className="text-purple-700 text-sm font-medium">
+                  <span className="text-purple-700 text-sm font-black">
                     ฿{(itemPrice * item.quantity).toLocaleString()}
                   </span>
                 </div>
@@ -91,19 +86,18 @@ export default function CartButton() {
             })}
           </div>
 
-          {/* ส่วนท้าย (ปุ่ม และ จำนวนที่เหลือ) */}
-          <div className="flex justify-between items-center p-3 bg-gray-50/50">
-            <span className="text-gray-500 text-xs">
-              {remainingItems > 0 ? `${remainingItems} สินค้าเพิ่มเติมในรถเข็น` : ""}
+          {/* ส่วนท้าย */}
+          <div className="flex justify-between items-center px-4 py-3 bg-gray-50/50 border-t border-gray-100">
+            <span className="text-gray-400 text-xs font-medium">
+              {remainingItems > 0 ? `+${remainingItems} สินค้าเพิ่มเติม` : ""}
             </span>
             <button
               onClick={() => router.push("/user/ShoppingCart")}
-              className="bg-purple-700 hover:bg-purple-800 text-white text-sm px-4 py-2 rounded-sm transition-colors cursor-pointer"
+              className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:shadow-md hover:shadow-purple-200 hover:-translate-y-0.5 text-white text-sm px-4 py-2 rounded-xl font-bold transition-all cursor-pointer"
             >
               ดูรถเข็นของคุณ
             </button>
           </div>
-
         </div>
       )}
     </div>

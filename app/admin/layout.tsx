@@ -1,18 +1,22 @@
-import Sidebar from "@/components/Sidebar/Sidebar";
+import Sidebar from "@/components/Sidebar/Sidebar"
+import MobileSidebarWrapper from "@/components/Sidebar/MobileSidebarWrapper"
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic"
 
-export default function MainLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen bg-[linear-gradient(140deg,#2F4156,#567C8D)]">
-      <Sidebar />
-      <main className="flex-1 bg-gray-100 rounded-l-3xl p-8 overflow-y-auto">
+      {/* Desktop sidebar */}
+      <div className="hidden md:block">
+        <Sidebar />
+      </div>
+
+      {/* Mobile sidebar */}
+      <MobileSidebarWrapper />
+
+      <main className="flex-1 bg-gray-100 rounded-l-3xl overflow-y-auto p-4 pt-16 md:p-8 md:pt-8">
         {children}
       </main>
     </div>
-  );
+  )
 }

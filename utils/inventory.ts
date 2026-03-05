@@ -1,36 +1,40 @@
 export async function deductStockFIFO(
-    tx: any, 
+    tx: any,
     {
         variantId,
         amountToDeduct,
+        orderItemId,
         profileId,
         note = "ขายสินค้า"
     }: {
         variantId: number
         amountToDeduct: number
+        orderItemId?: number  // ส่งมาเพื่อ track OrderItemLot
         profileId?: string
         note?: string
     }
 ) {
-    const variant = await tx.productVariant.findUnique({ where: { id: variantId } })
-
-    if (!variant || variant.stock < amountToDeduct) {
-        throw new Error(`สต๊อกสินค้าไม่เพียงพอ (ต้องการ ${amountToDeduct}, มีอยู่ ${variant?.stock || 0})`)
-    }
-
-    // ดึง Lot เรียงจากเก่าไปใหม่ (FIFO)
     const now = new Date()
+
     const availableLots = await tx.productVariantLot.findMany({
         where: {
-            variantId: variantId,
+            variantId,
             stock: { gt: 0 },
             OR: [
-                { expireDate: null }, // ไม่มีวันหมดอายุ
-                { expireDate: { gt: now } } // หรือ วันหมดอายุต้องมากกว่าปัจจุบัน
+                { expireDate: null },
+                { expireDate: { gt: now } }
             ]
         },
-        orderBy: { produceDate: 'asc' }
+        orderBy: [
+            { expireDate: 'asc' },
+            { produceDate: 'asc' } 
+        ]
     })
+
+    const totalStock = availableLots.reduce((sum: number, lot: any) => sum + lot.stock, 0)
+    if (totalStock < amountToDeduct) {
+        throw new Error(`สต๊อกสินค้าไม่เพียงพอ (ต้องการ ${amountToDeduct}, มีอยู่ ${totalStock})`)
+    }
 
     let remainingToDeduct = amountToDeduct
 
@@ -45,83 +49,115 @@ export async function deductStockFIFO(
             data: { stock: { decrement: deductFromThisLot } }
         })
 
+        // บันทึก OrderItemLot ว่าหักจาก lot นี้ไปเท่าไหร่
+        if (orderItemId) {
+            await tx.orderItemLot.create({
+                data: {
+                    orderItemId,
+                    lotId: lot.id,
+                    quantity: deductFromThisLot
+                }
+            })
+        }
+
         // บันทึกประวัติ
         await tx.stockTransaction.create({
             data: {
-                variantId: variantId,
+                variantId,
                 variantLotId: lot.id,
                 type: "OUT",
                 amount: deductFromThisLot,
                 reason: "SALE",
-                note: note,
-                profileId: profileId
+                note,
+                profileId
             }
         })
 
         remainingToDeduct -= deductFromThisLot
     }
-
-    // หักสต๊อกรวม
-    await tx.productVariant.update({
-        where: { id: variantId },
-        data: { stock: { decrement: amountToDeduct } }
-    })
 }
 
-// 🌟 ฟังก์ชันสำหรับคืนสต๊อก (เวลากดยกเลิกออเดอร์)
-export async function returnStockToLatestLot(
+// คืนสต๊อกกลับไป lot เดิมที่หักออกมา (ดูจาก OrderItemLot)
+export async function returnStockByOrderItem(
     tx: any,
     {
-        variantId,
-        amountToReturn,
+        orderItemId,
         profileId,
         note = "คืนสต๊อก"
     }: {
-        variantId: number
-        amountToReturn: number
+        orderItemId: number
         profileId?: string
         note?: string
     }
 ) {
-    // หา Lot ล่าสุดของสินค้านี้เพื่อเอาของไปคืน
-    let targetLot = await tx.productVariantLot.findFirst({
-        where: { variantId: variantId },
-        orderBy: { produceDate: 'desc' }
+
+    // ดึงว่า order item นี้หักจาก lot ไหนไปเท่าไหร่
+    const lotDeductions = await tx.orderItemLot.findMany({
+        where: { orderItemId },
+        include: { lot: true }
     })
 
-    // ถ้าไม่มี Lot เลย (เช่น ถูกลบไปแล้ว) ให้สร้าง Lot กลางขึ้นมารับของคืน
-    if (!targetLot) {
-        targetLot = await tx.productVariantLot.create({
+    if (lotDeductions.length === 0) {
+        // fallback: ถ้าไม่มี record (order เก่าก่อน migrate) ใช้วิธีเดิม
+        const orderItem = await tx.orderItem.findUnique({ where: { id: orderItemId } })
+        if (!orderItem) return
+
+        let targetLot = await tx.productVariantLot.findFirst({
+            where: { variantId: orderItem.variantId },
+            orderBy: { produceDate: 'desc' }
+        })
+        if (!targetLot) {
+            const anyLot = await tx.productVariantLot.findFirst({
+                where: { variantId: orderItem.variantId },
+                orderBy: { unitCost: 'desc' }
+            })
+
+            targetLot = await tx.productVariantLot.create({
+                data: {
+                    variantId: orderItem.variantId,
+                    lotNumber: `RETURN-${Date.now()}`,
+                    stock: 0,
+                    unitCost: anyLot?.unitCost || 0
+                }
+            })
+        }
+
+        await tx.productVariantLot.update({
+            where: { id: targetLot.id },
+            data: { stock: { increment: orderItem.quantity } }
+        })
+
+        await tx.stockTransaction.create({
             data: {
-                variantId: variantId,
-                lotNumber: `RETURN-${new Date().getTime()}`,
-                stock: 0
+                variantId: orderItem.variantId,
+                variantLotId: targetLot.id,
+                type: "IN",
+                amount: orderItem.quantity,
+                reason: "RETURN",
+                note,
+                profileId
+            }
+        })
+        return
+    }
+
+    // คืนกลับ lot เดิมทุก lot ที่เคยหักออกไป
+    for (const deduction of lotDeductions) {
+        await tx.productVariantLot.update({
+            where: { id: deduction.lotId },
+            data: { stock: { increment: deduction.quantity } }
+        })
+
+        await tx.stockTransaction.create({
+            data: {
+                variantId: deduction.lot.variantId,
+                variantLotId: deduction.lotId,
+                type: "IN",
+                amount: deduction.quantity,
+                reason: "RETURN",
+                note,
+                profileId
             }
         })
     }
-
-    // คืนสต๊อกเข้า Lot
-    await tx.productVariantLot.update({
-        where: { id: targetLot.id },
-        data: { stock: { increment: amountToReturn } }
-    })
-
-    // คืนสต๊อกรวม
-    await tx.productVariant.update({
-        where: { id: variantId },
-        data: { stock: { increment: amountToReturn } }
-    })
-
-    // บันทึกประวัติ
-    await tx.stockTransaction.create({
-        data: {
-            variantId: variantId,
-            variantLotId: targetLot.id,
-            type: "IN",
-            amount: amountToReturn,
-            reason: "CANCELLED_ORDER",
-            note: note,
-            profileId: profileId
-        }
-    })
 }

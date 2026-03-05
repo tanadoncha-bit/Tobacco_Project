@@ -9,18 +9,21 @@ export default function AddToCart({ variantId, stock, price }: { variantId: numb
   const [quantity, setQuantity] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const cartItems = useCartStore((state: any) => state.items) ?? []
-  const quantityInCart  = cartItems.find((item: any) => item.variantId === variantId)?.quantity ?? 0
-  const availableStock  = stock - quantityInCart
+  const quantityInCart = cartItems.find((item: any) => item.variantId === variantId)?.quantity ?? 0
+  const availableStock = stock - quantityInCart
 
   useEffect(() => {
-    if (availableStock <= 0) setQuantity(0)
-    else if (quantity > availableStock) setQuantity(availableStock)
-    else if (quantity === 0 && availableStock > 0) setQuantity(1)
+    setQuantity(prev => {
+      if (availableStock <= 0) return 0
+      if (prev > availableStock) return availableStock
+      if (prev === 0 && availableStock > 0) return 1
+      return prev
+    })
   }, [availableStock, variantId])
 
   const handleAddToCart = async () => {
     if (availableStock <= 0) return toast.error("เพิ่มสินค้าจนครบสต็อกแล้ว")
-    if (quantity <= 0)        return toast.error("กรุณาเลือกจำนวน")
+    if (quantity <= 0) return toast.error("กรุณาเลือกจำนวน")
     setIsLoading(true)
     try {
       const res = await fetch("/api/cart", {
@@ -79,11 +82,10 @@ export default function AddToCart({ variantId, stock, price }: { variantId: numb
 
       {/* Button */}
       <button onClick={handleAddToCart} disabled={isDisabled}
-        className={`w-full py-3.5 rounded-2xl font-black flex items-center justify-center gap-2 text-white transition-all shadow-md ${
-          isDisabled
+        className={`w-full py-3.5 rounded-2xl font-black flex items-center justify-center gap-2 text-white transition-all shadow-md ${isDisabled
             ? "bg-gray-300 cursor-not-allowed shadow-none"
             : "bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 hover:shadow-lg hover:shadow-purple-200 hover:-translate-y-0.5 cursor-pointer"
-        }`}
+          }`}
       >
         <ShoppingCart className="w-5 h-5" />
         {isLoading ? "กำลังเพิ่ม..." : availableStock <= 0 ? "สินค้าหมด" : "เพิ่มลงตะกร้า"}

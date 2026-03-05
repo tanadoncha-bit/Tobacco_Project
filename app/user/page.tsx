@@ -33,15 +33,20 @@ export default async function HomePage({
       _sum: { quantity: true },
       orderBy: { _sum: { quantity: "desc" } },
       take: 4,
+      where: {
+        order: {
+          status: { not: "CANCELLED" }
+        }
+      }
     }) : Promise.resolve([]),
   ])
 
   const topProductIds = topVariants.map((t: any) => t.variantId)
   const topProducts = topProductIds.length > 0
     ? await prisma.productVariant.findMany({
-        where: { id: { in: topProductIds } },
-        include: { product: { include: { images: true } } },
-      })
+      where: { id: { in: topProductIds } },
+      include: { product: { include: { images: true } } },
+    })
     : []
 
   return (
@@ -52,10 +57,10 @@ export default async function HomePage({
       <div className="bg-white border-b border-gray-100">
         <div className="container mx-auto px-4 py-4 grid grid-cols-2 md:flex md:justify-between gap-4">
           {[
-            { icon: <Truck className="w-5 h-5 text-purple-600" />,         label: "จัดส่งฟรี",        sub: "ทุกออเดอร์" },
-            { icon: <Shield className="w-5 h-5 text-purple-600" />,        label: "สินค้าแท้ 100%",   sub: "รับประกันคุณภาพ" },
-            { icon: <HeadphonesIcon className="w-5 h-5 text-purple-600" />, label: "ซัพพอร์ต 24/7",  sub: "พร้อมช่วยเหลือ" },
-            { icon: <TrendingUp className="w-5 h-5 text-purple-600" />,    label: "สินค้าคุณภาพสูง", sub: "คัดสรรมาเพื่อคุณ" },
+            { icon: <Truck className="w-5 h-5 text-purple-600" />, label: "จัดส่งฟรี", sub: "ทุกออเดอร์" },
+            { icon: <Shield className="w-5 h-5 text-purple-600" />, label: "สินค้าแท้ 100%", sub: "รับประกันคุณภาพ" },
+            { icon: <HeadphonesIcon className="w-5 h-5 text-purple-600" />, label: "ซัพพอร์ต 24/7", sub: "พร้อมช่วยเหลือ" },
+            { icon: <TrendingUp className="w-5 h-5 text-purple-600" />, label: "สินค้าคุณภาพสูง", sub: "คัดสรรมาเพื่อคุณ" },
           ].map(item => (
             <div key={item.label} className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center shrink-0">
@@ -88,9 +93,8 @@ export default async function HomePage({
                 return (
                   <div key={v.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group relative">
                     {i < 3 && (
-                      <div className={`absolute top-2 left-2 z-10 w-6 h-6 rounded-full text-white text-[10px] font-black flex items-center justify-center shadow-md ${
-                        i === 0 ? "bg-amber-400" : i === 1 ? "bg-gray-400" : "bg-orange-400"
-                      }`}>
+                      <div className={`absolute top-2 left-2 z-10 w-6 h-6 rounded-full text-white text-[10px] font-black flex items-center justify-center shadow-md ${i === 0 ? "bg-amber-400" : i === 1 ? "bg-gray-400" : "bg-orange-400"
+                        }`}>
                         {i + 1}
                       </div>
                     )}
@@ -154,7 +158,9 @@ export default async function HomePage({
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
               {products.map(product => {
                 const totalStock = product.variants.reduce((sum, v) => {
-                  const variantStock = v.productVariantLots.reduce((s, lot) => s + lot.stock, 0)
+                  const variantStock = v.productVariantLots
+                    .filter(lot => !lot.expireDate || new Date(lot.expireDate) > new Date())
+                    .reduce((s, lot) => s + lot.stock, 0)
                   return sum + variantStock
                 }, 0)
                 const isOutOfStock = totalStock <= 0

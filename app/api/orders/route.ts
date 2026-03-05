@@ -58,16 +58,21 @@ export async function POST() {
         },
       })
 
+      const createdItems = await tx.orderItem.findMany({
+        where: { orderId: newOrder.id }
+      })
+
       const shortOrderId = newOrder.id.substring(0, 8).toUpperCase()
       for (const item of cart.items) {
+        const orderItem = createdItems.find(oi => oi.variantId === item.variantId)
 
         await deductStockFIFO(tx, {
           variantId: item.variantId,
           amountToDeduct: item.quantity,
+          orderItemId: orderItem?.id,  // ← เพิ่มตรงนี้
           profileId: userId,
           note: `ขายสินค้า Order ORD-${shortOrderId}`
         })
-
       }
 
       await tx.cartItem.deleteMany({
