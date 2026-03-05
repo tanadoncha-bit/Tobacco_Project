@@ -38,7 +38,7 @@ const STATUS_OPTIONS = [
 
 const STATUS_STYLE: Record<string, { badge: string; dot: string; label: string }> = {
   PENDING: { badge: "bg-amber-50 text-amber-700 border-amber-200", dot: "bg-amber-400", label: "รอชำระเงิน" },
-  VERIFYING: { badge: "bg-orange-50 text-orange-700 border-orange-200", dot: "bg-orange-400", label: "รอตรวจสอบสลิป" },
+  VERIFYING: { badge: "bg-orange-50 text-orange-700 border-orange-200", dot: "bg-orange-400", label: "รอตรวจสอบ" },
   PAID: { badge: "bg-blue-50 text-blue-700 border-blue-200", dot: "bg-blue-400", label: "ชำระเงินแล้ว (รอจัดส่ง)" },
   SHIPPED: { badge: "bg-purple-50 text-purple-700 border-purple-200", dot: "bg-purple-400", label: "จัดส่งแล้ว" },
   COMPLETED: { badge: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-400", label: "เสร็จสิ้น" },
