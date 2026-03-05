@@ -268,7 +268,7 @@ export default function AddProductModal({
                 onClick={() => setOptions([...options, { name: "", values: [] }])}
                 className="text-sm bg-purple-50 text-purple-600 hover:bg-purple-100 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 cursor-pointer"
               >
-                <Plus className="w-4 h-4" /> เพิ่มหมวดหมู่ตัวเลือก
+                <Plus className="w-4 h-4" /> เพิ่มตัวเลือก
               </button>
             </div>
 

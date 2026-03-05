@@ -17,19 +17,19 @@ type DashboardProps = {
 }
 
 const STATUS_STYLE: Record<string, string> = {
-  PENDING:   "bg-amber-50 text-amber-600 border-amber-200",
+  PENDING: "bg-amber-50 text-amber-600 border-amber-200",
   VERIFYING: "bg-blue-50 text-blue-600 border-blue-200",
-  PAID:      "bg-indigo-50 text-indigo-600 border-indigo-200",
-  SHIPPED:   "bg-purple-50 text-purple-600 border-purple-200",
+  PAID: "bg-indigo-50 text-indigo-600 border-indigo-200",
+  SHIPPED: "bg-purple-50 text-purple-600 border-purple-200",
   COMPLETED: "bg-emerald-50 text-emerald-700 border-emerald-200",
   CANCELLED: "bg-rose-50 text-rose-600 border-rose-200",
 }
 
 const STATUS_LABEL: Record<string, string> = {
-  PENDING:   "รอดำเนินการ",
+  PENDING: "รอดำเนินการ",
   VERIFYING: "รอยืนยัน",
-  PAID:      "ชำระแล้ว",
-  SHIPPED:   "จัดส่งแล้ว",
+  PAID: "ชำระแล้ว",
+  SHIPPED: "จัดส่งแล้ว",
   COMPLETED: "เสร็จสิ้น",
   CANCELLED: "ยกเลิก",
 }
@@ -49,41 +49,41 @@ export default function DashboardClient({
     <div className="space-y-8">
 
       {/* ── Stat Cards ─────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div className="grid grid-cols-3 md:grid-cols-3 gap-3 md:gap-5">
         {[
           {
-            label:    "ยอดขายรวมทั้งหมด",
-            value:    `฿${stats.totalRevenue.toLocaleString()}`,
-            icon:     <DollarSign className="w-6 h-6" />,
+            label: "ยอดขายรวมทั้งหมด",
+            value: `฿${stats.totalRevenue.toLocaleString()}`,
+            icon: <DollarSign className="w-6 h-6" />,
             gradient: "from-emerald-400 to-teal-500",
-            shadow:   "shadow-emerald-200",
+            shadow: "shadow-emerald-200",
           },
           {
-            label:    "คำสั่งซื้อทั้งหมด",
-            value:    stats.totalOrders.toLocaleString(),
-            unit:     "ออเดอร์",
-            icon:     <ShoppingBag className="w-6 h-6" />,
+            label: "คำสั่งซื้อทั้งหมด",
+            value: stats.totalOrders.toLocaleString(),
+            unit: "ออเดอร์",
+            icon: <ShoppingBag className="w-6 h-6" />,
             gradient: "from-purple-500 to-violet-600",
-            shadow:   "shadow-purple-200",
+            shadow: "shadow-purple-200",
           },
           {
-            label:    "รอชำระ / รอดำเนินการ",
-            value:    stats.pendingOrders.toLocaleString(),
-            unit:     "ออเดอร์",
-            icon:     <Clock className="w-6 h-6" />,
+            label: "รอชำระ / รอดำเนินการ",
+            value: stats.pendingOrders.toLocaleString(),
+            unit: "ออเดอร์",
+            icon: <Clock className="w-6 h-6" />,
             gradient: "from-amber-400 to-orange-500",
-            shadow:   "shadow-amber-200",
+            shadow: "shadow-amber-200",
           },
         ].map(card => (
-          <div key={card.label} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-6 flex items-center gap-5 group">
-            <div className={`bg-gradient-to-br ${card.gradient} rounded-2xl p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
+          <div key={card.label} className="bg-white rounded-2xl md:rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-3 md:p-6 flex flex-col md:flex-row items-center md:items-center gap-2 md:gap-5 group">
+            <div className={`bg-gradient-to-br ${card.gradient} rounded-xl md:rounded-2xl p-2.5 md:p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
               {card.icon}
             </div>
-            <div>
-              <p className="text-sm text-gray-500 font-bold mb-1">{card.label}</p>
-              <p className="text-3xl font-black text-gray-900">
-                {card.value}{" "}
-                {card.unit && <span className="text-base font-semibold text-gray-400">{card.unit}</span>}
+            <div className="text-center md:text-left">
+              <p className="text-[11px] md:text-sm text-gray-500 font-bold mt-1 mb-0.5 md:mb-1 leading-tight">{card.label}</p>
+              <p className="text-lg md:text-3xl font-black text-gray-900">
+                {card.value}
+                {card.unit && <span className="text-xs md:text-base font-semibold text-gray-400 ml-1">{card.unit}</span>}
               </p>
             </div>
           </div>
@@ -244,7 +244,7 @@ export default function DashboardClient({
           <div className="space-y-3">
             {nearExpiryMaterials.length > 0 ? nearExpiryMaterials.map(lot => {
               const daysLeft = Math.ceil((new Date(lot.expireDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-              const urgent   = daysLeft <= 7
+              const urgent = daysLeft <= 7
               return (
                 <div key={lot.id} className={`p-3 rounded-2xl border transition-colors ${urgent ? "bg-rose-50/60 border-rose-100" : "bg-amber-50/60 border-amber-100"}`}>
                   <div className="flex justify-between items-start gap-2">

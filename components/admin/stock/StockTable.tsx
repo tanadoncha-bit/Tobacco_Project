@@ -43,6 +43,66 @@ const SORT_OPTIONS = [
 
 type SortValue = typeof SORT_OPTIONS[number]["value"]
 
+function MobileActionMenu({ canAdjustStock, onAdjust, onDispatch, onLot, onEdit, onSlip }: {
+  canAdjustStock: boolean
+  onAdjust: () => void
+  onDispatch: () => void
+  onLot: () => void
+  onEdit: () => void
+  onSlip: () => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [])
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="p-2 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100 cursor-pointer"
+      >
+        <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 bottom-full mb-2 w-44 bg-white rounded-2xl shadow-xl border border-gray-100 z-[100] overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
+          {canAdjustStock && (
+            <>
+              <button onClick={() => { onAdjust(); setOpen(false) }}
+                className="w-full flex items-center gap-2 px-4 py-3 text-sm font-bold text-emerald-700 hover:bg-emerald-50 cursor-pointer">
+                <ArrowDownToLine className="w-4 h-4" /> รับเข้า
+              </button>
+              <button onClick={() => { onDispatch(); setOpen(false) }}
+                className="w-full flex items-center gap-2 px-4 py-3 text-sm font-bold text-rose-700 hover:bg-rose-50 cursor-pointer">
+                <ArrowUpFromLine className="w-4 h-4" /> เบิกออก
+              </button>
+            </>
+          )}
+          <button onClick={() => { onLot(); setOpen(false) }}
+            className="w-full flex items-center gap-2 px-4 py-3 text-sm font-bold text-purple-700 hover:bg-purple-50 cursor-pointer">
+            <Layers className="w-4 h-4" /> ล็อต
+          </button>
+          <button onClick={() => { onEdit(); setOpen(false) }}
+            className="w-full flex items-center gap-2 px-4 py-3 text-sm font-bold text-gray-700 hover:bg-gray-50 cursor-pointer">
+            <Edit className="w-4 h-4" /> รายละเอียด
+          </button>
+          <button onClick={() => { onSlip(); setOpen(false) }}
+            className="w-full flex items-center gap-2 px-4 py-3 text-sm font-bold text-blue-700 hover:bg-blue-50 cursor-pointer">
+            <FileText className="w-4 h-4" /> ประวัติ
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function StockTable({
   data,
   userRole,
@@ -60,7 +120,6 @@ export default function StockTable({
   const [isSortOpen, setIsSortOpen] = useState(false)
   const sortRef = useRef<HTMLDivElement>(null)
 
-  // Modal states
   const [open, setOpen] = useState(false)
   const [recipeModalOpen, setRecipeModalOpen] = useState(false)
   const [isReceiveProduceOpen, setIsReceiveProduceOpen] = useState(false)
@@ -118,21 +177,21 @@ export default function StockTable({
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "สินค้าทั้งหมด", value: stats.totalProducts, unit: "รายการ", icon: <Package className="w-6 h-6" />, gradient: "from-indigo-500 to-purple-600", shadow: "shadow-purple-200" },
-          { label: "สต็อกรวม", value: stats.totalStock, unit: "ชิ้น", icon: <BoxesIcon className="w-6 h-6" />, gradient: "from-blue-400 to-indigo-500", shadow: "shadow-blue-200" },
-          { label: "สต็อกต่ำ (≤5)", value: stats.lowStock, unit: "รายการ", icon: <BarChart3 className="w-6 h-6" />, gradient: "from-orange-400 to-amber-500", shadow: "shadow-orange-200" },
-          { label: "หมดสต็อก", value: stats.outOfStock, unit: "รายการ", icon: <AlertTriangle className="w-6 h-6" />, gradient: "from-rose-500 to-red-600", shadow: "shadow-rose-200" },
+          { label: "สินค้าทั้งหมด", value: stats.totalProducts, unit: "รายการ", icon: <Package className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-indigo-500 to-purple-600", shadow: "shadow-purple-200" },
+          { label: "สต็อกรวม", value: stats.totalStock, unit: "ชิ้น", icon: <BoxesIcon className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-blue-400 to-indigo-500", shadow: "shadow-blue-200" },
+          { label: "สต็อกต่ำ (≤5)", value: stats.lowStock, unit: "รายการ", icon: <BarChart3 className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-orange-400 to-amber-500", shadow: "shadow-orange-200" },
+          { label: "หมดสต็อก", value: stats.outOfStock, unit: "รายการ", icon: <AlertTriangle className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-rose-500 to-red-600", shadow: "shadow-rose-200" },
         ].map(card => (
-          <div key={card.label} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-6 flex items-center gap-5 group">
-            <div className={`bg-gradient-to-br ${card.gradient} rounded-2xl p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
+          <div key={card.label} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-4 md:p-6 flex items-center gap-3 md:gap-5 group">
+            <div className={`bg-gradient-to-br ${card.gradient} rounded-2xl p-3 md:p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
               {card.icon}
             </div>
             <div>
-              <p className="text-sm text-gray-500 font-bold mb-1">{card.label}</p>
-              <p className="text-3xl font-black text-gray-900">
-                {card.value.toLocaleString()} <span className="text-base font-semibold text-gray-400">{card.unit}</span>
+              <p className="text-xs md:text-sm text-gray-500 font-bold mb-1">{card.label}</p>
+              <p className="text-xl md:text-3xl font-black text-gray-900">
+                {card.value.toLocaleString()} <span className="text-xs md:text-base font-semibold text-gray-400">{card.unit}</span>
               </p>
             </div>
           </div>
@@ -143,28 +202,29 @@ export default function StockTable({
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100">
 
         {/* Toolbar */}
-        <div className="p-4 md:p-6 border-b border-gray-100 bg-gray-50/30 rounded-t-3xl flex flex-wrap items-center justify-between gap-4">
+        <div className="p-4 md:p-6 border-b border-gray-100 bg-gray-50/30 rounded-t-3xl space-y-3">
 
-          {/* Left: Search + Sort */}
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative w-full sm:w-72 group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-purple-500 transition-colors" />
-              <input
-                type="text"
-                placeholder="ค้นหารหัส หรือ ชื่อสินค้า..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 bg-white transition-all shadow-sm"
-              />
-            </div>
+          {/* Search */}
+          <div className="relative w-full group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-purple-500 transition-colors" />
+            <input
+              type="text"
+              placeholder="ค้นหารหัส หรือ ชื่อสินค้า..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 bg-white transition-all shadow-sm"
+            />
+          </div>
 
+          {/* Sort + Actions */}
+          <div className="flex items-center gap-2 flex-wrap">
             <div className="relative" ref={sortRef}>
               <button
                 onClick={() => setIsSortOpen(!isSortOpen)}
-                className="flex items-center justify-between min-w-[160px] border border-gray-200 rounded-2xl px-4 py-3 text-sm bg-white hover:border-purple-300 focus:outline-none transition-all shadow-sm cursor-pointer font-bold text-gray-700"
+                className="flex items-center justify-between border border-gray-200 rounded-2xl px-3 py-2.5 text-sm bg-white hover:border-purple-300 focus:outline-none transition-all shadow-sm cursor-pointer font-bold text-gray-700 gap-2"
               >
                 {SORT_OPTIONS.find(o => o.value === sort)?.label}
-                <ChevronDown className={`w-4 h-4 text-gray-400 ml-2 transition-transform duration-200 ${isSortOpen ? "rotate-180 text-purple-500" : ""}`} />
+                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isSortOpen ? "rotate-180 text-purple-500" : ""}`} />
               </button>
 
               {isSortOpen && (
@@ -186,41 +246,43 @@ export default function StockTable({
                 </div>
               )}
             </div>
-          </div>
 
-          {/* Right: Action buttons */}
-          <div className="flex gap-3 flex-wrap">
+            <div className="flex-1" />
+
             <button
               onClick={() => setIsReceiveProduceOpen(true)}
-              className="bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer"
+              className="bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 px-3 py-2.5 rounded-2xl text-xs md:text-sm font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
             >
-              <PackagePlus className="w-4 h-4" /> รับเข้าผลิต
+              <PackagePlus className="w-4 h-4" />
+              <span className="hidden sm:inline">รับเข้าผลิต</span>
             </button>
             <button
               onClick={() => setRecipeModalOpen(true)}
-              className="bg-white border border-gray-200 text-gray-700 hover:border-purple-300 hover:text-purple-700 hover:bg-purple-50 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer"
+              className="bg-white border border-gray-200 text-gray-700 hover:border-purple-300 hover:text-purple-700 hover:bg-purple-50 px-3 py-2.5 rounded-2xl text-xs md:text-sm font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
             >
-              <BookOpen className="w-4 h-4" /> สูตรการผลิต
+              <BookOpen className="w-4 h-4" />
+              <span className="hidden sm:inline">สูตรการผลิต</span>
             </button>
             <button
               onClick={() => setOpen(true)}
-              className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white px-4 py-2.5 rounded-2xl text-sm font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-2 cursor-pointer"
+              className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white px-3 py-2.5 rounded-2xl text-xs md:text-sm font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-1.5 cursor-pointer"
             >
-              <Plus className="w-4 h-4" /> เพิ่มสินค้าใหม่
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">เพิ่มสินค้าใหม่</span>
             </button>
           </div>
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto">
+        <div>
           <table className="w-full text-sm text-center">
             <thead>
               <tr className="bg-gray-50/80 border-b border-gray-100">
-                {["รูปภาพ", "รหัสสินค้า", "ชื่อสินค้า", "สต็อกรวม", "จัดการ"].map(h => (
-                  <th key={h} className="px-6 py-5 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                    {h}
-                  </th>
-                ))}
+                <th className="px-2 md:px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">รูปภาพ</th>
+                <th className="px-2 md:px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">รหัสสินค้า</th>
+                <th className="px-2 md:px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">ชื่อสินค้า</th>
+                <th className="px-2 md:px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">สต็อกรวม</th>
+                <th className="px-2 md:px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">จัดการ</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -243,31 +305,31 @@ export default function StockTable({
                   <tr key={item.Pid} className="hover:bg-indigo-50/20 transition-colors group">
 
                     {/* รูปภาพ */}
-                    <td className="px-6 py-4">
-                      <div className="w-14 h-14 bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden shrink-0 shadow-sm group-hover:shadow-md transition-all">
+                    <td className="px-2 md:px-6 py-3">
+                      <div className="w-10 h-10 md:w-14 md:h-14 bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden shrink-0 shadow-sm group-hover:shadow-md transition-all mx-auto">
                         {item.imageUrl ? (
                           <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs font-medium">
-                            No Image
+                            No
                           </div>
                         )}
                       </div>
                     </td>
 
                     {/* รหัสสินค้า */}
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-gray-500 text-sm">{item.productCode}</span>
+                    <td className="px-2 md:px-6 py-3">
+                      <span className="font-bold text-gray-500 text-xs md:text-sm">{item.productCode}</span>
                     </td>
 
                     {/* ชื่อสินค้า */}
-                    <td className="px-6 py-4">
-                      <p className="font-extrabold text-gray-800 text-base group-hover:text-indigo-700 transition-colors">{item.name}</p>
+                    <td className="px-2 md:px-6 py-3">
+                      <p className="font-extrabold text-gray-800 text-xs md:text-base">{item.name}</p>
                     </td>
 
                     {/* สต็อกรวม */}
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-3 py-1.5 rounded-xl font-black text-sm border ${item.stock === 0
+                    <td className="px-2 md:px-6 py-3">
+                      <span className={`inline-flex items-center px-2 py-1 text-xs rounded-xl font-black text-sm border ${item.stock === 0
                         ? "text-rose-600 bg-rose-50 border-rose-200"
                         : item.stock <= 5
                           ? "text-orange-600 bg-orange-50 border-orange-200"
@@ -278,8 +340,9 @@ export default function StockTable({
                     </td>
 
                     {/* จัดการ */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-2 flex-wrap min-w-max">
+                    <td className="px-2 md:px-6 py-3">
+                      {/* Desktop */}
+                      <div className="hidden md:flex items-center justify-center gap-2 flex-wrap min-w-max">
                         {canAdjustStock && (
                           <>
                             <button
@@ -296,26 +359,18 @@ export default function StockTable({
                             </button>
                           </>
                         )}
-
                         <button
-                          onClick={() => {
-                            setSelectedLotProductCode(item.productCode)
-                            setSelectedLotProductId(item.Pid)
-                            setSelectedLotProductName(item.name)
-                            setLotModalOpen(true)
-                          }}
+                          onClick={() => { setSelectedLotProductCode(item.productCode); setSelectedLotProductId(item.Pid); setSelectedLotProductName(item.name); setLotModalOpen(true) }}
                           className="inline-flex items-center gap-1.5 bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
                         >
                           <Layers className="w-3.5 h-3.5" /> ล็อต
                         </button>
-
                         <button
                           onClick={() => { setEditProductId(item.Pid); setEditModalOpen(true) }}
                           className="inline-flex items-center gap-1.5 bg-white text-gray-700 hover:text-indigo-700 hover:bg-indigo-50 border border-gray-200 hover:border-indigo-200 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
                         >
                           <Edit className="w-3.5 h-3.5" /> รายละเอียด
                         </button>
-
                         <button
                           onClick={() => { setSelectedSlipId(item.Pid); setSelectedSlipName(item.name); setSlipModalOpen(true) }}
                           className="inline-flex items-center gap-1.5 bg-white text-gray-600 hover:text-blue-600 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
@@ -323,9 +378,10 @@ export default function StockTable({
                           <FileText className="w-3.5 h-3.5" /> ประวัติ
                         </button>
                       </div>
+
+                      {/* Mobile */}
                       <div className="md:hidden flex justify-center">
                         <MobileActionMenu
-                          item={item}
                           canAdjustStock={canAdjustStock}
                           onAdjust={() => { setAdjustProductId(item.Pid); setAdjustStockOpen(true) }}
                           onDispatch={() => { setDispatchProductId(item.Pid); setDispatchProductName(item.name); setDispatchOpen(true) }}
@@ -362,59 +418,6 @@ export default function StockTable({
       <ProductLotModal open={lotModalOpen} productCode={selectedLotProductCode} productId={selectedLotProductId} productName={selectedLotProductName} unit="ชิ้น" onClose={() => { setLotModalOpen(false); setSelectedLotProductId(null) }} />
       {dispatchOpen && dispatchProductId && (
         <DispatchProductModal open={dispatchOpen} productId={dispatchProductId} productName={dispatchProductName} onClose={() => { setDispatchOpen(false); setDispatchProductId(null) }} onSuccess={() => router.refresh()} />
-      )}
-    </div>
-  )
-}
-
-function MobileActionMenu({ item, canAdjustStock, onAdjust, onDispatch, onLot, onEdit, onSlip }: any) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener("mousedown", handler)
-    return () => document.removeEventListener("mousedown", handler)
-  }, [])
-
-  return (
-    <div className="relative" ref={ref}>
-      <button
-        onClick={() => setOpen(!open)}
-        className="p-2 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100 cursor-pointer"
-      >
-        <ChevronDown className="w-4 h-4" />
-      </button>
-
-      {open && (
-        <div className="absolute right-0 mt-2 w-44 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-          {canAdjustStock && (
-            <>
-              <button onClick={() => { onAdjust(); setOpen(false) }}
-                className="w-full flex items-center gap-2 px-4 py-3 text-sm font-bold text-emerald-700 hover:bg-emerald-50 cursor-pointer">
-                <ArrowDownToLine className="w-4 h-4" /> รับเข้า
-              </button>
-              <button onClick={() => { onDispatch(); setOpen(false) }}
-                className="w-full flex items-center gap-2 px-4 py-3 text-sm font-bold text-rose-700 hover:bg-rose-50 cursor-pointer">
-                <ArrowUpFromLine className="w-4 h-4" /> เบิกออก
-              </button>
-            </>
-          )}
-          <button onClick={() => { onLot(); setOpen(false) }}
-            className="w-full flex items-center gap-2 px-4 py-3 text-sm font-bold text-purple-700 hover:bg-purple-50 cursor-pointer">
-            <Layers className="w-4 h-4" /> ล็อต
-          </button>
-          <button onClick={() => { onEdit(); setOpen(false) }}
-            className="w-full flex items-center gap-2 px-4 py-3 text-sm font-bold text-gray-700 hover:bg-gray-50 cursor-pointer">
-            <Edit className="w-4 h-4" /> รายละเอียด
-          </button>
-          <button onClick={() => { onSlip(); setOpen(false) }}
-            className="w-full flex items-center gap-2 px-4 py-3 text-sm font-bold text-blue-700 hover:bg-blue-50 cursor-pointer">
-            <FileText className="w-4 h-4" /> ประวัติ
-          </button>
-        </div>
       )}
     </div>
   )

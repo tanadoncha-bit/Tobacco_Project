@@ -1,6 +1,6 @@
 import prisma from "@/utils/db"
 import OrderTable from "@/components/admin/orders/OrderTable"
-import { SquareChartGantt, Clock, CreditCard, Truck, CheckCircle } from "lucide-react"
+import { SquareChartGantt, Clock, Truck, CheckCircle } from "lucide-react"
 
 export const dynamic = "force-dynamic"
 
@@ -63,20 +63,20 @@ export default async function OrdersPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "ออเดอร์ทั้งหมด", value: totalOrders,    icon: <SquareChartGantt className="w-6 h-6" />, gradient: "from-indigo-500 to-purple-600", shadow: "shadow-purple-200" },
-          { label: "รอดำเนินการ",    value: pendingOrders,  icon: <Clock className="w-6 h-6" />,            gradient: "from-orange-400 to-amber-500",  shadow: "shadow-orange-200" },
-          { label: "กำลังจัดส่ง",    value: shippingOrders, icon: <Truck className="w-6 h-6" />,            gradient: "from-blue-400 to-indigo-500",   shadow: "shadow-blue-200"   },
-          { label: "เสร็จสิ้น",       value: doneOrders,     icon: <CheckCircle className="w-6 h-6" />,      gradient: "from-emerald-400 to-teal-500",  shadow: "shadow-emerald-200"},
+          { label: "ออเดอร์ทั้งหมด", value: totalOrders,    icon: <SquareChartGantt className="w-4 h-4 md:w-6 md:h-6" />, gradient: "from-indigo-500 to-purple-600", shadow: "shadow-purple-200" },
+          { label: "รอดำเนินการ",    value: pendingOrders,  icon: <Clock className="w-4 h-4 md:w-6 md:h-6" />,            gradient: "from-orange-400 to-amber-500",  shadow: "shadow-orange-200" },
+          { label: "กำลังจัดส่ง",    value: shippingOrders, icon: <Truck className="w-4 h-4 md:w-6 md:h-6" />,            gradient: "from-blue-400 to-indigo-500",   shadow: "shadow-blue-200"   },
+          { label: "เสร็จสิ้น",       value: doneOrders,     icon: <CheckCircle className="w-4 h-4 md:w-6 md:h-6" />,      gradient: "from-emerald-400 to-teal-500",  shadow: "shadow-emerald-200"},
         ].map(card => (
-          <div key={card.label} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-6 flex items-center gap-5 group">
-            <div className={`bg-gradient-to-br ${card.gradient} rounded-2xl p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
+          <div key={card.label} className="bg-white rounded-2xl md:rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-3 md:p-6 flex items-center gap-3 md:gap-5 group">
+            <div className={`bg-gradient-to-br ${card.gradient} rounded-xl md:rounded-2xl p-2.5 md:p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
               {card.icon}
             </div>
             <div>
-              <p className="text-sm text-gray-500 font-bold mb-1">{card.label}</p>
-              <p className="text-3xl font-black text-gray-900">{card.value} <span className="text-base font-semibold text-gray-400">รายการ</span></p>
+              <p className="text-[10px] md:text-sm text-gray-500 font-bold mb-0.5 md:mb-1 leading-tight">{card.label}</p>
+              <p className="text-xl md:text-3xl font-black text-gray-900">{card.value} <span className="text-xs md:text-base font-semibold text-gray-400">รายการ</span></p>
             </div>
           </div>
         ))}
