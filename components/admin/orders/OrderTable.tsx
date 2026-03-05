@@ -174,45 +174,42 @@ export default function OrderTable({ initialOrders }: { initialOrders: Order[] }
             </div>
 
             {/* Filter dropdown — mobile */}
-            <div className="md:hidden relative">
-              <div className="md:hidden relative" ref={filterRef}>
-                <button
-                  onClick={() => setIsFilterOpen(!isFilterOpen)}
-                  className={`flex items-center gap-2 px-3 py-3 rounded-2xl text-sm font-bold border shadow-sm cursor-pointer transition-all whitespace-nowrap ${filterStatus !== "ALL"
-                      ? FILTER_ACTIVE[filterStatus] + " border-transparent"
-                      : "bg-white border-gray-200 text-gray-700"
-                    }`}
-                >
-                  {FILTER_TABS.find(t => t.value === filterStatus)?.label}
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${filterStatus !== "ALL" ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"
-                    }`}>
-                    {FILTER_TABS.find(t => t.value === filterStatus)?.count}
-                  </span>
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isFilterOpen ? "rotate-180" : ""}`} />
-                </button>
+            <div className="md:hidden relative" ref={filterRef}>
+              <button
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className={`flex items-center gap-2 px-3 py-3 rounded-2xl text-sm font-bold border shadow-sm cursor-pointer transition-all whitespace-nowrap ${filterStatus !== "ALL"
+                    ? FILTER_ACTIVE[filterStatus] + " border-transparent"
+                    : "bg-white border-gray-200 text-gray-700"
+                  }`}
+              >
+                {FILTER_TABS.find(t => t.value === filterStatus)?.label}
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${filterStatus !== "ALL" ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"
+                  }`}>
+                  {FILTER_TABS.find(t => t.value === filterStatus)?.count}
+                </span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isFilterOpen ? "rotate-180" : ""}`} />
+              </button>
 
-                {isFilterOpen && (
-                  <div className="absolute right-0 mt-2 w-44 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                    {FILTER_TABS.map(tab => (
-                      <button
-                        key={tab.value}
-                        onClick={() => { setFilterStatus(tab.value); setIsFilterOpen(false) }}
-                        className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-bold transition-colors cursor-pointer ${filterStatus === tab.value
-                            ? "bg-indigo-50 text-indigo-700 border-l-4 border-indigo-500"
-                            : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent"
-                          }`}
-                      >
-                        {tab.label}
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${filterStatus === tab.value ? "bg-indigo-100 text-indigo-600" : "bg-gray-100 text-gray-500"
-                          }`}>
-                          {tab.count}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              {isFilterOpen && (
+                <div className="absolute right-0 mt-2 w-44 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                  {FILTER_TABS.map(tab => (
+                    <button
+                      key={tab.value}
+                      onClick={() => { setFilterStatus(tab.value); setIsFilterOpen(false) }}
+                      className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-bold transition-colors cursor-pointer ${filterStatus === tab.value
+                          ? "bg-indigo-50 text-indigo-700 border-l-4 border-indigo-500"
+                          : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent"
+                        }`}
+                    >
+                      {tab.label}
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${filterStatus === tab.value ? "bg-indigo-100 text-indigo-600" : "bg-gray-100 text-gray-500"
+                        }`}>
+                        {tab.count}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Filter tabs — desktop */}
