@@ -22,7 +22,7 @@ const Logo = async () => {
         focus:text-white
         focus-visible:ring-0
         focus-visible:outline-none
-        text-3xl 
+        text-2xl md:text-3xl
         font-semibold 
         tracking-wide
         leading-none">

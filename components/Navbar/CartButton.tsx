@@ -41,7 +41,7 @@ export default function CartButton() {
     >
       <button
         onClick={() => router.push("/user/ShoppingCart")}
-        className="relative p-2 pb-1.5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
+        className="relative p-2 pb-2 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
       >
         <ShoppingCart className="size-5 md:size-6" strokeWidth={2.5} />
         {totalItems > 0 && (

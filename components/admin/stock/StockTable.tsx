@@ -289,7 +289,7 @@ export default function StockTable({
         </div>
 
         {/* Table */}
-        <div>
+        <div className="overflow-x-auto">
           <table className="w-full text-sm text-center">
             <thead>
               <tr className="bg-gray-50/80 border-b border-gray-100">
