@@ -39,7 +39,7 @@ export default function BannerSlider({ banners }: { banners: Banner[] }) {
   }
 
   return (
-    <div className="relative w-full h-[300px] md:h-[400px] lg:h-[500px] overflow-hidden group">
+    <div className="relative w-full overflow-hidden group aspect-[16/6] md:aspect-[16/5] lg:aspect-[16/4]">
       <div 
         className="flex transition-transform duration-700 ease-out h-full"
         style={{ transform: `translateX(-${currentIndex * 100}%)` }}
@@ -49,7 +49,7 @@ export default function BannerSlider({ banners }: { banners: Banner[] }) {
             <img
               src={banner.imageUrl}
               alt="Banner"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain md:object-cover"
             />
             <div className="absolute inset-0 bg-black/10"></div>
           </div>

@@ -17,31 +17,26 @@ export default withAuth(
     const token = req.nextauth.token
     const path = req.nextUrl.pathname
     const userRole = token?.role as string
-
     const basicAdminRoles = ["ADMIN", "STAFF", "MANAGER"] 
 
     if (path.startsWith("/admin")) {
       if (!basicAdminRoles.includes(userRole)) {
         return NextResponse.redirect(new URL("/user", req.url))
       }
-
       const matchedRoute = routePermissions
         .sort((a, b) => b.path.length - a.path.length)
         .find((route) => path.startsWith(route.path))
-
       if (matchedRoute) {
         if (!matchedRoute.roles.includes(userRole)) {
           return NextResponse.redirect(new URL("/admin", req.url))
         }
       }
     }
-
     if (path.startsWith("/user")) {
       if (basicAdminRoles.includes(userRole)) {
         return NextResponse.redirect(new URL("/admin", req.url))
       }
     }
-
     return NextResponse.next()
   },
   {

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter, usePathname } from "next/navigation"
+import { useRouter, usePathname, redirect } from "next/navigation"
 import { ShoppingCart, Loader2 } from "lucide-react"
 
 export default function ProductButton({ productId }: { productId: number }) {

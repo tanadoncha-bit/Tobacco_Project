@@ -8,6 +8,17 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+import PrintReceipt from "@/components/PrintReceipt"
+
+type StoreSettings = {
+  storeName?: string
+  address?: string
+  phone?: string
+  email?: string
+  bankName?: string
+  accountNumber?: string
+  accountName?: string
+}
 
 type PaymentSettings = {
   bankName: string
@@ -16,27 +27,29 @@ type PaymentSettings = {
 }
 
 const STATUS_BADGE: Record<string, { label: string; className: string; icon: any }> = {
-  PENDING:    { label: "รอชำระเงิน",       className: "bg-amber-50 text-amber-700 border-amber-200",   icon: Clock },
-  VERIFYING:  { label: "รอตรวจสอบสลิป",   className: "bg-orange-50 text-orange-700 border-orange-200", icon: Clock },
-  PAID:       { label: "ชำระเงินแล้ว",     className: "bg-blue-50 text-blue-700 border-blue-200",       icon: Package },
-  SHIPPED:    { label: "จัดส่งแล้ว",       className: "bg-purple-50 text-purple-700 border-purple-200", icon: Truck },
-  COMPLETED:  { label: "สำเร็จ",           className: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: CheckCircle2 },
-  CANCELLED:  { label: "ยกเลิกแล้ว",      className: "bg-rose-50 text-rose-600 border-rose-200",       icon: X },
+  PENDING: { label: "รอชำระเงิน", className: "bg-amber-50 text-amber-700 border-amber-200", icon: Clock },
+  VERIFYING: { label: "รอตรวจสอบสลิป", className: "bg-orange-50 text-orange-700 border-orange-200", icon: Clock },
+  PAID: { label: "ชำระเงินแล้ว", className: "bg-blue-50 text-blue-700 border-blue-200", icon: Package },
+  SHIPPED: { label: "จัดส่งแล้ว", className: "bg-purple-50 text-purple-700 border-purple-200", icon: Truck },
+  COMPLETED: { label: "สำเร็จ", className: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: CheckCircle2 },
+  CANCELLED: { label: "ยกเลิกแล้ว", className: "bg-rose-50 text-rose-600 border-rose-200", icon: X },
 }
 
 export default function OrderListClient({
   orders,
   paymentSettings,
+  storeSettings,
 }: {
   orders: any[]
   paymentSettings?: PaymentSettings
+  storeSettings?: StoreSettings
 }) {
   const router = useRouter()
-  const [selectedReceipt, setSelectedReceipt]   = useState<any | null>(null)
-  const [slipFile, setSlipFile]                 = useState<File | null>(null)
-  const [isUploading, setIsUploading]           = useState(false)
-  const [cancellingId, setCancellingId]         = useState<string | null>(null)
-  const [confirmCancelId, setConfirmCancelId]   = useState<string | null>(null)
+  const [selectedReceipt, setSelectedReceipt] = useState<any | null>(null)
+  const [slipFile, setSlipFile] = useState<File | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const [cancellingId, setCancellingId] = useState<string | null>(null)
+  const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null)
 
   const executeCancelOrder = async () => {
     if (!confirmCancelId) return
@@ -107,7 +120,7 @@ export default function OrderListClient({
                       {new Date(order.createdAt).toLocaleDateString("th-TH", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                     </p>
                   </div>
-                  {order.trackingNumber && ["SHIPPED","COMPLETED"].includes(order.status) && (
+                  {order.trackingNumber && ["SHIPPED", "COMPLETED"].includes(order.status) && (
                     <div>
                       <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1"><Truck className="w-3 h-3" /> เลขพัสดุ</p>
                       <p className="font-black text-purple-600 text-sm">{order.trackingNumber}</p>
@@ -258,10 +271,9 @@ export default function OrderListClient({
 
               {/* Actions */}
               <div className="flex gap-3">
-                <button onClick={() => window.print()}
-                  className="flex-1 flex items-center justify-center gap-2 bg-white border-2 border-gray-200 text-gray-700 font-bold py-3 rounded-2xl hover:border-purple-300 hover:text-purple-600 transition-all cursor-pointer">
-                  <Printer className="w-4 h-4" /> พิมพ์ใบเสร็จ
-                </button>
+                <div className="flex-1">
+                  <PrintReceipt order={selectedReceipt} storeSettings={storeSettings} />
+                </div>
                 <button onClick={() => setSelectedReceipt(null)}
                   className="flex-1 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold rounded-2xl shadow-md hover:shadow-lg transition-all cursor-pointer">
                   ปิด
