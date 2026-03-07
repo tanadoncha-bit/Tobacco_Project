@@ -19,11 +19,7 @@ export default async function HomePage({
     prisma.product.findMany({
       where: keyword ? { Pname: { contains: keyword, mode: "insensitive" } } : {},
       include: {
-        variants: {
-          include: {
-            productVariantLots: true,
-          }
-        },
+        variants: { include: { productVariantLots: true } },
         images: true,
       },
       orderBy: { createdAt: "desc" },
@@ -32,25 +28,39 @@ export default async function HomePage({
       by: ["variantId"],
       _sum: { quantity: true },
       orderBy: { _sum: { quantity: "desc" } },
-      take: 4,
-      where: {
-        order: {
-          status: { not: "CANCELLED" }
-        }
-      }
+      take: 20, // ดึงมาเยอะขึ้นก่อน แล้วค่อย dedup ที่ product level
+      where: { order: { status: { not: "CANCELLED" } } }
     }) : Promise.resolve([]),
   ])
 
-  const topProductIds = topVariants.map((t: any) => t.variantId)
-  const topProducts = topProductIds.length > 0
-    ? await prisma.productVariant.findMany({
-      where: { id: { in: topProductIds } },
+  // dedup ที่ product level — เอาแค่ 4 product ไม่ซ้ำกัน
+  let topProducts: any[] = []
+  if (topVariants.length > 0) {
+    const variantIds = topVariants.map((t: any) => t.variantId)
+    const variants = await prisma.productVariant.findMany({
+      where: { id: { in: variantIds } },
       include: {
         product: { include: { images: true } },
         productVariantLots: true,
       },
     })
-    : []
+
+    // group by product แล้วเอา variant ราคาถูกสุดแทน
+    const seenProductIds = new Set<number>()
+    for (const t of topVariants) {
+      const v = variants.find((x: any) => x.id === t.variantId)
+      if (!v || seenProductIds.has(v.product.Pid)) continue
+      seenProductIds.add(v.product.Pid)
+
+      // หา variant ราคาถูกสุดของ product นี้
+      const cheapest = variants
+        .filter((x: any) => x.product.Pid === v.product.Pid)
+        .sort((a: any, b: any) => (a.price ?? 0) - (b.price ?? 0))[0]
+
+      topProducts.push(cheapest)
+      if (topProducts.length >= 4) break
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -89,11 +99,8 @@ export default async function HomePage({
               </div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {topVariants.map((t: any, i: number) => {
-                const v = topProducts.find((p: any) => p.id === t.variantId)
-                if (!v) return null
+              {topProducts.map((v: any, i: number) => {
                 const imageUrl = v.product.images?.[0]?.url ?? null
-
                 const stock = (v.productVariantLots ?? [])
                   .filter((lot: any) => !lot.expireDate || new Date(lot.expireDate) > new Date())
                   .reduce((s: number, lot: any) => s + lot.stock, 0)
@@ -102,12 +109,13 @@ export default async function HomePage({
                 return (
                   <div key={v.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group relative flex flex-col">
                     {i < 3 && (
-                      <div className={`absolute top-2 left-2 z-10 w-8 h-8 rounded-full text-white text-sm font-black flex items-center justify-center shadow-md ${i === 0 ? "bg-amber-400" : i === 1 ? "bg-gray-400" : "bg-orange-400"
-                        }`}>
+                      <div className={`absolute top-2 left-2 z-10 w-8 h-8 rounded-full text-white text-sm font-black flex items-center justify-center shadow-md ${
+                        i === 0 ? "bg-amber-400" : i === 1 ? "bg-gray-400" : "bg-orange-400"
+                      }`}>
                         {i + 1}
                       </div>
                     )}
-                    <div className="aspect-square bg-gray-50 overflow-hidden">
+                    <div className="aspect-square bg-gray-50 overflow-hidden relative">
                       {imageUrl
                         ? <img src={imageUrl} alt={v.product.Pname} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         : <div className="w-full h-full flex items-center justify-center text-gray-300 text-sm">ไม่มีรูป</div>

@@ -30,16 +30,14 @@ const DropdownListMenu = () => {
                             <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
                         ) : session ? (
                             session.user.image ? (
-                                // สร้างกรอบวงกลมครอบรูป
                                 <div className="w-7 h-7 rounded-full overflow-hidden">
                                     <img
                                         src={session.user.image}
                                         alt="Avatar"
-                                        className="w-full h-full object-cover" // ให้รูปขยายเต็มกรอบ
+                                        className="w-full h-full object-cover"
                                     />
                                 </div>
                             ) : (
-                                // ถ้าไม่มีรูป ให้ไอคอน User อยู่ในกรอบวงกลมเหมือนกัน
                                 <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
                                     <User className="h-5 w-5 text-gray-500" />
                                 </div>
@@ -75,7 +73,7 @@ const DropdownListMenu = () => {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                                 className="text-red-600 cursor-pointer focus:text-red-600 focus:bg-red-50"
-                                onClick={() => signOut({ callbackUrl: "/user" })} // กดแล้วเคลียร์ Session และไปหน้า login
+                                onClick={() => signOut({ callbackUrl: "/user" })}
                             >
                                 <span>Logout</span>
                             </DropdownMenuItem>

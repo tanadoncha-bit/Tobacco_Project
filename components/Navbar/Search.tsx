@@ -1,14 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter, usePathname } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { Input } from "../ui/input"
 import { Search as SearchIcon } from "lucide-react"
 
-const Search = () => {
+const Search = ({ autoFocus }: { autoFocus?: boolean }) => {
   const [searchTerm, setSearchTerm] = useState("")
   const router = useRouter()
-  const pathname = usePathname()
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchTerm.trim()) {
@@ -28,9 +28,9 @@ const Search = () => {
         placeholder="ค้นหาสินค้า"
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
+        autoFocus={autoFocus}
         className="w-full bg-white text-black rounded-full dark:bg-white pr-12"
       />
-
       <button
         type="submit"
         className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-purple-800 transition-colors cursor-pointer"

@@ -75,9 +75,9 @@ export default function NotificationBell() {
         onClick={handleOpen}
         className="relative p-2 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
       >
-        <Bell className="size-6" strokeWidth={2.5} />
+        <Bell className="size-5 md:size-6" strokeWidth={2.5} />
         {unread > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-rose-500 text-white text-[9px] font-black rounded-full flex items-center justify-center">
+          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 md:w-5 md:h-5 bg-rose-500 text-white text-[9px] font-black rounded-full flex items-center justify-center">
             {unread > 9 ? "9+" : unread}
           </span>
         )}
