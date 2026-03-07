@@ -54,15 +54,66 @@ type Stats = {
 }
 
 const SORT_OPTIONS = [
-  { value: "newest",     label: "เพิ่มล่าสุด" },
-  { value: "oldest",     label: "เก่าสุด" },
-  { value: "name-az",    label: "ชื่อวัตถุดิบ (A-Z)" },
-  { value: "name-za",    label: "ชื่อวัตถุดิบ (Z-A)" },
+  { value: "newest", label: "เพิ่มล่าสุด" },
+  { value: "oldest", label: "เก่าสุด" },
+  { value: "name-az", label: "ชื่อวัตถุดิบ (A-Z)" },
+  { value: "name-za", label: "ชื่อวัตถุดิบ (Z-A)" },
   { value: "stock-high", label: "สต็อก (มากไปน้อย)" },
-  { value: "stock-low",  label: "สต็อก (น้อยไปมาก)" },
+  { value: "stock-low", label: "สต็อก (น้อยไปมาก)" },
 ] as const
 
 type SortValue = typeof SORT_OPTIONS[number]["value"]
+
+function ActionMenu({ onIn, onOut, onLot, onHistory }: {
+  onIn: () => void
+  onOut: () => void
+  onLot: () => void
+  onHistory: () => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [])
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100 text-xs font-bold cursor-pointer transition-all"
+      >
+        <span className="hidden sm:inline">จัดการ</span>
+        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 mt-1.5 w-40 bg-white rounded-2xl shadow-xl border border-gray-100 z-[100] animate-in fade-in slide-in-from-top-2 duration-150">
+          <button onClick={() => { onIn(); setOpen(false) }}
+            className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-emerald-700 hover:bg-emerald-50 cursor-pointer">
+            <ArrowDownToLine className="w-3.5 h-3.5" /> รับเข้า
+          </button>
+          <button onClick={() => { onOut(); setOpen(false) }}
+            className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-rose-700 hover:bg-rose-50 cursor-pointer">
+            <ArrowUpFromLine className="w-3.5 h-3.5" /> เบิกออก
+          </button>
+          <button onClick={() => { onLot(); setOpen(false) }}
+            className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-purple-700 hover:bg-purple-50 cursor-pointer">
+            <Layers className="w-3.5 h-3.5" /> ล็อต
+          </button>
+          <button onClick={() => { onHistory(); setOpen(false) }}
+            className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-blue-700 hover:bg-blue-50 cursor-pointer">
+            <FileText className="w-3.5 h-3.5" /> ประวัติ
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function MaterialTable({
   initialMaterials,
@@ -139,10 +190,10 @@ export default function MaterialTable({
     )
     switch (sort) {
       case "stock-high": result.sort((a, b) => b.totalStock - a.totalStock); break
-      case "stock-low":  result.sort((a, b) => a.totalStock - b.totalStock); break
-      case "name-az":    result.sort((a, b) => a.name.localeCompare(b.name)); break
-      case "name-za":    result.sort((a, b) => b.name.localeCompare(a.name)); break
-      case "oldest":     result.reverse(); break
+      case "stock-low": result.sort((a, b) => a.totalStock - b.totalStock); break
+      case "name-az": result.sort((a, b) => a.name.localeCompare(b.name)); break
+      case "name-za": result.sort((a, b) => b.name.localeCompare(a.name)); break
+      case "oldest": result.reverse(); break
     }
     return result
   }, [materials, search, sort])
@@ -245,21 +296,22 @@ export default function MaterialTable({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "วัตถุดิบทั้งหมด",     value: stats.totalMaterials, unit: "รายการ", icon: <FlaskConical className="w-6 h-6" />, gradient: "from-emerald-500 to-teal-600",  shadow: "shadow-emerald-200" },
-          { label: "สต็อกต่ำ (≤10)",      value: stats.lowStock,       unit: "รายการ", icon: <AlertTriangle className="w-6 h-6" />, gradient: "from-orange-400 to-amber-500", shadow: "shadow-orange-200" },
-          { label: "หมดสต็อก",            value: stats.outOfStock,     unit: "รายการ", icon: <PackageX className="w-6 h-6" />,     gradient: "from-rose-500 to-red-600",     shadow: "shadow-rose-200"   },
-          { label: "ใกล้หมดอายุ (30 วัน)", value: stats.nearExpiry,     unit: "รายการ", icon: <Timer className="w-6 h-6" />,        gradient: "from-purple-500 to-indigo-600", shadow: "shadow-purple-200" },
+          { label: "วัตถุดิบทั้งหมด", value: stats.totalMaterials, unit: "รายการ", icon: <FlaskConical className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-emerald-500 to-teal-600", shadow: "shadow-emerald-200" },
+          { label: "สต็อกต่ำ (≤10)", value: stats.lowStock, unit: "รายการ", icon: <AlertTriangle className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-orange-400 to-amber-500", shadow: "shadow-orange-200" },
+          { label: "หมดสต็อก", value: stats.outOfStock, unit: "รายการ", icon: <PackageX className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-rose-500 to-red-600", shadow: "shadow-rose-200" },
+          { label: "ใกล้หมดอายุ (30 วัน)", value: stats.nearExpiry, unit: "รายการ", icon: <Timer className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-purple-500 to-indigo-600", shadow: "shadow-purple-200" },
         ].map(card => (
-          <div key={card.label} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-6 flex items-center gap-5 group">
-            <div className={`bg-gradient-to-br ${card.gradient} rounded-2xl p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
+          <div key={card.label} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-4 md:p-6 flex items-center gap-3 md:gap-5 group">
+            <div className={`bg-gradient-to-br ${card.gradient} rounded-2xl p-3 md:p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
               {card.icon}
             </div>
             <div>
-              <p className="text-sm text-gray-500 font-bold mb-1">{card.label}</p>
-              <p className="text-3xl font-black text-gray-900">
-                {card.value} <span className="text-base font-semibold text-gray-400">{card.unit}</span>
+              <p className="text-xs md:text-sm text-gray-500 font-bold mb-1">{card.label}</p>
+              <p className="text-xl md:text-3xl font-black text-gray-900">
+                {card.value} <span className="text-xs md:text-base font-semibold text-gray-400">{card.unit}</span>
               </p>
             </div>
           </div>
@@ -267,9 +319,12 @@ export default function MaterialTable({
       </div>
 
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100">
-        <div className="p-4 md:p-6 border-b border-gray-100 bg-gray-50/30 rounded-t-3xl flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative w-72 group">
+
+        {/* Toolbar */}
+        <div className="p-4 md:p-6 border-b border-gray-100 bg-gray-50/30 rounded-t-3xl">
+          {/* Mobile: search แยกบน */}
+          <div className="md:hidden mb-3">
+            <div className="relative w-full group">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-emerald-500 transition-colors" />
               <input
                 type="text"
@@ -279,16 +334,34 @@ export default function MaterialTable({
                 className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 bg-white transition-all shadow-sm"
               />
             </div>
+          </div>
+
+          {/* Desktop: ทุกอย่างแถวเดียว | Mobile: sort + ปุ่ม */}
+          <div className="flex items-center gap-2 flex-wrap">
+
+            {/* Search — desktop only */}
+            <div className="relative hidden md:block group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-emerald-500 transition-colors" />
+              <input
+                type="text"
+                placeholder="ค้นหารหัส หรือ ชื่อวัตถุดิบ..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="w-80 pl-10 pr-4 py-2.5 border border-gray-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 bg-white transition-all shadow-sm"
+              />
+            </div>
+
+            {/* Sort */}
             <div className="relative" ref={sortRef}>
               <button
                 onClick={() => setIsSortOpen(!isSortOpen)}
-                className="flex items-center justify-between min-w-[170px] border border-gray-200 rounded-2xl px-4 py-3 text-sm bg-white hover:border-emerald-300 focus:outline-none transition-all shadow-sm cursor-pointer font-bold text-gray-700"
+                className="flex items-center justify-between border border-gray-200 rounded-2xl px-3 py-2.5 text-sm bg-white hover:border-emerald-300 focus:outline-none transition-all shadow-sm cursor-pointer font-bold text-gray-700 gap-2"
               >
                 {SORT_OPTIONS.find(o => o.value === sort)?.label}
-                <ChevronDown className={`w-4 h-4 text-gray-400 ml-2 transition-transform duration-200 ${isSortOpen ? "rotate-180 text-emerald-500" : ""}`} />
+                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isSortOpen ? "rotate-180 text-emerald-500" : ""}`} />
               </button>
               {isSortOpen && (
-                <div className="absolute left-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute left-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="py-1.5">
                     {SORT_OPTIONS.map(opt => (
                       <button
@@ -297,7 +370,7 @@ export default function MaterialTable({
                         className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer ${sort === opt.value
                           ? "bg-emerald-50 text-emerald-700 font-bold border-l-4 border-emerald-500"
                           : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent font-medium"
-                        }`}
+                          }`}
                       >
                         {opt.label}
                       </button>
@@ -306,30 +379,37 @@ export default function MaterialTable({
                 </div>
               )}
             </div>
-          </div>
-          <div className="flex gap-3 flex-wrap">
+
+            <div className="flex-1" />
+
             <button
               onClick={() => setIsProduceOpen(true)}
-              className="bg-orange-50 border border-orange-200 text-orange-700 hover:bg-orange-100 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer"
+              className="bg-orange-50 border border-orange-200 text-orange-700 hover:bg-orange-100 px-3 py-2.5 rounded-2xl text-xs md:text-sm font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
             >
-              <Hammer className="w-4 h-4" /> เบิกผลิตสินค้า
+              <Hammer className="w-4 h-4" />
+              <span className="hidden sm:inline">เบิกผลิตสินค้า</span>
             </button>
             <button
               onClick={() => setIsAddOpen(true)}
-              className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-4 py-2.5 rounded-2xl text-sm font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-2 cursor-pointer"
+              className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-3 py-2.5 rounded-2xl text-xs md:text-sm font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-1.5 cursor-pointer"
             >
-              <Plus className="w-4 h-4" /> เพิ่มวัตถุดิบ
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">เพิ่มวัตถุดิบ</span>
             </button>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Table */}
+        <div>
           <table className="w-full text-sm text-center">
             <thead>
               <tr className="bg-gray-50/80 border-b border-gray-100">
-                {["รหัส", "ชื่อวัตถุดิบ", "คงเหลือ", "หน่วย", "ต้นทุน/หน่วย", "จัดการสต๊อก"].map(h => (
-                  <th key={h} className="px-6 py-5 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
-                ))}
+                <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">รหัส</th>
+                <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">ชื่อวัตถุดิบ</th>
+                <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">คงเหลือ</th>
+                <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">หน่วย</th>
+                <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">ต้นทุน/หน่วย</th>
+                <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">จัดการ</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -349,45 +429,38 @@ export default function MaterialTable({
                 </tr>
               ) : filteredAndSorted.map(mat => (
                 <tr key={mat.id} className="hover:bg-teal-50/20 transition-colors group">
-                  <td className="px-6 py-4">
-                    <span className="font-bold text-gray-400 text-sm">{mat.code || "—"}</span>
+                  <td className="px-4 py-2">
+                    <span className="font-bold text-gray-400 text-xs">{mat.code || "—"}</span>
                   </td>
-                  <td className="px-6 py-4">
-                    <p className="font-black text-gray-900 group-hover:text-teal-700 transition-colors">{mat.name}</p>
+                  <td className="px-4 py-2">
+                    <p className="font-black text-gray-900 text-sm group-hover:text-teal-700 transition-colors">{mat.name}</p>
+                    {/* แสดง หน่วย + ต้นทุน บนมือถือ */}
+                    <p className="md:hidden text-xs text-gray-400 font-medium mt-0.5">
+                      {mat.unit} · ฿{(mat.costPerUnit ?? 0).toFixed(2)}/หน่วย
+                    </p>
                   </td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-black text-sm border ${
-                      mat.totalStock === 0       ? "text-rose-600 bg-rose-50 border-rose-200" :
-                      mat.totalStock <= 10       ? "text-orange-600 bg-orange-50 border-orange-200" :
-                                                   "text-emerald-700 bg-emerald-50 border-emerald-200"
-                    }`}>
-                      {(mat.totalStock ?? 0).toLocaleString()}
+                  <td className="px-4 py-2">
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-xl font-black text-xs border whitespace-nowrap ${mat.totalStock === 0 ? "text-rose-600 bg-rose-50 border-rose-200" :
+                        mat.totalStock <= 10 ? "text-orange-600 bg-orange-50 border-orange-200" :
+                          "text-emerald-700 bg-emerald-50 border-emerald-200"
+                      }`}>
+                      {(mat.totalStock ?? 0).toLocaleString()} {mat.unit}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-2 hidden md:table-cell">
                     <span className="text-sm text-gray-500 font-medium">{mat.unit}</span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-2 hidden md:table-cell">
                     <span className="text-sm font-bold text-gray-700">฿{(mat.costPerUnit ?? 0).toFixed(2)}</span>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-center gap-2 flex-wrap">
-                      <button onClick={() => setTxModal({ isOpen: true, mat, type: "IN" })}
-                        className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer">
-                        <ArrowDownToLine className="w-3.5 h-3.5" /> รับเข้า
-                      </button>
-                      <button onClick={() => setTxModal({ isOpen: true, mat, type: "OUT" })}
-                        className="inline-flex items-center gap-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer">
-                        <ArrowUpFromLine className="w-3.5 h-3.5" /> เบิกออก
-                      </button>
-                      <button onClick={() => setLotsModal({ isOpen: true, mat })}
-                        className="inline-flex items-center gap-1.5 bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer">
-                        <Layers className="w-3.5 h-3.5" /> ล็อต
-                      </button>
-                      <button onClick={() => { setSelectedHistoryId(mat.id); setSelectedHistoryName(mat.name); setHistoryModalOpen(true) }}
-                        className="inline-flex items-center gap-1.5 bg-white text-gray-600 hover:text-blue-600 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer">
-                        <FileText className="w-3.5 h-3.5" /> ประวัติ
-                      </button>
+                  <td className="px-4 py-2">
+                    <div className="flex justify-center">
+                      <ActionMenu
+                        onIn={() => setTxModal({ isOpen: true, mat, type: "IN" })}
+                        onOut={() => setTxModal({ isOpen: true, mat, type: "OUT" })}
+                        onLot={() => setLotsModal({ isOpen: true, mat })}
+                        onHistory={() => { setSelectedHistoryId(mat.id); setSelectedHistoryName(mat.name); setHistoryModalOpen(true) }}
+                      />
                     </div>
                   </td>
                 </tr>

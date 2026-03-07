@@ -72,17 +72,17 @@ export default function EmployeeManagementClient({
 
   const getRoleBadge = (role: string) => {
     switch (role) {
-      case "ADMIN": return "bg-rose-50 text-rose-600 border-rose-200"
+      case "ADMIN":   return "bg-rose-50 text-rose-600 border-rose-200"
       case "MANAGER": return "bg-blue-50 text-blue-600 border-blue-200"
-      default: return "bg-emerald-50 text-emerald-600 border-emerald-200"
+      default:        return "bg-emerald-50 text-emerald-600 border-emerald-200"
     }
   }
 
   const getRoleLabel = (role: string) => {
     switch (role) {
-      case "ADMIN": return "Admin"
+      case "ADMIN":   return "Admin"
       case "MANAGER": return "Manager"
-      default: return "Staff"
+      default:        return "Staff"
     }
   }
 
@@ -101,21 +101,21 @@ export default function EmployeeManagementClient({
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "พนักงานทั้งหมด", value: stats.totalEmployees, icon: <Users className="w-6 h-6" />, gradient: "from-indigo-500 to-purple-600", shadow: "shadow-purple-200" },
-          { label: "Admin", value: stats.admins, icon: <Crown className="w-6 h-6" />, gradient: "from-rose-500 to-red-600", shadow: "shadow-rose-200" },
-          { label: "Manager", value: stats.managers, icon: <Briefcase className="w-6 h-6" />, gradient: "from-blue-400 to-indigo-500", shadow: "shadow-blue-200" },
-          { label: "Staff", value: stats.staff, icon: <User className="w-6 h-6" />, gradient: "from-emerald-400 to-teal-500", shadow: "shadow-emerald-200" },
+          { label: "พนักงานทั้งหมด", value: stats.totalEmployees, icon: <Users   className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-indigo-500 to-purple-600", shadow: "shadow-purple-200" },
+          { label: "Admin",          value: stats.admins,         icon: <Crown    className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-rose-500 to-red-600",      shadow: "shadow-rose-200"   },
+          { label: "Manager",        value: stats.managers,       icon: <Briefcase className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-blue-400 to-indigo-500",  shadow: "shadow-blue-200"   },
+          { label: "Staff",          value: stats.staff,          icon: <User     className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-emerald-400 to-teal-500",  shadow: "shadow-emerald-200" },
         ].map(card => (
-          <div key={card.label} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-6 flex items-center gap-5 group">
-            <div className={`bg-gradient-to-br ${card.gradient} rounded-2xl p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
+          <div key={card.label} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-4 md:p-6 flex items-center gap-3 md:gap-5 group">
+            <div className={`bg-gradient-to-br ${card.gradient} rounded-2xl p-3 md:p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
               {card.icon}
             </div>
             <div>
-              <p className="text-sm text-gray-500 font-bold mb-1">{card.label}</p>
-              <p className="text-3xl font-black text-gray-900">
-                {card.value} <span className="text-base font-semibold text-gray-400">คน</span>
+              <p className="text-xs md:text-sm text-gray-500 font-bold mb-1">{card.label}</p>
+              <p className="text-xl md:text-3xl font-black text-gray-900">
+                {card.value} <span className="text-xs md:text-base font-semibold text-gray-400">คน</span>
               </p>
             </div>
           </div>
@@ -128,32 +128,26 @@ export default function EmployeeManagementClient({
         {/* Toolbar */}
         <div className="p-4 md:p-6 border-b border-gray-100 bg-gray-50/30 rounded-t-3xl flex justify-between items-center">
           <p className="text-sm font-bold text-gray-500">
-            พนักงานทั้งหมด <strong className="text-gray-900">{employees.length}</strong> คน
+            ทั้งหมด <strong className="text-gray-900">{employees.length}</strong> คน
           </p>
           <button
             onClick={openCreateModal}
-            className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white px-4 py-2.5 rounded-2xl text-sm font-bold flex items-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer"
+            className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white px-3 md:px-4 py-2.5 rounded-2xl text-xs md:text-sm font-bold flex items-center gap-1.5 shadow-md hover:shadow-lg transition-all cursor-pointer"
           >
-            <UserPlus className="w-4 h-4" /> เพิ่มพนักงานใหม่
+            <UserPlus className="w-4 h-4" />
+            <span>เพิ่มพนักงานใหม่</span>
           </button>
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto">
+        <div>
           <table className="w-full text-left">
             <thead>
               <tr className="bg-gray-50/80 border-b border-gray-100">
-                {["ชื่อ-นามสกุล", "อีเมล", "ตำแหน่ง (Role)", "จัดการ"].map(h => (
-                  <th
-                    key={h}
-                    className={`
-          py-5 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap
-          ${h === "จัดการ" ? "px-6 text-center" : "px-6"}
-        `}
-                  >
-                    {h}
-                  </th>
-                ))}
+                <th className="px-4 md:px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">ชื่อ-นามสกุล</th>
+                <th className="px-4 md:px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">อีเมล</th>
+                <th className="px-4 md:px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">ตำแหน่ง</th>
+                <th className="px-4 md:px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">จัดการ</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -171,55 +165,56 @@ export default function EmployeeManagementClient({
                     </div>
                   </td>
                 </tr>
-              ) : (
-                employees.map(emp => (
-                  <tr key={emp.id} className="hover:bg-indigo-50/20 transition-colors group">
+              ) : employees.map(emp => (
+                <tr key={emp.id} className="hover:bg-indigo-50/20 transition-colors group">
 
-                    {/* ชื่อ */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 border border-purple-100 shadow-sm group-hover:shadow-md transition-all">
-                          {emp.profileImage ? (
-                            <img src={emp.profileImage} alt="Profile" className="w-full h-full rounded-2xl object-cover" />
-                          ) : (
-                            <User className="w-4 h-4" strokeWidth={2.5} />
-                          )}
-                        </div>
-                        <p className="font-semibold text-gray-800 group-hover:text-indigo-700 transition-colors">
+                  {/* ชื่อ */}
+                  <td className="px-4 md:px-6 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 border border-purple-100 shadow-sm">
+                        {emp.profileImage
+                          ? <img src={emp.profileImage} alt="Profile" className="w-full h-full rounded-2xl object-cover" />
+                          : <User className="w-4 h-4" strokeWidth={2.5} />
+                        }
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-800 text-sm group-hover:text-indigo-700 transition-colors">
                           {emp.firstname} {emp.lastname}
                         </p>
+                        {/* อีเมลแสดงใต้ชื่อบนมือถือ */}
+                        <p className="md:hidden text-xs text-gray-400 font-medium mt-0.5">{emp.email}</p>
                       </div>
-                    </td>
+                    </div>
+                  </td>
 
-                    {/* อีเมล */}
-                    <td className="px-6 py-4 text-sm text-gray-500 font-medium">{emp.email}</td>
+                  {/* อีเมล — desktop only */}
+                  <td className="px-4 md:px-6 py-3 text-sm text-gray-500 font-medium hidden md:table-cell">{emp.email}</td>
 
-                    {/* Role */}
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border ${getRoleBadge(emp.role)}`}>
-                        <Shield className="w-3 h-3" /> {getRoleLabel(emp.role)}
-                      </span>
-                    </td>
+                  {/* Role */}
+                  <td className="px-4 md:px-6 py-3">
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold border ${getRoleBadge(emp.role)}`}>
+                      <Shield className="w-3 h-3" /> {getRoleLabel(emp.role)}
+                    </span>
+                  </td>
 
-                    {/* จัดการ */}
-                    <td className="px-6 py-4 text-center">
-                      <button
-                        onClick={() => openEditModal(emp)}
-                        className="inline-flex items-center gap-1.5 bg-white text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 border border-gray-200 hover:border-indigo-200 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
-                      >
-                        <Edit className="w-3.5 h-3.5" /> แก้ไข
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
+                  {/* จัดการ */}
+                  <td className="px-4 md:px-6 py-3 text-center">
+                    <button
+                      onClick={() => openEditModal(emp)}
+                      className="inline-flex items-center gap-1.5 bg-white text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 border border-gray-200 hover:border-indigo-200 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+                    >
+                      <Edit className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">แก้ไข</span>
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
 
-        {/* Footer */}
         {employees.length > 0 && (
-          <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100 rounded-b-3xl">
+          <div className="px-4 md:px-6 py-4 bg-gray-50/50 border-t border-gray-100 rounded-b-3xl">
             <span className="text-sm font-medium text-gray-500">
               แสดงผลทั้งหมด <strong className="text-gray-900">{employees.length}</strong> รายการ
             </span>
@@ -250,7 +245,6 @@ export default function EmployeeManagementClient({
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
-
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">ชื่อจริง</label>
@@ -311,9 +305,9 @@ export default function EmployeeManagementClient({
                     <div className="fixed inset-0 z-40" onClick={() => setIsRoleOpen(false)} />
                     <div className="absolute z-50 w-full mt-1.5 bg-white border border-gray-100 rounded-2xl shadow-xl py-1.5 overflow-hidden">
                       {[
-                        { id: "ADMIN", title: "Admin", desc: "ดูแลระบบหลัก" },
+                        { id: "ADMIN",   title: "Admin",   desc: "ดูแลระบบหลัก" },
                         { id: "MANAGER", title: "Manager", desc: "ผู้จัดการ" },
-                        { id: "STAFF", title: "Staff", desc: "พนักงานทั่วไป" },
+                        { id: "STAFF",   title: "Staff",   desc: "พนักงานทั่วไป" },
                       ].map(r => (
                         <button
                           key={r.id}
@@ -322,7 +316,7 @@ export default function EmployeeManagementClient({
                           className={`w-full text-left px-4 py-3 text-sm flex items-center justify-between transition-colors cursor-pointer ${formData.role === r.id
                             ? "bg-purple-50 text-purple-700 border-l-4 border-purple-500"
                             : "text-gray-700 hover:bg-gray-50 border-l-4 border-transparent"
-                            }`}
+                          }`}
                         >
                           <div>
                             <p className="font-bold">{r.title}</p>
@@ -347,7 +341,7 @@ export default function EmployeeManagementClient({
                   type="submit" disabled={isLoading}
                   className="flex-1 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-bold rounded-xl shadow-md disabled:opacity-50 transition-all cursor-pointer"
                 >
-                  {isLoading ? "กำลังบันทึก..." : "ยืนยันการบันทึก"}
+                  {isLoading ? "กำลังบันทึก..." : "ยืนยัน"}
                 </button>
               </div>
             </form>

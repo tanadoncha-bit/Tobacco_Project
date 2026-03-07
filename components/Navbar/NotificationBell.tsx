@@ -20,12 +20,19 @@ const STATUS_INFO: Record<string, { label: string; icon: any; color: string }> =
   COMPLETED: { label: "สำเร็จแล้ว", icon: CheckCircle, color: "text-emerald-500" },
 }
 
+const STORAGE_KEY = "notification_last_seen_at"
+
 export default function NotificationBell() {
   const { data: session } = useSession()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [isOpen, setIsOpen] = useState(false)
-  const [readIds, setReadIds] = useState<Set<string>>(new Set())
+  const [lastSeenAt, setLastSeenAt] = useState<number>(0)
   const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) setLastSeenAt(parseInt(stored, 10))
+  }, [])
 
   useEffect(() => {
     if (!session) return
@@ -36,7 +43,7 @@ export default function NotificationBell() {
         .catch(console.error)
 
     fetchNotifications()
-    const interval = setInterval(fetchNotifications, 60_000) // ทุก 1 นาที
+    const interval = setInterval(fetchNotifications, 60_000)
     return () => clearInterval(interval)
   }, [session])
 
@@ -48,11 +55,16 @@ export default function NotificationBell() {
     return () => document.removeEventListener("mousedown", handler)
   }, [])
 
-  const unread = notifications.filter(n => !readIds.has(n.id)).length
+  const unread = notifications.filter(n => new Date(n.updatedAt).getTime() > lastSeenAt).length
 
   const handleOpen = () => {
-    setIsOpen(!isOpen)
-    if (!isOpen) setReadIds(new Set(notifications.map(n => n.id)))
+    const opening = !isOpen
+    setIsOpen(opening)
+    if (opening && notifications.length > 0) {
+      const latestTime = Math.max(...notifications.map(n => new Date(n.updatedAt).getTime()))
+      setLastSeenAt(latestTime)
+      localStorage.setItem(STORAGE_KEY, latestTime.toString())
+    }
   }
 
   if (!session) return null
@@ -91,13 +103,13 @@ export default function NotificationBell() {
                 const info = STATUS_INFO[n.status]
                 if (!info) return null
                 const Icon = info.icon
-                const isRead = readIds.has(n.id)
+                const isNew = new Date(n.updatedAt).getTime() > lastSeenAt
                 return (
                   <Link
                     key={n.id}
                     href="/user/OrderStatue"
                     onClick={() => setIsOpen(false)}
-                    className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 ${!isRead ? "bg-purple-50/40" : ""}`}
+                    className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 ${isNew ? "bg-purple-50/40" : ""}`}
                   >
                     <div className={`mt-0.5 shrink-0 ${info.color}`}>
                       <Icon className="w-4 h-4" />
@@ -111,7 +123,7 @@ export default function NotificationBell() {
                         ฿{n.totalAmount.toLocaleString()} • {new Date(n.updatedAt).toLocaleDateString("th-TH", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                       </p>
                     </div>
-                    {!isRead && <span className="w-2 h-2 bg-purple-500 rounded-full mt-1.5 shrink-0" />}
+                    {isNew && <span className="w-2 h-2 bg-purple-500 rounded-full mt-1.5 shrink-0" />}
                   </Link>
                 )
               })

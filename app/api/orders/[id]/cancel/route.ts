@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import prisma from "@/utils/db"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/utils/authOptions"
+import { returnStockByOrderItem } from "@/utils/inventory"
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,7 @@ export async function PATCH(
         if (!orderId) {
             return NextResponse.json({ error: "Invalid Order ID" }, { status: 400 })
         }
+
         const existingOrder = await prisma.order.findUnique({
             where: { id: orderId },
             include: { items: true }
@@ -43,6 +45,7 @@ export async function PATCH(
         }
 
         const shortOrderId = orderId.substring(0, 8).toUpperCase()
+
         await prisma.$transaction(async (tx) => {
             await tx.order.update({
                 where: { id: orderId },
@@ -50,39 +53,15 @@ export async function PATCH(
             })
 
             for (const item of existingOrder.items) {
-                // หา lot ล่าสุดของ variant นี้
-                const latestLot = await tx.productVariantLot.findFirst({
-                    where: { variantId: item.variantId },
-                    orderBy: { produceDate: "desc" }
-                })
-
-                if (latestLot) {
-                    await tx.productVariantLot.update({
-                        where: { id: latestLot.id },
-                        data: { stock: { increment: item.quantity } }
-                    })
-                } else {
-                    // ถ้าไม่มี lot เลย สร้าง lot ใหม่
-                    await tx.productVariantLot.create({
-                        data: {
-                            variantId: item.variantId,
-                            lotNumber: `RETURN-${orderId.substring(0, 8).toUpperCase()}`,
-                            stock: item.quantity,
-                        }
-                    })
-                }
-
-                await tx.stockTransaction.create({
-                    data: {
-                        variantId: item.variantId,
-                        type: "IN",
-                        reason: "RETURN",
-                        amount: item.quantity,
-                        note: `คืนสต๊อกจากการยกเลิกออเดอร์ ORD-${shortOrderId}`,
-                        profileId: session.user.id
-                    }
+                await returnStockByOrderItem(tx, {
+                    orderItemId: item.id,
+                    profileId: session.user.id,
+                    note: `คืนสต๊อกจากการยกเลิกออเดอร์ ORD-${shortOrderId}`
                 })
             }
+        }, {
+            maxWait: 10000,
+            timeout: 30000,
         })
 
         return NextResponse.json({ message: "ยกเลิกออเดอร์สำเร็จ" })

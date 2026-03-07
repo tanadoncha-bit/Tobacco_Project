@@ -69,7 +69,7 @@ export async function POST() {
         await deductStockFIFO(tx, {
           variantId: item.variantId,
           amountToDeduct: item.quantity,
-          orderItemId: orderItem?.id,  // ← เพิ่มตรงนี้
+          orderItemId: orderItem?.id,
           profileId: userId,
           note: `ขายสินค้า Order ORD-${shortOrderId}`
         })

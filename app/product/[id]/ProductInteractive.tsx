@@ -9,14 +9,37 @@ export default function ProductInteractive({ product }: { product: any }) {
   const [imgIndex, setImgIndex] = useState(0)
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({})
 
+  // helper: เช็ค stock ของ variant
+  const getVariantStock = (v: any) =>
+    (v.productVariantLots ?? [])
+      .filter((lot: any) => !lot.expireDate || new Date(lot.expireDate) > new Date())
+      .reduce((sum: number, lot: any) => sum + lot.stock, 0)
+
+  // auto-select option ที่มี stock ก่อน ถ้าไม่มีค่อยเลือกตัวแรก
   useEffect(() => {
-    if (product.Option?.length > 0) {
-      const init: Record<string, string> = {}
+    if (!product.Option?.length) return
+
+    const init: Record<string, string> = {}
+
+    // หา variant แรกที่มี stock
+    const firstInStock = product.variants?.find((v: any) => getVariantStock(v) > 0)
+    const sourceVariant = firstInStock ?? product.variants?.[0]
+
+    if (sourceVariant) {
+      sourceVariant.values.forEach((vv: any) => {
+        const optName = product.Option?.find((o: any) =>
+          o.values.some((ov: any) => ov.value === vv.optionValue.value)
+        )?.name
+        if (optName) init[optName] = vv.optionValue.value
+      })
+    } else {
+      // fallback: เลือก value แรกของแต่ละ option
       product.Option.forEach((opt: any) => {
         if (opt.values?.length > 0) init[opt.name] = opt.values[0].value
       })
-      setSelectedOptions(init)
     }
+
+    setSelectedOptions(init)
   }, [product.Option])
 
   const currentVariant = useMemo(() => {
@@ -37,10 +60,49 @@ export default function ProductInteractive({ product }: { product: any }) {
   }, [selectedOptions, product.variants, product.Option])
 
   const price = currentVariant?.price ?? 0
-  const stock = (currentVariant?.productVariantLots ?? [])
-    .filter((lot: any) => !lot.expireDate || new Date(lot.expireDate) > new Date())
-    .reduce((sum: number, lot: any) => sum + lot.stock, 0)
+  const stock = getVariantStock(currentVariant ?? { productVariantLots: [] })
   const variantId = currentVariant?.id ?? 0
+
+  // เช็คว่า option แถวนี้ควรแสดงมั้ย
+  // แสดงถ้ามี variant ไหนก็ได้ (ที่ตรงกับ selection ปัจจุบัน) มีค่าของ option นี้
+  const shouldShowOption = (opt: any) => {
+    const firstOpt = product.Option?.[0]
+    const relevantVariants = product.variants?.filter((v: any) => {
+      const vals = v.values.map((vv: any) => vv.optionValue.value)
+      // กรองตาม option แรกที่เลือกไว้ (ถ้า opt นี้ไม่ใช่ option แรก)
+      if (firstOpt && opt.id !== firstOpt.id && selectedOptions[firstOpt.name]) {
+        return vals.includes(selectedOptions[firstOpt.name])
+      }
+      return true
+    }) ?? []
+
+    return relevantVariants.some((v: any) =>
+      opt.values.some((ov: any) =>
+        v.values.some((vv: any) => vv.optionValue.value === ov.value)
+      )
+    )
+  }
+
+  // เช็ค stock ของ option value นั้นๆ
+  const getOptionValueStatus = (opt: any, val: any) => {
+    const matchingVariants = product.variants?.filter((v: any) => {
+      const vals = v.values.map((vv: any) => vv.optionValue.value)
+      if (!vals.includes(val.value)) return false
+
+      // ถ้า opt นี้ไม่ใช่ option แรก ให้กรองตาม option แรกที่เลือกไว้
+      const firstOpt = product.Option?.[0]
+      if (firstOpt && opt.id !== firstOpt.id && selectedOptions[firstOpt.name]) {
+        return vals.includes(selectedOptions[firstOpt.name])
+      }
+      return true
+    }) ?? []
+
+    if (matchingVariants.length === 0) return { exists: false, hasStock: false }
+
+    const hasStock = matchingVariants.some((v: any) => getVariantStock(v) > 0)
+
+    return { exists: true, hasStock }
+  }
 
   return (
     <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
@@ -121,73 +183,107 @@ export default function ProductInteractive({ product }: { product: any }) {
 
             {product.Option?.length > 0 && (
               <div className="space-y-4">
-                {product.Option.map((opt: any) => (
-                  <div key={opt.id}>
-                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{opt.name}</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {opt.values.filter((val: any) => val.value && val.value.trim() !== "").map((val: any) => {
-                        const isSelected = selectedOptions[opt.name] === val.value
+                {product.Option.map((opt: any) => {
+                  // ซ่อน option ทั้งแถวถ้า variant ที่เลือกไม่มี option นี้
+                  if (!shouldShowOption(opt)) return null
 
-                        const hypothetical: Record<string, string> = { ...selectedOptions, [opt.name]: val.value }
-                        const isAvailable = opt === product.Option[0]
-                          ? true
-                          : product.variants?.some((v: any) => {
-                            const vals = v.values.map((vv: any) => vv.optionValue.value)
-                            return Object.entries(hypothetical).every(([k, s]) => {
-                              if (k === opt.name) return vals.includes(s)
-                              const variantHasThisOption = product.Option?.find((o: any) => o.name === k)
-                                ?.values?.some((vv: any) => vals.includes(vv.value))
-                              if (!variantHasThisOption) return true
-                              return vals.includes(s)
-                            })
-                          })
+                  const validValues = opt.values.filter((val: any) => val.value && val.value.trim() !== "")
 
-                        return (
-                          <button
-                            key={val.id}
-                            onClick={() => {
-                              if (!isAvailable) return
+                  const visibleValues = validValues.filter((val: any) => {
+                    const { exists } = getOptionValueStatus(opt, val)
+                    return exists
+                  })
 
-                              const newSelected: Record<string, string> = { ...selectedOptions, [opt.name]: val.value }
+                  if (visibleValues.length === 0) return null
 
-                              product.Option?.forEach((o: any) => {
-                                if (o.name === opt.name) return
-                                const currentVal = newSelected[o.name]
+                  return (
+                    <div key={opt.id}>
+                      <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{opt.name}</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {visibleValues.map((val: any) => {
+                          const isSelected = selectedOptions[opt.name] === val.value
+                          const { hasStock } = getOptionValueStatus(opt, val)
 
-                                const stillValid = currentVal && product.variants?.some((v: any) => {
-                                  const vals = v.values.map((vv: any) => vv.optionValue.value)
-                                  return vals.includes(val.value) && vals.includes(currentVal)
-                                })
+                          return (
+                            <button
+                              key={val.id}
+                              onClick={() => {
+                                if (!hasStock) return
 
-                                if (!stillValid) {
-                                  const firstValid = o.values.find((ov: any) =>
-                                    ov.value?.trim() !== "" &&
-                                    product.variants?.some((v: any) => {
+                                const newSelected: Record<string, string> = { ...selectedOptions, [opt.name]: val.value }
+
+                                // ถ้าเปลี่ยน option แรก (รสชาติ) ให้ auto-select ปริมาณที่มี stock
+                                if (opt.id === product.Option?.[0]?.id) {
+                                  product.Option.forEach((o: any) => {
+                                    if (o.id === opt.id) return
+
+                                    // หา variant ที่ตรงกับรสชาติใหม่ที่มี stock
+                                    const bestVariant = product.variants?.find((v: any) => {
                                       const vals = v.values.map((vv: any) => vv.optionValue.value)
-                                      return vals.includes(val.value) && vals.includes(ov.value)
+                                      return vals.includes(val.value) && getVariantStock(v) > 0
                                     })
-                                  )
-                                  if (firstValid) newSelected[o.name] = firstValid.value
-                                  else delete newSelected[o.name]
-                                }
-                              })
 
-                              setSelectedOptions(newSelected)
-                            }}
-                            className={`px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all ${isSelected
+                                    if (bestVariant) {
+                                      const matchVal = bestVariant.values.find((vv: any) =>
+                                        o.values.some((ov: any) => ov.value === vv.optionValue.value)
+                                      )
+                                      if (matchVal) newSelected[o.name] = matchVal.optionValue.value
+                                    } else {
+                                      // ไม่มี stock เลย → เลือก value แรกที่มี variant
+                                      const firstValid = o.values.find((ov: any) =>
+                                        ov.value?.trim() !== "" &&
+                                        product.variants?.some((v: any) => {
+                                          const vals = v.values.map((vv: any) => vv.optionValue.value)
+                                          return vals.includes(val.value) && vals.includes(ov.value)
+                                        })
+                                      )
+                                      if (firstValid) newSelected[o.name] = firstValid.value
+                                      else delete newSelected[o.name]
+                                    }
+                                  })
+                                } else {
+                                  // option อื่นๆ ใช้ logic เดิม
+                                  product.Option?.forEach((o: any) => {
+                                    if (o.name === opt.name) return
+                                    const currentVal = newSelected[o.name]
+                                    const stillValid = currentVal && product.variants?.some((v: any) => {
+                                      const vals = v.values.map((vv: any) => vv.optionValue.value)
+                                      return vals.includes(val.value) && vals.includes(currentVal)
+                                    })
+                                    if (!stillValid) {
+                                      const firstValid = o.values.find((ov: any) =>
+                                        ov.value?.trim() !== "" &&
+                                        product.variants?.some((v: any) => {
+                                          const vals = v.values.map((vv: any) => vv.optionValue.value)
+                                          return vals.includes(val.value) && vals.includes(ov.value)
+                                        })
+                                      )
+                                      if (firstValid) newSelected[o.name] = firstValid.value
+                                      else delete newSelected[o.name]
+                                    }
+                                  })
+                                }
+
+                                setSelectedOptions(newSelected)
+                              }}
+                              className={`px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all ${isSelected
                                 ? "border-purple-500 bg-purple-500 text-white shadow-md shadow-purple-200"
-                                : isAvailable
+                                : hasStock
                                   ? "border-gray-200 text-gray-600 hover:border-purple-300 hover:text-purple-600 cursor-pointer"
-                                  : "border-gray-100 text-gray-300 bg-gray-50 cursor-not-allowed"
-                              }`}
-                          >
-                            {val.value}
-                          </button>
-                        )
-                      })}
+                                  : "border-gray-100 text-gray-300 bg-gray-50 cursor-not-allowed line-through"
+                                }`}
+                            >
+                              {val.value}
+                              {!hasStock && (
+                                <span className="ml-1 text-[10px] font-medium">(หมด)</span>
+                              )}
+                            </button>
+                          )
+                        })}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>

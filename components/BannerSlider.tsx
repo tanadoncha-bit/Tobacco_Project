@@ -39,17 +39,17 @@ export default function BannerSlider({ banners }: { banners: Banner[] }) {
   }
 
   return (
-    <div className="relative w-full overflow-hidden group aspect-[16/6] md:aspect-[16/5] lg:aspect-[16/4]">
-      <div 
-        className="flex transition-transform duration-700 ease-out h-full"
+    <div className="relative w-full overflow-hidden group">
+      <div
+        className="flex transition-transform duration-700 ease-out"
         style={{ transform: `translateX(-${currentIndex * 100}%)` }}
       >
         {banners.map((banner) => (
-          <div key={banner.id} className="min-w-full h-full relative">
+          <div key={banner.id} className="min-w-full relative">
             <img
               src={banner.imageUrl}
               alt="Banner"
-              className="w-full h-full object-contain md:object-cover"
+              className="w-full h-auto block"
             />
             <div className="absolute inset-0 bg-black/10"></div>
           </div>

@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Factory, Search, X, Package, Hammer, ChevronRight, ClipboardList, AlertCircle } from "lucide-react"
+import { useState, useRef, useEffect } from "react"
+import { Factory, Search, X, Package, Hammer, ChevronRight, ClipboardList, ChevronDown } from "lucide-react"
 
 type Order = {
     id: number
@@ -27,10 +27,29 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
     CANCELLED: { label: "ยกเลิก", color: "bg-rose-100 text-rose-700 border-rose-300 shadow-sm" },
 }
 
+const FILTER_OPTIONS = [
+    { value: "ALL", label: "ทั้งหมด" },
+    { value: "PENDING", label: "กำลังผลิต" },
+    { value: "COMPLETED", label: "เสร็จแล้ว" },
+    { value: "CANCELLED", label: "ยกเลิก" },
+] as const
+
+type FilterValue = typeof FILTER_OPTIONS[number]["value"]
+
 export default function ProductionClient({ orders }: { orders: Order[] }) {
     const [search, setSearch] = useState("")
-    const [filter, setFilter] = useState<"ALL" | "PENDING" | "COMPLETED" | "CANCELLED">("ALL")
+    const [filter, setFilter] = useState<FilterValue>("ALL")
     const [selected, setSelected] = useState<Order | null>(null)
+    const [filterOpen, setFilterOpen] = useState(false)
+    const filterRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (filterRef.current && !filterRef.current.contains(e.target as Node)) setFilterOpen(false)
+        }
+        document.addEventListener("mousedown", handler)
+        return () => document.removeEventListener("mousedown", handler)
+    }, [])
 
     const filtered = orders.filter(o => {
         const matchFilter = filter === "ALL" || o.status === filter
@@ -41,72 +60,39 @@ export default function ProductionClient({ orders }: { orders: Order[] }) {
     })
 
     const totalCostAll = filtered.reduce((sum, o) => sum + o.totalCost, 0)
+    const getCount = (v: FilterValue) => v === "ALL" ? orders.length : orders.filter(o => o.status === v).length
+    const currentLabel = FILTER_OPTIONS.find(f => f.value === filter)!.label
 
     return (
         <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
             {/* Header */}
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6">
-                <div className="space-y-3">
-                    <div className="flex items-center gap-4">
-                        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-3 rounded-2xl shadow-lg shadow-purple-200">
-                            <Factory className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">ใบสั่งผลิต</h1>
-                            <p className="text-[16px] text-gray-500 font-medium mt-1">ประวัติและรายละเอียดการสั่งผลิตสินค้าทั้งหมด</p>
-                        </div>
-                    </div>
+            <div className="flex items-center gap-4">
+                <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-3 rounded-2xl shadow-lg shadow-purple-200">
+                    <Factory className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                    <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">ใบสั่งผลิต</h1>
+                    <p className="text-[16px] text-gray-500 font-medium mt-1">ประวัติและรายละเอียดการสั่งผลิตสินค้าทั้งหมด</p>
                 </div>
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                    {
-                        label: "ทั้งหมด",
-                        value: orders.length,
-                        unit: "ใบ",
-                        icon: <ClipboardList className="w-6 h-6" />,
-                        gradient: "from-blue-500 to-indigo-600",
-                        shadow: "shadow-blue-200",
-                    },
-                    {
-                        label: "กำลังผลิต",
-                        value: orders.filter(o => o.status === "PENDING").length,
-                        unit: "ใบ",
-                        icon: <Factory className="w-6 h-6" />,
-                        gradient: "from-orange-400 to-amber-500",
-                        shadow: "shadow-orange-200",
-                    },
-                    {
-                        label: "เสร็จแล้ว",
-                        value: orders.filter(o => o.status === "COMPLETED").length,
-                        unit: "ใบ",
-                        icon: <Package className="w-6 h-6" />,
-                        gradient: "from-emerald-400 to-teal-500",
-                        shadow: "shadow-emerald-200",
-                    },
-                    {
-                        label: "ยกเลิก",
-                        value: orders.filter(o => o.status === "CANCELLED").length,
-                        unit: "ใบ",
-                        icon: <X className="w-6 h-6" />,
-                        gradient: "from-rose-500 to-red-600",
-                        shadow: "shadow-rose-200",
-                    },
+                    { label: "ทั้งหมด", value: orders.length, unit: "ใบ", icon: <ClipboardList className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-blue-500 to-indigo-600", shadow: "shadow-blue-200" },
+                    { label: "กำลังผลิต", value: orders.filter(o => o.status === "PENDING").length, unit: "ใบ", icon: <Factory className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-orange-400 to-amber-500", shadow: "shadow-orange-200" },
+                    { label: "เสร็จแล้ว", value: orders.filter(o => o.status === "COMPLETED").length, unit: "ใบ", icon: <Package className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-emerald-400 to-teal-500", shadow: "shadow-emerald-200" },
+                    { label: "ยกเลิก", value: orders.filter(o => o.status === "CANCELLED").length, unit: "ใบ", icon: <X className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-rose-500 to-red-600", shadow: "shadow-rose-200" },
                 ].map(card => (
-                    <div
-                        key={card.label}
-                        className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-6 flex items-center gap-5 group"
-                    >
-                        <div className={`bg-gradient-to-br ${card.gradient} rounded-2xl p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300`}>
+                    <div key={card.label} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-4 md:p-6 flex items-center gap-3 md:gap-5 group">
+                        <div className={`bg-gradient-to-br ${card.gradient} rounded-2xl p-3 md:p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
                             {card.icon}
                         </div>
                         <div>
-                            <p className="text-sm text-gray-500 font-bold mb-1">{card.label}</p>
-                            <p className="text-3xl font-black text-gray-900">
-                                {card.value} <span className="text-base font-semibold text-gray-400">{card.unit}</span>
+                            <p className="text-xs md:text-sm text-gray-500 font-bold mb-1">{card.label}</p>
+                            <p className="text-xl md:text-3xl font-black text-gray-900">
+                                {card.value} <span className="text-xs md:text-base font-semibold text-gray-400">{card.unit}</span>
                             </p>
                         </div>
                     </div>
@@ -117,61 +103,97 @@ export default function ProductionClient({ orders }: { orders: Order[] }) {
             <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
 
                 {/* Toolbar */}
-                <div className="p-4 md:p-6 border-b border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4 bg-gray-50/30">
-                    <div className="relative w-full md:w-80 group">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-purple-500 transition-colors" />
-                        <input
-                            type="text"
-                            placeholder="ค้นหาเลขใบ, ชื่อสินค้า..."
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                            className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 bg-white transition-all shadow-sm"
-                        />
+                <div className="p-4 md:p-6 border-b border-gray-100 bg-gray-50/30 space-y-3">
+
+                    {/* Mobile: search + filter dropdown */}
+                    <div className="flex gap-2 md:hidden">
+                        <div className="relative flex-1 group">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-purple-500 transition-colors" />
+                            <input
+                                type="text"
+                                placeholder="ค้นหา..."
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 bg-white transition-all shadow-sm"
+                            />
+                        </div>
+                        <div className="relative shrink-0" ref={filterRef}>
+                            <button
+                                onClick={() => setFilterOpen(!filterOpen)}
+                                className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-2xl border border-gray-200 bg-white text-sm font-bold text-gray-700 shadow-sm cursor-pointer whitespace-nowrap"
+                            >
+                                {currentLabel}
+                                <span className="text-xs text-gray-400">{getCount(filter)}</span>
+                                <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${filterOpen ? "rotate-180" : ""}`} />
+                            </button>
+                            {filterOpen && (
+                                <div className="absolute right-0 mt-1.5 w-44 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+                                    {FILTER_OPTIONS.map(opt => (
+                                        <button
+                                            key={opt.value}
+                                            onClick={() => { setFilter(opt.value); setFilterOpen(false) }}
+                                            className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-bold transition-colors cursor-pointer ${filter === opt.value ? "bg-indigo-50 text-indigo-700 border-l-4 border-indigo-500" : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent"}`}
+                                        >
+                                            {opt.label}
+                                            <span className="text-xs text-gray-400">{getCount(opt.value)}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
-                    <div className="inline-flex bg-gray-100/80 p-1.5 rounded-2xl items-center shadow-inner">
-                        {(["ALL", "PENDING", "COMPLETED", "CANCELLED"] as const).map(s => {
-                            const isActive = filter === s
-                            let activeClass = ""
-                            if (isActive) {
-                                if (s === "ALL") activeClass = "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md"
-                                else if (s === "PENDING") activeClass = "bg-gradient-to-r from-orange-400 to-amber-500 text-white shadow-md"
-                                else if (s === "COMPLETED") activeClass = "bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-md"
-                                else if (s === "CANCELLED") activeClass = "bg-gradient-to-r from-rose-400 to-red-500 text-white shadow-md"
-                            } else {
-                                activeClass = "text-gray-500 hover:text-gray-800 hover:bg-gray-200/50"
-                            }
-                            const label = s === "ALL" ? "ทั้งหมด" : STATUS_MAP[s].label
-                            const count = s === "ALL" ? orders.length : orders.filter(o => o.status === s).length
-
-                            return (
-                                <button
-                                    key={s}
-                                    onClick={() => setFilter(s)}
-                                    className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer ${activeClass}`}
-                                >
-                                    {label}
-                                    <span className={`py-0.5 px-2 rounded-full text-[10px] ml-0.5 ${isActive ? "bg-white/20 text-white" : "bg-gray-200 text-gray-500"}`}>
-                                        {count}
-                                    </span>
-                                </button>
-                            )
-                        })}
+                    {/* Desktop: search + tab filter */}
+                    <div className="hidden md:flex items-center justify-between gap-3">
+                        <div className="relative w-80 group">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-purple-500 transition-colors" />
+                            <input
+                                type="text"
+                                placeholder="ค้นหาเลขใบ, ชื่อสินค้า..."
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 bg-white transition-all shadow-sm"
+                            />
+                        </div>
+                        <div className="inline-flex bg-gray-100/80 p-1.5 rounded-2xl items-center shadow-inner self-start">
+                            {FILTER_OPTIONS.map(opt => {
+                                const isActive = filter === opt.value
+                                let activeClass = "text-gray-500 hover:text-gray-800 hover:bg-gray-200/50"
+                                if (isActive) {
+                                    if (opt.value === "ALL") activeClass = "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md"
+                                    else if (opt.value === "PENDING") activeClass = "bg-gradient-to-r from-orange-400 to-amber-500 text-white shadow-md"
+                                    else if (opt.value === "COMPLETED") activeClass = "bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-md"
+                                    else if (opt.value === "CANCELLED") activeClass = "bg-gradient-to-r from-rose-400 to-red-500 text-white shadow-md"
+                                }
+                                return (
+                                    <button
+                                        key={opt.value}
+                                        onClick={() => setFilter(opt.value)}
+                                        className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-1.5 cursor-pointer ${activeClass}`}
+                                    >
+                                        {opt.label}
+                                        <span className={`py-0.5 px-2 rounded-full text-[10px] ${isActive ? "bg-white/20 text-white" : "bg-gray-200 text-gray-500"}`}>
+                                            {getCount(opt.value)}
+                                        </span>
+                                    </button>
+                                )
+                            })}
+                        </div>
                     </div>
                 </div>
 
                 {/* Table */}
-                <div className="overflow-x-auto">
+                <div>
                     <table className="w-full text-sm text-center">
                         <thead>
                             <tr className="bg-gray-50/80 border-b border-gray-100">
-                                <th className="px-6 py-5 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">เลขใบสั่งผลิต</th>
-                                <th className="px-6 py-5 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">สินค้า</th>
-                                <th className="px-6 py-5 text-xs font-bold text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">จำนวน</th>
-                                <th className="px-6 py-5 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">ต้นทุนวัตถุดิบ</th>
-                                <th className="px-6 py-5 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">สถานะ</th>
-                                <th className="px-6 py-5 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">วันที่</th>
-                                <th className="px-6 py-5 text-xs font-bold text-gray-500 uppercase tracking-wider pl-12 whitespace-nowrap">จัดการ</th>
+                                <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">เลขใบสั่งผลิต</th>
+                                <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">สินค้า</th>
+                                <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">จำนวน</th>
+                                <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">ต้นทุน</th>
+                                <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">สถานะ</th>
+                                <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">วันที่</th>
+                                <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">จัดการ</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
@@ -189,61 +211,65 @@ export default function ProductionClient({ orders }: { orders: Order[] }) {
                                         </div>
                                     </td>
                                 </tr>
-                            ) : (
-                                filtered.map(order => (
-                                    <tr key={order.id} className="hover:bg-indigo-50/30 transition-colors group">
-                                        <td className="px-6 py-5">
-                                            <span className="font-mono text-xs bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-xl border border-indigo-100 font-bold">
-                                                {order.docNo}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-5 min-w-[200px]">
-                                            <p className="font-black text-gray-900 text-base group-hover:text-indigo-700 transition-colors">{order.productName}</p>
-                                        </td>
-                                        <td className="px-6 py-5 text-center">
-                                            <div className="flex items-center justify-center gap-1.5">
-                                                <span className="font-black text-gray-900 text-base">{order.amount.toLocaleString()}</span>
-                                                <span className="text-gray-400 text-xs font-medium">ชิ้น</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-5">
-                                            <span className={`font-black text-base ${order.totalCost > 0 ? "text-indigo-600" : "text-gray-400"}`}>
-                                                ฿{order.totalCost.toLocaleString("th-TH", { minimumFractionDigits: 2 })}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-5">
-                                            <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold border ${STATUS_MAP[order.status]?.color}`}>
-                                                {STATUS_MAP[order.status]?.label}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-5 text-gray-500 text-xs font-medium whitespace-nowrap">
+                            ) : filtered.map(order => (
+                                <tr key={order.id} className="hover:bg-indigo-50/30 transition-colors group">
+                                    <td className="px-4 py-3">
+                                        <span className="font-mono text-xs bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg border border-indigo-100 font-bold whitespace-nowrap">
+                                            {order.docNo}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <p className="font-black text-gray-900 text-sm group-hover:text-indigo-700 transition-colors">
+                                            <span className="md:hidden">{order.productName.replace(/\s*\(.*?\)/g, "")}</span>
+                                            <span className="hidden md:inline">{order.productName}</span>
+                                        </p>
+                                        {/* mobile sub-info */}
+                                        <p className="md:hidden text-xs text-gray-400 font-medium mt-0.5">
                                             {new Date(order.createdAt).toLocaleDateString("th-TH", { day: "2-digit", month: "short", year: "numeric" })}
-                                        </td>
-                                        <td className="px-6 py-5 text-right">
-                                            <button
-                                                onClick={() => setSelected(order)}
-                                                className="inline-flex items-center gap-2 bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-500 hover:text-white hover:border-indigo-500 px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 shadow-sm hover:shadow-md hover:shadow-indigo-200 cursor-pointer"
-                                            >
-                                                รายละเอียด <ChevronRight className="w-4 h-4" />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
+                                        </p>
+                                    </td>
+                                    <td className="px-4 py-3 text-center hidden md:table-cell">
+                                        <span className="font-black text-gray-900 text-sm">{order.amount.toLocaleString()}</span>
+                                        <span className="text-gray-400 text-xs ml-1">ชิ้น</span>
+                                    </td>
+                                    <td className="px-4 py-3 text-center hidden md:table-cell">
+                                        <span className={`font-black text-sm ${order.totalCost > 0 ? "text-indigo-600" : "text-gray-400"}`}>
+                                            ฿{order.totalCost.toLocaleString("th-TH", { minimumFractionDigits: 2 })}
+                                        </span>
+                                    </td>
+                                    <td className="pl-4 pr-6 py-3 text-center">
+                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold border whitespace-nowrap ${STATUS_MAP[order.status]?.color}`}>
+                                            {STATUS_MAP[order.status]?.label}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3 text-center text-gray-500 text-xs font-medium whitespace-nowrap hidden md:table-cell">
+                                        {new Date(order.createdAt).toLocaleDateString("th-TH", { day: "2-digit", month: "short", year: "numeric" })}
+                                    </td>
+                                    <td className="px-2 py-3 text-center whitespace-nowrap">
+                                        <button
+                                            onClick={() => setSelected(order)}
+                                            className="inline-flex items-center gap-1 bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-500 hover:text-white hover:border-indigo-500 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm"
+                                        >
+                                            <span className="hidden sm:inline">รายละเอียด</span>
+                                            <ChevronRight className="w-3.5 h-3.5" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 </div>
 
                 {/* Footer */}
                 {filtered.length > 0 && (
-                    <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-3">
+                    <div className="px-4 md:px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex flex-wrap justify-between items-center gap-3 rounded-b-3xl">
                         <span className="text-sm font-medium text-gray-500">
-                            แสดงผลทั้งหมด <strong className="text-gray-900">{filtered.length}</strong> รายการ
+                            แสดงผล <strong className="text-gray-900">{filtered.length}</strong> รายการ
                         </span>
-                        <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
-                            <span className="text-sm font-bold text-gray-600">ต้นทุนรวมทั้งหมด:</span>
-                            <span className="text-lg font-black text-indigo-600">
-                                ฿ {totalCostAll.toLocaleString("th-TH", { minimumFractionDigits: 2 })}
+                        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
+                            <span className="text-sm font-bold text-gray-600">ต้นทุนรวม:</span>
+                            <span className="text-base font-black text-indigo-600">
+                                ฿{totalCostAll.toLocaleString("th-TH", { minimumFractionDigits: 2 })}
                             </span>
                         </div>
                     </div>
@@ -253,9 +279,8 @@ export default function ProductionClient({ orders }: { orders: Order[] }) {
             {/* Detail Modal */}
             {selected && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-in zoom-in-95 duration-200 max-h-[85vh] flex flex-col overflow-hidden">
-
-                        <div className="px-6 py-5 bg-gradient-to-r from-indigo-600 to-purple-600 flex justify-between items-center">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col overflow-hidden">
+                        <div className="px-6 py-5 bg-gradient-to-r from-indigo-600 to-purple-600 flex justify-between items-center shrink-0">
                             <div className="flex items-center gap-3 text-white">
                                 <div className="bg-white/20 p-2 rounded-xl backdrop-blur-md">
                                     <Factory className="w-5 h-5" />
@@ -265,27 +290,22 @@ export default function ProductionClient({ orders }: { orders: Order[] }) {
                                     <p className="text-indigo-100 text-xs font-medium">รายละเอียดใบสั่งผลิต</p>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => setSelected(null)}
-                                className="text-white/70 hover:text-white hover:bg-white/20 p-2 rounded-xl transition-all cursor-pointer"
-                            >
+                            <button onClick={() => setSelected(null)} className="text-white/70 hover:text-white hover:bg-white/20 p-2 rounded-xl transition-all cursor-pointer">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
 
-                        <div className="p-6 space-y-6 overflow-y-auto bg-slate-50/50">
-
-                            {/* Info */}
-                            <div className="bg-white border border-gray-100 shadow-sm rounded-xl p-5 space-y-3">
+                        <div className="p-4 md:p-6 space-y-5 overflow-y-auto bg-slate-50/50">
+                            <div className="bg-white border border-gray-100 shadow-sm rounded-xl p-4 md:p-5 space-y-3">
                                 {[
                                     { label: "สินค้า", value: <span className="text-sm font-black text-gray-800 bg-gray-100 px-3 py-1 rounded-lg">{selected.productName}</span> },
                                     { label: "จำนวนผลิต", value: <span className="text-sm font-bold text-gray-800">{selected.amount.toLocaleString()} <span className="text-xs text-gray-400">ชิ้น</span></span> },
                                     { label: "สถานะ", value: <span className={`text-xs font-bold px-3 py-1.5 rounded-lg border shadow-sm ${STATUS_MAP[selected.status]?.color}`}>{STATUS_MAP[selected.status]?.label}</span> },
                                     { label: "วันที่สั่งผลิต", value: <span className="text-sm font-bold text-gray-800">{new Date(selected.createdAt).toLocaleDateString("th-TH", { day: "2-digit", month: "long", year: "numeric" })}</span> },
                                 ].map(row => (
-                                    <div key={row.label} className="flex justify-between items-center">
-                                        <span className="text-sm text-gray-500 font-medium">{row.label}</span>
-                                        {row.value}
+                                    <div key={row.label} className="flex justify-between items-center gap-3">
+                                        <span className="text-sm text-gray-500 font-medium shrink-0">{row.label}</span>
+                                        <div className="text-right">{row.value}</div>
                                     </div>
                                 ))}
                                 {selected.note && (
@@ -296,7 +316,6 @@ export default function ProductionClient({ orders }: { orders: Order[] }) {
                                 )}
                             </div>
 
-                            {/* Lots */}
                             {selected.lots.length > 0 && (
                                 <div>
                                     <p className="text-xs font-extrabold text-indigo-500 uppercase tracking-wider mb-3 flex items-center gap-2">
@@ -304,15 +323,12 @@ export default function ProductionClient({ orders }: { orders: Order[] }) {
                                     </p>
                                     <div className="flex flex-wrap gap-2">
                                         {selected.lots.map(lot => (
-                                            <span key={lot} className="font-mono text-xs bg-gradient-to-r from-teal-400 to-emerald-500 text-white px-3 py-1.5 rounded-lg font-bold shadow-sm">
-                                                {lot}
-                                            </span>
+                                            <span key={lot} className="font-mono text-xs bg-gradient-to-r from-teal-400 to-emerald-500 text-white px-3 py-1.5 rounded-lg font-bold shadow-sm">{lot}</span>
                                         ))}
                                     </div>
                                 </div>
                             )}
 
-                            {/* Materials */}
                             {selected.materials.length > 0 && (
                                 <div>
                                     <p className="text-xs font-extrabold text-indigo-500 uppercase tracking-wider mb-3 flex items-center gap-2">
@@ -322,19 +338,17 @@ export default function ProductionClient({ orders }: { orders: Order[] }) {
                                         <table className="w-full text-sm">
                                             <thead className="bg-slate-50 border-b border-gray-100">
                                                 <tr>
-                                                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500">วัตถุดิบ</th>
-                                                    <th className="px-4 py-3 text-center text-xs font-bold text-gray-500">จำนวน</th>
-                                                    <th className="px-4 py-3 text-right text-xs font-bold text-gray-500">ต้นทุน</th>
+                                                    <th className="px-3 md:px-4 py-3 text-left text-xs font-bold text-gray-500">วัตถุดิบ</th>
+                                                    <th className="px-3 md:px-4 py-3 text-center text-xs font-bold text-gray-500">จำนวน</th>
+                                                    <th className="px-3 md:px-4 py-3 text-right text-xs font-bold text-gray-500">ต้นทุน</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-gray-50">
                                                 {selected.materials.map((mat, i) => (
                                                     <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                                                        <td className="px-4 py-3 font-bold text-gray-700">{mat.name}</td>
-                                                        <td className="px-4 py-3 text-center text-gray-500 font-medium">{mat.amount} <span className="text-xs">{mat.unit}</span></td>
-                                                        <td className="px-4 py-3 text-right font-black text-indigo-600">
-                                                            ฿{mat.totalCost.toLocaleString("th-TH", { minimumFractionDigits: 2 })}
-                                                        </td>
+                                                        <td className="px-3 md:px-4 py-2.5 font-bold text-gray-700 text-xs md:text-sm">{mat.name}</td>
+                                                        <td className="px-3 md:px-4 py-2.5 text-center text-gray-500 font-medium text-xs">{mat.amount} {mat.unit}</td>
+                                                        <td className="px-3 md:px-4 py-2.5 text-right font-black text-indigo-600 text-xs md:text-sm">฿{mat.totalCost.toLocaleString("th-TH", { minimumFractionDigits: 2 })}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -343,13 +357,12 @@ export default function ProductionClient({ orders }: { orders: Order[] }) {
                                 </div>
                             )}
 
-                            {/* Total Cost */}
-                            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-purple-100 rounded-2xl px-6 py-5 flex justify-between items-center shadow-inner">
+                            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-purple-100 rounded-2xl px-4 md:px-6 py-4 md:py-5 flex justify-between items-center shadow-inner">
                                 <div className="flex flex-col">
                                     <span className="text-xs font-bold text-indigo-500 uppercase tracking-wider">ต้นทุนวัตถุดิบรวม</span>
                                     <span className="text-sm text-gray-500">ทั้งหมด {selected.materials.length} รายการ</span>
                                 </div>
-                                <span className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-700">
+                                <span className="text-xl md:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-700">
                                     ฿{selected.totalCost.toLocaleString("th-TH", { minimumFractionDigits: 2 })}
                                 </span>
                             </div>

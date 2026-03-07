@@ -14,15 +14,18 @@ import { useSession, signOut } from "next-auth/react"
 type BadgeCounts = {
   pendingOrders: number
   nearExpiry: number
+  lowStock: number
+  pendingProductions: number
+  openDefects: number
 }
 
 const menu = [
   { label: "Dashboard", href: "/admin", icon: LayoutGrid, roles: ["ADMIN", "MANAGER", "STAFF"] },
   { label: "Order Management", href: "/admin/SaleItem", icon: Store, roles: ["ADMIN", "MANAGER", "STAFF"], badgeKey: "pendingOrders" as keyof BadgeCounts },
   { label: "Material", href: "/admin/Material", icon: FlaskConical, roles: ["ADMIN", "MANAGER", "STAFF"], badgeKey: "nearExpiry" as keyof BadgeCounts },
-  { label: "Productions", href: "/admin/productions", icon: Factory, roles: ["ADMIN", "MANAGER"] },
-  { label: "Stock", href: "/admin/Stock", icon: Warehouse, roles: ["ADMIN", "MANAGER", "STAFF"] },
-  { label: "Reports", href: "/admin/reports/defects", icon: ClipboardList, roles: ["ADMIN", "MANAGER", "STAFF"] },
+  { label: "Productions", href: "/admin/productions", icon: Factory, roles: ["ADMIN", "MANAGER"], badgeKey: "pendingProductions" as keyof BadgeCounts },
+  { label: "Stock", href: "/admin/Stock", icon: Warehouse, roles: ["ADMIN", "MANAGER", "STAFF"], badgeKey: "lowStock" as keyof BadgeCounts },
+  { label: "Reports", href: "/admin/reports/defects", icon: ClipboardList, roles: ["ADMIN", "MANAGER", "STAFF"], badgeKey: "openDefects" as keyof BadgeCounts },
   { label: "History", href: "/admin/history", icon: History, roles: ["ADMIN", "MANAGER"] },
   { label: "Financial", href: "/admin/Financial", icon: BarChart3, roles: ["ADMIN", "MANAGER"] },
   { label: "Employee", href: "/admin/employees", icon: Users, roles: ["ADMIN"] },
@@ -43,7 +46,13 @@ const Sidebar = () => {
   const [storeName, setStoreName] = useState("Tobacco")
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
-  const [badges, setBadges] = useState<BadgeCounts>({ pendingOrders: 0, nearExpiry: 0 })
+  const [badges, setBadges] = useState<BadgeCounts>({
+    pendingOrders: 0,
+    nearExpiry: 0,
+    lowStock: 0,
+    pendingProductions: 0,
+    openDefects: 0,
+  })
   const profileRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -55,7 +64,13 @@ const Sidebar = () => {
         .then(d => {
           if (!d) return
           setStoreName(d.storeName)
-          setBadges({ pendingOrders: d.pendingOrders, nearExpiry: d.nearExpiry })
+          setBadges({
+            pendingOrders: d.pendingOrders,
+            nearExpiry: d.nearExpiry,
+            lowStock: d.lowStock,
+            pendingProductions: d.pendingProductions,
+            openDefects: d.openDefects,
+          })
         })
         .catch(console.error)
 

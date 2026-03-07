@@ -185,28 +185,28 @@ export default async function AdminDashboard() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-      <div className="flex items-center gap-4">
-        <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-3 rounded-2xl shadow-lg shadow-purple-200">
-          <Wallet className="w-6 h-6 text-white" />
+      <div className="flex items-center gap-3 md:gap-4">
+        <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-2.5 md:p-3 rounded-xl md:rounded-2xl shadow-lg shadow-purple-200 shrink-0">
+          <Wallet className="w-5 h-5 md:w-6 md:h-6 text-white" />
         </div>
         <div>
-          <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">Financial Dashboard</h1>
-          <p className="text-[16px] text-gray-500 font-medium mt-1">ภาพรวมการเงินและประวัติการทำรายการล่าสุดของร้าน</p>
+          <h1 className="text-xl md:text-3xl font-black text-gray-900 tracking-tight">Financial Dashboard</h1>
+          <p className="text-xs md:text-base text-gray-500 font-medium mt-0.5">ภาพรวมการเงินและประวัติการทำรายการล่าสุดของร้าน</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-5">
         {cards.map(card => (
-          <div key={card.label} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-6 flex items-center gap-5 group">
-            <div className={`bg-gradient-to-br ${card.gradient} rounded-2xl p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
+          <div key={card.label} className="bg-white rounded-2xl md:rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-4 md:p-6 flex items-center gap-4 md:gap-5 group">
+            <div className={`bg-gradient-to-br ${card.gradient} rounded-xl md:rounded-2xl p-3 md:p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
               {card.icon}
             </div>
             <div className="min-w-0">
-              <p className="text-sm text-gray-500 font-bold mb-1 truncate">{card.label}</p>
+              <p className="text-xs md:text-sm text-gray-500 font-bold mb-0.5 md:mb-1 truncate">{card.label}</p>
               {card.value === null || card.value === 0 ? (
-                <p className="text-xl font-black text-gray-300">{card.emptyText}</p>
+                <p className="text-base md:text-xl font-black text-gray-300">{card.emptyText}</p>
               ) : (
-                <p className={`text-3xl font-black ${card.valueColor}`}>
+                <p className={`text-xl md:text-3xl font-black ${card.valueColor}`}>
                   ฿{card.value.toLocaleString("th-TH", { minimumFractionDigits: 2 })}
                 </p>
               )}

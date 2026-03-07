@@ -15,7 +15,7 @@ export async function GET() {
         const defectLogs = await prisma.stockTransaction.findMany({
             where: {
                 type: "OUT",
-                reason: "EXPIRED"
+                reason: { in: ["EXPIRED", "DAMAGED"] }
             },
             include: {
                 variant: { include: { product: true } },

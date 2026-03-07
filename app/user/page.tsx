@@ -45,7 +45,10 @@ export default async function HomePage({
   const topProducts = topProductIds.length > 0
     ? await prisma.productVariant.findMany({
       where: { id: { in: topProductIds } },
-      include: { product: { include: { images: true } } },
+      include: {
+        product: { include: { images: true } },
+        productVariantLots: true,
+      },
     })
     : []
 
@@ -90,10 +93,16 @@ export default async function HomePage({
                 const v = topProducts.find((p: any) => p.id === t.variantId)
                 if (!v) return null
                 const imageUrl = v.product.images?.[0]?.url ?? null
+
+                const stock = (v.productVariantLots ?? [])
+                  .filter((lot: any) => !lot.expireDate || new Date(lot.expireDate) > new Date())
+                  .reduce((s: number, lot: any) => s + lot.stock, 0)
+                const isOutOfStock = stock <= 0
+
                 return (
-                  <div key={v.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group relative">
+                  <div key={v.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group relative flex flex-col">
                     {i < 3 && (
-                      <div className={`absolute top-2 left-2 z-10 w-6 h-6 rounded-full text-white text-[10px] font-black flex items-center justify-center shadow-md ${i === 0 ? "bg-amber-400" : i === 1 ? "bg-gray-400" : "bg-orange-400"
+                      <div className={`absolute top-2 left-2 z-10 w-8 h-8 rounded-full text-white text-sm font-black flex items-center justify-center shadow-md ${i === 0 ? "bg-amber-400" : i === 1 ? "bg-gray-400" : "bg-orange-400"
                         }`}>
                         {i + 1}
                       </div>
@@ -103,12 +112,23 @@ export default async function HomePage({
                         ? <img src={imageUrl} alt={v.product.Pname} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         : <div className="w-full h-full flex items-center justify-center text-gray-300 text-sm">ไม่มีรูป</div>
                       }
+                      {isOutOfStock && (
+                        <div className="absolute top-2 right-2 bg-rose-500 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-md">
+                          หมดชั่วคราว
+                        </div>
+                      )}
                     </div>
-                    <div className="p-3">
-                      <p className="font-bold text-gray-900 text-sm line-clamp-2">{v.product.Pname}</p>
-                      <p className="text-purple-600 font-black text-base mt-1">฿{(v.price ?? 0).toLocaleString()}</p>
-                      <div className="mt-2">
-                        <ProductButton productId={v.product.Pid} />
+                    <div className="p-3 flex flex-col flex-grow">
+                      <p className="font-bold text-gray-900 text-sm line-clamp-2 mb-1">{v.product.Pname}</p>
+                      <p className="text-purple-600 font-black text-base mb-3">฿{(v.price ?? 0).toLocaleString()}</p>
+                      <div className="mt-auto">
+                        {isOutOfStock ? (
+                          <button disabled className="w-full py-2.5 bg-gray-100 text-gray-400 rounded-xl font-bold text-sm cursor-not-allowed">
+                            สินค้าหมด
+                          </button>
+                        ) : (
+                          <ProductButton productId={v.product.Pid} />
+                        )}
                       </div>
                     </div>
                   </div>
