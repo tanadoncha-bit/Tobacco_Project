@@ -1,105 +1,125 @@
-import { NextResponse } from "next/server"
 import prisma from "@/utils/db"
+import { NextResponse } from "next/server"
+
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
-    const { name, imageUrls, options, variants } = await req.json()
+    const data = await req.json()
+    const { name, imageUrls, options, variants } = data
 
-    // 1️⃣ Create product (ไม่ใช้ transaction)
-    const product = await prisma.product.create({
-      data: { Pname: name },
-    })
+    const count = await prisma.product.count()
+    const productCode = `P-${(count + 1).toString().padStart(4, "0")}`
 
-    // 2️⃣ Images
-    if (imageUrls?.length) {
-      await prisma.productImage.createMany({
-        data: imageUrls.map((url: string) => ({
-          url,
-          Pid: product.Pid,
-        })),
-      })
-    }
-
-    // 3️⃣ Options + OptionValues
-    const optionValueMap = new Map<string, number>()
-
-    for (const opt of options || []) {
-      const option = await prisma.productOption.create({
-        data: {
-          name: opt.name,
-          Pid: product.Pid,
-        },
+    const newProduct = await prisma.$transaction(async (tx) => {
+      const product = await tx.product.create({
+        data: { Pname: name, productCode },
       })
 
-      for (const v of opt.values || []) {
-        const value = await prisma.productOptionValue.create({
+      if (imageUrls && imageUrls.length > 0) {
+        await tx.productImage.createMany({
+          data: imageUrls.map((url: string) => ({ Pid: product.Pid, url })),
+        })
+      }
+
+      const valueIdMap = new Map<string, number>()
+      for (const opt of options || []) {
+        const createdOption = await tx.productOption.create({
+          data: { name: opt.name, Pid: product.Pid },
+        })
+        for (const val of opt.values || []) {
+          const createdValue = await tx.productOptionValue.create({
+            data: { value: val.value, optionId: createdOption.id },
+          })
+          valueIdMap.set(val.value, createdValue.id)
+        }
+      }
+
+      for (const v of variants || []) {
+        const createdVariant = await tx.productVariant.create({
           data: {
-            value: v.value,
-            optionId: option.id,
+            Pid: product.Pid,
+            price: Number(v.price),
           },
         })
 
-        // ใช้ key = `${optionId}:${value}`
-        optionValueMap.set(`${option.id}:${v.value}`, value.id)
-      }
-    }
 
-    // 4️⃣ Variants + VariantValues
-    for (const v of variants || []) {
-      const variant = await prisma.productVariant.create({
-        data: {
-          price: Number(v.price),
-          stock: Number(v.stock),
-          Pid: product.Pid,
-        },
-      })
-
-      for (const value of v.combination || []) {
-        // หา optionValueId จากทุก option
-        for (const [key, optionValueId] of optionValueMap.entries()) {
-          if (key.endsWith(`:${value}`)) {
-            await prisma.productVariantValue.create({
-              data: {
-                variantId: variant.id,
-                optionValueId,
-              },
+        for (const valName of v.combination || []) {
+          const optionValueId = valueIdMap.get(valName)
+          if (optionValueId) {
+            await tx.productVariantValue.create({
+              data: { variantId: createdVariant.id, optionValueId },
             })
           }
         }
       }
-    }
 
-    // 5️⃣ Generate productCode
-    const updatedProduct = await prisma.product.update({
-      where: { Pid: product.Pid },
-      data: {
-        productCode: `TC-${String(product.Pid).padStart(4, "0")}`,
-      },
+      return product
+    }, 
+    {
+      maxWait: 5000, 
+      timeout: 20000 
     })
 
-    // 6️⃣ Create Slip
-    await prisma.productSlip.create({
-      data: {
-        Pid: product.Pid,
-        action: "CREATE",
-        snapshot: {
-          name,
-          images: imageUrls,
-          options,
-          variants,
-        },
-        createdBy: "Product Staff",
-      },
-    })
-
-    return NextResponse.json({
-      success: true,
-      product: updatedProduct,
-    })
-  } catch (error) {
+    return NextResponse.json(newProduct)
+  } catch (error: any) {
     console.error("CREATE PRODUCT ERROR:", error)
+    return NextResponse.json({ message: "เกิดข้อผิดพลาดในการสร้างสินค้า" }, { status: 500 })
+  }
+}
+
+export async function GET() {
+  try {
+    const products = await prisma.product.findMany({
+      orderBy: { Pid: 'desc' },
+      include: {
+        variants: {
+          include: {
+            values: {
+              include: {
+                optionValue: true
+              }
+            },
+            recipes: true
+          }
+        }
+      }
+    })
+
+    const formattedProducts = products.flatMap((product) => {
+
+      if (!product.variants || product.variants.length === 0) {
+        return [{
+          id: -1,
+          productId: product.Pid,
+          name: `${product.Pname} (${product.productCode || 'ไม่มีรหัส'}) - ไม่มีตัวเลือก`,
+          hasRecipe: false
+        }]
+      }
+
+      return product.variants.map((variant) => {
+        const optionNames = variant.values
+          ?.map((v) => v.optionValue.value)
+          .join(" / ")
+
+        const displayName = optionNames
+          ? `${product.Pname} - ${optionNames} (${product.productCode || 'ไม่มีรหัส'})`
+          : `${product.Pname} (${product.productCode || 'ไม่มีรหัส'})`
+
+        return {
+          id: variant.id,
+          productId: product.Pid,
+          name: displayName,
+          hasRecipe: variant.recipes && variant.recipes.length > 0
+        }
+      })
+    })
+
+    return NextResponse.json(formattedProducts)
+  } catch (error) {
+    console.error("GET PRODUCTS ERROR:", error)
     return NextResponse.json(
-      { error: "Something went wrong" },
+      { message: "เกิดข้อผิดพลาดในการดึงข้อมูลสินค้า" },
       { status: 500 }
     )
   }

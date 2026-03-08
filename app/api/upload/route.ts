@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
 import cloudinary from "@/utils/cloudinary"
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
 
 export async function POST(req: Request) {
   try {
@@ -33,7 +35,7 @@ export async function POST(req: Request) {
     )
 
     return NextResponse.json({
-      url: uploadResult.secure_url,
+      imageUrl: uploadResult.secure_url,
     })
   } catch (error) {
     console.error(error)
