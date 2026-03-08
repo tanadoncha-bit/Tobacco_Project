@@ -14,44 +14,44 @@ type Trx = {
 }
 
 const FILTERS = [
-  { value: "ALL",     label: "ทั้งหมด" },
-  { value: "income",  label: "รายรับ" },
+  { value: "ALL", label: "ทั้งหมด" },
+  { value: "income", label: "รายรับ" },
   { value: "expense", label: "รายจ่าย (ทุน)" },
   { value: "expired", label: "หมดอายุ" },
   { value: "damaged", label: "ชำรุด" },
-  { value: "return",  label: "คืนสต็อก" },
+  { value: "return", label: "คืนสต็อก" },
 ] as const
 
 type FilterValue = typeof FILTERS[number]["value"]
 
 const BADGE_CLASS: Record<string, string> = {
-  sale:         "bg-emerald-100 text-emerald-700 border-emerald-200",
+  sale: "bg-emerald-100 text-emerald-700 border-emerald-200",
   offline_sale: "bg-teal-100 text-teal-700 border-teal-200",
-  material:     "bg-blue-100 text-blue-700 border-blue-200",
-  product:      "bg-blue-100 text-blue-700 border-blue-200",
-  expired:      "bg-rose-100 text-rose-700 border-rose-200",
-  damaged:      "bg-orange-100 text-orange-700 border-orange-200",
-  return:       "bg-gray-100 text-gray-600 border-gray-200",
+  material: "bg-blue-100 text-blue-700 border-blue-200",
+  product: "bg-blue-100 text-blue-700 border-blue-200",
+  expired: "bg-rose-100 text-rose-700 border-rose-200",
+  damaged: "bg-orange-100 text-orange-700 border-orange-200",
+  return: "bg-gray-100 text-gray-600 border-gray-200",
 }
 
 const BADGE_LABEL: Record<string, string> = {
-  sale:         "ออนไลน์",
+  sale: "ออนไลน์",
   offline_sale: "หน้าร้าน",
-  material:     "ทุนวัตถุดิบ",
-  product:      "ทุนสินค้า",
-  expired:      "หมดอายุ",
-  damaged:      "ชำรุด",
-  return:       "คืนสต็อก",
+  material: "ทุนวัตถุดิบ",
+  product: "ทุนสินค้า",
+  expired: "หมดอายุ",
+  damaged: "ชำรุด",
+  return: "คืนสต็อก",
 }
 
 const AMOUNT_CLASS: Record<string, string> = {
-  sale:         "text-emerald-600",
+  sale: "text-emerald-600",
   offline_sale: "text-teal-600",
-  material:     "text-blue-600",
-  product:      "text-blue-600",
-  expired:      "text-rose-600",
-  damaged:      "text-orange-500",
-  return:       "text-gray-500",
+  material: "text-blue-600",
+  product: "text-blue-600",
+  expired: "text-rose-600",
+  damaged: "text-orange-500",
+  return: "text-gray-500",
 }
 
 // ── Export helpers ────────────────────────────────────────────────────────────
@@ -66,7 +66,7 @@ function exportCSV(rows: Trx[], filterLabel: string, dateLabel: string) {
     BADGE_LABEL[t.subtype] || t.subtype,
     `${t.type === "income" ? "" : "-"}${t.amount.toFixed(2)}`,
   ])
-  const totalIncome  = rows.filter(t => t.type === "income").reduce((s, t) => s + t.amount, 0)
+  const totalIncome = rows.filter(t => t.type === "income").reduce((s, t) => s + t.amount, 0)
   const totalExpense = rows.filter(t => t.type !== "income").reduce((s, t) => s + t.amount, 0)
   const content = [
     `"Financial Report — ${filterLabel} | ${dateLabel}"`,
@@ -89,7 +89,7 @@ function exportCSV(rows: Trx[], filterLabel: string, dateLabel: string) {
 }
 
 function exportPDF(rows: Trx[], filterLabel: string, dateLabel: string) {
-  const totalIncome  = rows.filter(t => t.type === "income").reduce((s, t) => s + t.amount, 0)
+  const totalIncome = rows.filter(t => t.type === "income").reduce((s, t) => s + t.amount, 0)
   const totalExpense = rows.filter(t => t.type !== "income").reduce((s, t) => s + t.amount, 0)
   const profit = totalIncome - totalExpense
   const tableRows = rows.map(t => `
@@ -184,7 +184,7 @@ function ExportModal({
 }) {
   const [expFilter, setExpFilter] = useState<FilterValue>("ALL")
   const [dateFrom, setDateFrom] = useState("")
-  const [dateTo,   setDateTo]   = useState("")
+  const [dateTo, setDateTo] = useState("")
   const [filterOpen, setFilterOpen] = useState(false)
   const filterRef = useRef<HTMLDivElement>(null)
 
@@ -203,25 +203,25 @@ function ExportModal({
   const preview = useMemo(() => {
     return transactions.filter(t => {
       const matchFilter =
-        expFilter === "ALL"     ? true :
-        expFilter === "income"  ? t.type === "income" :
-        expFilter === "expense" ? t.type === "expense" :
-        t.subtype === expFilter
+        expFilter === "ALL" ? true :
+          expFilter === "income" ? t.type === "income" :
+            expFilter === "expense" ? t.type === "expense" :
+              t.subtype === expFilter
       const d = new Date(t.date)
       const matchFrom = dateFrom ? d >= new Date(dateFrom) : true
-      const matchTo   = dateTo   ? d <= new Date(dateTo + "T23:59:59") : true
+      const matchTo = dateTo ? d <= new Date(dateTo + "T23:59:59") : true
       return matchFilter && matchFrom && matchTo
     })
   }, [transactions, expFilter, dateFrom, dateTo])
 
-  const totalIncome  = preview.filter(t => t.type === "income").reduce((s, t) => s + t.amount, 0)
+  const totalIncome = preview.filter(t => t.type === "income").reduce((s, t) => s + t.amount, 0)
   const totalExpense = preview.filter(t => t.type !== "income").reduce((s, t) => s + t.amount, 0)
 
   const filterLabel = FILTERS.find(f => f.value === expFilter)?.label || "ทั้งหมด"
-  const dateLabel   = dateFrom && dateTo
+  const dateLabel = dateFrom && dateTo
     ? `${new Date(dateFrom).toLocaleDateString("th-TH", { day: "2-digit", month: "short" })} – ${new Date(dateTo).toLocaleDateString("th-TH", { day: "2-digit", month: "short", year: "numeric" })}`
     : dateFrom ? `ตั้งแต่ ${new Date(dateFrom).toLocaleDateString("th-TH")}` :
-      dateTo   ? `ถึง ${new Date(dateTo).toLocaleDateString("th-TH")}` : "ทุกช่วงเวลา"
+      dateTo ? `ถึง ${new Date(dateTo).toLocaleDateString("th-TH")}` : "ทุกช่วงเวลา"
 
   if (!open) return null
 
@@ -267,9 +267,9 @@ function ExportModal({
                       {opt.label}
                       <span className="text-xs text-gray-400">
                         {opt.value === "ALL" ? transactions.length :
-                         opt.value === "income"  ? transactions.filter(t => t.type === "income").length :
-                         opt.value === "expense" ? transactions.filter(t => t.type === "expense").length :
-                         transactions.filter(t => t.subtype === opt.value).length}
+                          opt.value === "income" ? transactions.filter(t => t.type === "income").length :
+                            opt.value === "expense" ? transactions.filter(t => t.type === "expense").length :
+                              transactions.filter(t => t.subtype === opt.value).length}
                       </span>
                     </button>
                   ))}
@@ -310,11 +310,11 @@ function ExportModal({
             </div>
             <div className="flex gap-2 mt-2 flex-wrap">
               {[
-                { label: "7 วันล่าสุด",  days: 7 },
+                { label: "7 วันล่าสุด", days: 7 },
                 { label: "30 วันล่าสุด", days: 30 },
                 { label: "90 วันล่าสุด", days: 90 },
               ].map(preset => {
-                const to   = new Date()
+                const to = new Date()
                 const from = new Date(); from.setDate(from.getDate() - preset.days)
                 return (
                   <button
@@ -400,17 +400,17 @@ export default function FinanceTable({ transactions }: { transactions: Trx[] }) 
   }, [])
 
   const getCount = (value: string) =>
-    value === "ALL"     ? transactions.length :
-    value === "income"  ? transactions.filter(t => t.type === "income").length :
-    value === "expense" ? transactions.filter(t => t.type === "expense").length :
-    transactions.filter(t => t.subtype === value).length
+    value === "ALL" ? transactions.length :
+      value === "income" ? transactions.filter(t => t.type === "income").length :
+        value === "expense" ? transactions.filter(t => t.type === "expense").length :
+          transactions.filter(t => t.subtype === value).length
 
   const filtered = transactions.filter(t => {
     const matchFilter =
-      filter === "ALL"     ? true :
-      filter === "income"  ? t.type === "income" :
-      filter === "expense" ? t.type === "expense" :
-      t.subtype === filter
+      filter === "ALL" ? true :
+        filter === "income" ? t.type === "income" :
+          filter === "expense" ? t.type === "expense" :
+            t.subtype === filter
     const matchSearch =
       t.description.toLowerCase().includes(search.toLowerCase()) ||
       t.displayCode.toLowerCase().includes(search.toLowerCase())
@@ -425,26 +425,26 @@ export default function FinanceTable({ transactions }: { transactions: Trx[] }) 
 
       {/* Toolbar */}
       <div className="p-4 md:p-6 border-b border-gray-100 bg-gray-50/30">
-        <div className="flex items-center gap-2">
+        <div className="flex gap-2 items-center">
           {/* Search */}
-          <div className="relative flex-1 group">
+          <div className="relative min-w-0 flex-1 md:flex-none md:w-80 group">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-purple-500 transition-colors" />
             <input
               type="text"
-              placeholder="ค้นหารายการ, รหัสอ้างอิง..."
+              placeholder="ค้นหารายการ..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-55 md:w-80 pl-10 pr-4 py-2.5 border border-gray-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 bg-white transition-all shadow-sm"
+              className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-2xl text-sm font-medium focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 bg-white transition-all shadow-sm"
             />
           </div>
 
           {/* Filter dropdown */}
-          <div className="relative shrink-0" ref={filterRef}>
+          <div className="relative shrink-0 md:ml-auto" ref={filterRef}>
             <button
               onClick={() => setFilterOpen(!filterOpen)}
               className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-2xl border border-gray-200 bg-white text-sm font-bold text-gray-700 shadow-sm cursor-pointer whitespace-nowrap hover:border-purple-300 transition-all"
             >
-              <span className="hidden sm:inline">{currentFilter.label}</span>
+              <span>{currentFilter.label}</span>
               <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full font-bold">{getCount(filter)}</span>
               <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${filterOpen ? "rotate-180" : ""}`} />
             </button>
@@ -454,9 +454,8 @@ export default function FinanceTable({ transactions }: { transactions: Trx[] }) 
                   <button
                     key={opt.value}
                     onClick={() => { setFilter(opt.value); setFilterOpen(false) }}
-                    className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-bold transition-colors cursor-pointer ${
-                      filter === opt.value ? "bg-indigo-50 text-indigo-700 border-l-4 border-indigo-500" : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent"
-                    }`}
+                    className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-bold transition-colors cursor-pointer ${filter === opt.value ? "bg-indigo-50 text-indigo-700 border-l-4 border-indigo-500" : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent"
+                      }`}
                   >
                     {opt.label}
                     <span className="text-[10px] text-gray-400">{getCount(opt.value)}</span>
@@ -522,11 +521,11 @@ export default function FinanceTable({ transactions }: { transactions: Trx[] }) 
                 </td>
                 <td className="px-3 md:px-6 py-3 md:py-5">
                   <div className="flex items-center gap-2">
-                    {trx.subtype === "sale"         && <ShoppingBag className="w-3.5 h-3.5 md:w-4 md:h-4 text-emerald-500 shrink-0" />}
+                    {trx.subtype === "sale" && <ShoppingBag className="w-3.5 h-3.5 md:w-4 md:h-4 text-emerald-500 shrink-0" />}
                     {trx.subtype === "offline_sale" && <ShoppingBag className="w-3.5 h-3.5 md:w-4 md:h-4 text-teal-500 shrink-0" />}
                     {(trx.subtype === "material" || trx.subtype === "product") && <Package className="w-3.5 h-3.5 md:w-4 md:h-4 text-blue-400 shrink-0" />}
-                    {(trx.subtype === "expired"  || trx.subtype === "damaged")  && <Trash2  className="w-3.5 h-3.5 md:w-4 md:h-4 text-rose-500 shrink-0" />}
-                    {trx.subtype === "return"       && <Package className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-400 shrink-0" />}
+                    {(trx.subtype === "expired" || trx.subtype === "damaged") && <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4 text-rose-500 shrink-0" />}
+                    {trx.subtype === "return" && <Package className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-400 shrink-0" />}
                     <div>
                       <p className="font-bold text-gray-800 group-hover:text-indigo-700 transition-colors text-xs md:text-sm">{trx.description}</p>
                       <div className="sm:hidden mt-0.5">

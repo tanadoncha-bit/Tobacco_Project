@@ -357,7 +357,7 @@ export default function ReceiveProduceModal({ open, onClose, onSuccess }: { open
                             </span>
 
                             <span
-                              className={`text-xs px-2.5 py-1 rounded-full font-bold ${isSelected
+                              className={`text-xs px-2.5 py-1 rounded-full font-bold whitespace-nowrap ${isSelected
                                   ? "bg-emerald-100 text-emerald-700"
                                   : "bg-gray-100 text-gray-500"
                                 }`}

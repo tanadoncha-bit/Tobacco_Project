@@ -73,7 +73,7 @@ function ActionMenu({ canAdjustStock, onAdjust, onDispatch, onLot, onEdit, onSli
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-1.5 w-40 bg-white rounded-2xl shadow-xl border border-gray-100 z-[100] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+        <div className="absolute right-0 mt-1.5 w-40 bg-white rounded-2xl shadow-xl border border-gray-100 z-[100] animate-in fade-in slide-in-from-top-2 duration-150">
           {canAdjustStock && (
             <>
               <button onClick={() => { onAdjust(); setOpen(false) }}
@@ -243,7 +243,7 @@ export default function StockTable({
                 <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isSortOpen ? "rotate-180 text-purple-500" : ""}`} />
               </button>
               {isSortOpen && (
-                <div className="absolute left-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute left-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="py-1.5">
                     {SORT_OPTIONS.map(opt => (
                       <button
@@ -319,7 +319,7 @@ export default function StockTable({
                 filteredAndSorted.map(item => (
                   <tr key={item.Pid} className="hover:bg-indigo-50/20 transition-colors group">
                     <td className="px-4 py-2">
-                      <div className="w-10 h-10 bg-gray-50 rounded-xl border border-gray-200 overflow-hidden mx-auto">
+                      <div className="w-10 h-10 bg-gray-50 rounded-xl border border-gray-200 mx-auto">
                         {item.imageUrl
                           ? <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
                           : <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">No</div>
