@@ -87,7 +87,7 @@ export default function EmployeeManagementClient({
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="p-4 xl:p-8 max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
       {/* Header */}
       <div className="flex items-center gap-4">
@@ -95,27 +95,27 @@ export default function EmployeeManagementClient({
           <ContactRound className="w-6 h-6 text-white" />
         </div>
         <div>
-          <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">Employee Management</h1>
+          <h1 className="text-2xl xl:text-3xl font-black text-gray-900 tracking-tight">Employee Management</h1>
           <p className="text-[16px] text-gray-500 font-medium mt-1">รายชื่อแอดมิน และพนักงานทั้งหมดในระบบ</p>
         </div>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         {[
-          { label: "พนักงานทั้งหมด", value: stats.totalEmployees, icon: <Users   className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-indigo-500 to-purple-600", shadow: "shadow-purple-200" },
-          { label: "Admin",          value: stats.admins,         icon: <Crown    className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-rose-500 to-red-600",      shadow: "shadow-rose-200"   },
-          { label: "Manager",        value: stats.managers,       icon: <Briefcase className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-blue-400 to-indigo-500",  shadow: "shadow-blue-200"   },
-          { label: "Staff",          value: stats.staff,          icon: <User     className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-emerald-400 to-teal-500",  shadow: "shadow-emerald-200" },
+          { label: "พนักงานทั้งหมด", value: stats.totalEmployees, icon: <Users   className="w-5 h-5 xl:w-6 xl:h-6" />, gradient: "from-indigo-500 to-purple-600", shadow: "shadow-purple-200" },
+          { label: "Admin",          value: stats.admins,         icon: <Crown    className="w-5 h-5 xl:w-6 xl:h-6" />, gradient: "from-rose-500 to-red-600",      shadow: "shadow-rose-200"   },
+          { label: "Manager",        value: stats.managers,       icon: <Briefcase className="w-5 h-5 xl:w-6 xl:h-6" />, gradient: "from-blue-400 to-indigo-500",  shadow: "shadow-blue-200"   },
+          { label: "Staff",          value: stats.staff,          icon: <User     className="w-5 h-5 xl:w-6 xl:h-6" />, gradient: "from-emerald-400 to-teal-500",  shadow: "shadow-emerald-200" },
         ].map(card => (
-          <div key={card.label} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-4 md:p-6 flex items-center gap-3 md:gap-5 group">
-            <div className={`bg-gradient-to-br ${card.gradient} rounded-2xl p-3 md:p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
+          <div key={card.label} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 p-4 xl:p-6 flex items-center gap-3 xl:gap-5 group">
+            <div className={`bg-gradient-to-br ${card.gradient} rounded-2xl p-3 xl:p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
               {card.icon}
             </div>
             <div>
-              <p className="text-xs md:text-sm text-gray-500 font-bold mb-1">{card.label}</p>
-              <p className="text-xl md:text-3xl font-black text-gray-900">
-                {card.value} <span className="text-xs md:text-base font-semibold text-gray-400">คน</span>
+              <p className="text-xs xl:text-sm text-gray-500 font-bold mb-1">{card.label}</p>
+              <p className="text-xl xl:text-3xl font-black text-gray-900">
+                {card.value} <span className="text-xs xl:text-base font-semibold text-gray-400">คน</span>
               </p>
             </div>
           </div>
@@ -126,13 +126,13 @@ export default function EmployeeManagementClient({
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100">
 
         {/* Toolbar */}
-        <div className="p-4 md:p-6 border-b border-gray-100 bg-gray-50/30 rounded-t-3xl flex justify-between items-center">
+        <div className="p-4 xl:p-6 border-b border-gray-100 bg-gray-50/30 rounded-t-3xl flex justify-between items-center">
           <p className="text-sm font-bold text-gray-500">
             ทั้งหมด <strong className="text-gray-900">{employees.length}</strong> คน
           </p>
           <button
             onClick={openCreateModal}
-            className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white px-3 md:px-4 py-2.5 rounded-2xl text-xs md:text-sm font-bold flex items-center gap-1.5 shadow-md hover:shadow-lg transition-all cursor-pointer"
+            className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white px-3 xl:px-4 py-2.5 rounded-2xl text-xs xl:text-sm font-bold flex items-center gap-1.5 shadow-xl hover:shadow-lg transition-all cursor-pointer"
           >
             <UserPlus className="w-4 h-4" />
             <span>เพิ่มพนักงานใหม่</span>
@@ -144,10 +144,10 @@ export default function EmployeeManagementClient({
           <table className="w-full text-left">
             <thead>
               <tr className="bg-gray-50/80 border-b border-gray-100">
-                <th className="px-4 md:px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">ชื่อ-นามสกุล</th>
-                <th className="px-4 md:px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">อีเมล</th>
-                <th className="px-4 md:px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">ตำแหน่ง</th>
-                <th className="px-4 md:px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">จัดการ</th>
+                <th className="px-4 xl:px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">ชื่อ-นามสกุล</th>
+                <th className="px-4 xl:px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">อีเมล</th>
+                <th className="px-4 xl:px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">ตำแหน่ง</th>
+                <th className="px-4 xl:px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">จัดการ</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -169,7 +169,7 @@ export default function EmployeeManagementClient({
                 <tr key={emp.id} className="hover:bg-indigo-50/20 transition-colors group">
 
                   {/* ชื่อ */}
-                  <td className="px-4 md:px-6 py-3">
+                  <td className="px-4 xl:px-6 py-3">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 border border-purple-100 shadow-sm">
                         {emp.profileImage
@@ -182,23 +182,23 @@ export default function EmployeeManagementClient({
                           {emp.firstname} {emp.lastname}
                         </p>
                         {/* อีเมลแสดงใต้ชื่อบนมือถือ */}
-                        <p className="md:hidden text-xs text-gray-400 font-medium mt-0.5">{emp.email}</p>
+                        <p className="xl:hidden text-xs text-gray-400 font-medium mt-0.5">{emp.email}</p>
                       </div>
                     </div>
                   </td>
 
                   {/* อีเมล — desktop only */}
-                  <td className="px-4 md:px-6 py-3 text-sm text-gray-500 font-medium hidden md:table-cell">{emp.email}</td>
+                  <td className="px-4 xl:px-6 py-3 text-sm text-gray-500 font-medium hidden xl:table-cell">{emp.email}</td>
 
                   {/* Role */}
-                  <td className="px-4 md:px-6 py-3">
+                  <td className="px-4 xl:px-6 py-3">
                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold border ${getRoleBadge(emp.role)}`}>
                       <Shield className="w-3 h-3" /> {getRoleLabel(emp.role)}
                     </span>
                   </td>
 
                   {/* จัดการ */}
-                  <td className="px-4 md:px-6 py-3 text-center">
+                  <td className="px-4 xl:px-6 py-3 text-center">
                     <button
                       onClick={() => openEditModal(emp)}
                       className="inline-flex items-center gap-1.5 bg-white text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 border border-gray-200 hover:border-indigo-200 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
@@ -214,7 +214,7 @@ export default function EmployeeManagementClient({
         </div>
 
         {employees.length > 0 && (
-          <div className="px-4 md:px-6 py-4 bg-gray-50/50 border-t border-gray-100 rounded-b-3xl">
+          <div className="px-4 xl:px-6 py-4 bg-gray-50/50 border-t border-gray-100 rounded-b-3xl">
             <span className="text-sm font-medium text-gray-500">
               แสดงผลทั้งหมด <strong className="text-gray-900">{employees.length}</strong> รายการ
             </span>
@@ -225,7 +225,7 @@ export default function EmployeeManagementClient({
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-xl shadow-2xl animate-in zoom-in-95 duration-200">
 
             <div className="flex justify-between items-center px-6 py-5 border-b border-gray-100">
               <div className="flex items-center gap-3">
@@ -339,7 +339,7 @@ export default function EmployeeManagementClient({
                 </button>
                 <button
                   type="submit" disabled={isLoading}
-                  className="flex-1 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-bold rounded-xl shadow-md disabled:opacity-50 transition-all cursor-pointer"
+                  className="flex-1 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-bold rounded-xl shadow-xl disabled:opacity-50 transition-all cursor-pointer"
                 >
                   {isLoading ? "กำลังบันทึก..." : "ยืนยัน"}
                 </button>
