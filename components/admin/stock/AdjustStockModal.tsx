@@ -356,7 +356,7 @@ export default function AdjustStockModal({ open, productId, onClose, onSuccess }
           </button>
         </div>
 
-        <div className="p-6 pb-4 space-y-5 flex-1 overflow-y-auto">
+        <div className="p-6 pb-4 space-y-5 flex-1">
           {isFetching ? (
             <div className="text-center py-8 text-gray-400 font-medium">กำลังโหลดข้อมูลสินค้า...</div>
           ) : (

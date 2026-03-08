@@ -227,7 +227,7 @@ function ExportModal({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl animate-in zoom-in-95 duration-200 overflow-hidden">
 
         {/* Header */}
         <div className="px-6 py-5 bg-gradient-to-r from-indigo-600 to-purple-600 flex justify-between items-center">
@@ -424,10 +424,10 @@ export default function FinanceTable({ transactions }: { transactions: Trx[] }) 
       <ExportModal open={exportModalOpen} onClose={() => setExportModalOpen(false)} transactions={transactions} />
 
       {/* Toolbar */}
-      <div className="p-4 md:p-6 border-b border-gray-100 bg-gray-50/30">
+      <div className="p-4 xl:p-6 border-b border-gray-100 bg-gray-50/30">
         <div className="flex gap-2 items-center">
           {/* Search */}
-          <div className="relative min-w-0 flex-1 md:flex-none md:w-80 group">
+          <div className="relative min-w-0 flex-1 xl:flex-none xl:w-80 group">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-purple-500 transition-colors" />
             <input
               type="text"
@@ -439,7 +439,7 @@ export default function FinanceTable({ transactions }: { transactions: Trx[] }) 
           </div>
 
           {/* Filter dropdown */}
-          <div className="relative shrink-0 md:ml-auto" ref={filterRef}>
+          <div className="relative shrink-0 xl:ml-auto" ref={filterRef}>
             <button
               onClick={() => setFilterOpen(!filterOpen)}
               className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-2xl border border-gray-200 bg-white text-sm font-bold text-gray-700 shadow-sm cursor-pointer whitespace-nowrap hover:border-purple-300 transition-all"
@@ -481,11 +481,11 @@ export default function FinanceTable({ transactions }: { transactions: Trx[] }) 
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-gray-50/80 border-b border-gray-100">
-              <th className="px-3 md:px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-left">วันที่</th>
-              <th className="hidden md:table-cell px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-left">รหัสอ้างอิง</th>
-              <th className="px-3 md:px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-left">รายการ</th>
-              <th className="hidden sm:table-cell px-3 md:px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">ประเภท</th>
-              <th className="px-3 md:px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-right">จำนวนเงิน</th>
+              <th className="px-3 xl:px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-left">วันที่</th>
+              <th className="hidden xl:table-cell px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-left">รหัสอ้างอิง</th>
+              <th className="px-3 xl:px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-left">รายการ</th>
+              <th className="hidden sm:table-cell px-3 xl:px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">ประเภท</th>
+              <th className="px-3 xl:px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-right">จำนวนเงิน</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
@@ -505,29 +505,29 @@ export default function FinanceTable({ transactions }: { transactions: Trx[] }) 
               </tr>
             ) : filtered.map(trx => (
               <tr key={trx.uniqueKey} className="hover:bg-indigo-50/20 transition-colors group">
-                <td className="px-3 md:px-6 py-3 md:py-5 whitespace-nowrap">
-                  <div className="text-xs md:text-sm font-bold text-gray-700">
+                <td className="px-3 xl:px-6 py-3 xl:py-5 whitespace-nowrap">
+                  <div className="text-xs xl:text-sm font-bold text-gray-700">
                     {new Date(trx.date).toLocaleDateString("th-TH", { day: "2-digit", month: "short", year: "numeric" })}
                   </div>
-                  <div className="text-[10px] md:text-xs text-gray-400 mt-0.5">
+                  <div className="text-[10px] xl:text-xs text-gray-400 mt-0.5">
                     {new Date(trx.date).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })}
                   </div>
-                  <div className="md:hidden mt-1">
+                  <div className="xl:hidden mt-1">
                     <span className="font-mono text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-lg">{trx.displayCode}</span>
                   </div>
                 </td>
-                <td className="hidden md:table-cell px-6 py-5">
+                <td className="hidden xl:table-cell px-6 py-5">
                   <span className="font-mono text-xs bg-gray-100 text-gray-600 px-3 py-1.5 rounded-xl font-semibold">{trx.displayCode}</span>
                 </td>
-                <td className="px-3 md:px-6 py-3 md:py-5">
+                <td className="px-3 xl:px-6 py-3 xl:py-5">
                   <div className="flex items-center gap-2">
-                    {trx.subtype === "sale" && <ShoppingBag className="w-3.5 h-3.5 md:w-4 md:h-4 text-emerald-500 shrink-0" />}
-                    {trx.subtype === "offline_sale" && <ShoppingBag className="w-3.5 h-3.5 md:w-4 md:h-4 text-teal-500 shrink-0" />}
-                    {(trx.subtype === "material" || trx.subtype === "product") && <Package className="w-3.5 h-3.5 md:w-4 md:h-4 text-blue-400 shrink-0" />}
-                    {(trx.subtype === "expired" || trx.subtype === "damaged") && <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4 text-rose-500 shrink-0" />}
-                    {trx.subtype === "return" && <Package className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-400 shrink-0" />}
+                    {trx.subtype === "sale" && <ShoppingBag className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-emerald-500 shrink-0" />}
+                    {trx.subtype === "offline_sale" && <ShoppingBag className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-teal-500 shrink-0" />}
+                    {(trx.subtype === "material" || trx.subtype === "product") && <Package className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-blue-400 shrink-0" />}
+                    {(trx.subtype === "expired" || trx.subtype === "damaged") && <Trash2 className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-rose-500 shrink-0" />}
+                    {trx.subtype === "return" && <Package className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-gray-400 shrink-0" />}
                     <div>
-                      <p className="font-bold text-gray-800 group-hover:text-indigo-700 transition-colors text-xs md:text-sm">{trx.description}</p>
+                      <p className="font-bold text-gray-800 group-hover:text-indigo-700 transition-colors text-xs xl:text-sm">{trx.description}</p>
                       <div className="sm:hidden mt-0.5">
                         <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold border ${BADGE_CLASS[trx.subtype] || ""}`}>
                           {BADGE_LABEL[trx.subtype] || trx.subtype}
@@ -536,12 +536,12 @@ export default function FinanceTable({ transactions }: { transactions: Trx[] }) 
                     </div>
                   </div>
                 </td>
-                <td className="hidden sm:table-cell px-3 md:px-6 py-5 text-center">
+                <td className="hidden sm:table-cell px-3 xl:px-6 py-5 text-center">
                   <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold border ${BADGE_CLASS[trx.subtype] || ""}`}>
                     {BADGE_LABEL[trx.subtype] || trx.subtype}
                   </span>
                 </td>
-                <td className={`px-3 md:px-6 py-3 md:py-5 text-right font-black text-sm md:text-base whitespace-nowrap ${AMOUNT_CLASS[trx.subtype] || "text-gray-600"}`}>
+                <td className={`px-3 xl:px-6 py-3 xl:py-5 text-right font-black text-sm xl:text-base whitespace-nowrap ${AMOUNT_CLASS[trx.subtype] || "text-gray-600"}`}>
                   {trx.type === "income" ? "+" : "-"}฿{trx.amount.toLocaleString("th-TH", { minimumFractionDigits: 2 })}
                 </td>
               </tr>
@@ -551,7 +551,7 @@ export default function FinanceTable({ transactions }: { transactions: Trx[] }) 
       </div>
 
       {filtered.length > 0 && (
-        <div className="px-4 md:px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex justify-between items-center rounded-b-3xl">
+        <div className="px-4 xl:px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex justify-between items-center rounded-b-3xl">
           <span className="text-sm font-medium text-gray-500">
             แสดงผล <strong className="text-gray-900">{filtered.length}</strong> รายการ
           </span>

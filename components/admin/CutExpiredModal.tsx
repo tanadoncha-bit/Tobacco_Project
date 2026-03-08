@@ -6,6 +6,7 @@ import { toast } from "sonner"
 
 type Props = {
     open: boolean
+    type?: "product" | "material"  // default = product
     item: {
         dbId: number
         name: string
@@ -17,25 +18,30 @@ type Props = {
     onSuccess: () => void
 }
 
-export default function CutExpiredModal({ open, item, onClose, onSuccess }: Props) {
+export default function CutExpiredModal({ open, type = "product", item, onClose, onSuccess }: Props) {
     const [isLoading, setIsLoading] = useState(false)
     const [note, setNote] = useState("")
 
     if (!open || !item) return null
 
     const totalDamage = item.unitCost * item.stock
+    const isMaterial = type === "material"
 
     const handleSubmit = async () => {
         setIsLoading(true)
         try {
-            const res = await fetch("/api/inventory/adjust", {
+            const url = isMaterial
+                ? "/api/inventory/adjust-material"
+                : "/api/inventory/adjust"
+
+            const res = await fetch(url, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     lotId: item.dbId,
                     amount: item.stock,
                     reason: "EXPIRED",
-                    note: note || `ตัดสินค้าหมดอายุ [Lot: ${item.lotNumber}]`
+                    note: note || `ตัด${isMaterial ? "วัตถุดิบ" : "สินค้า"}หมดอายุ [Lot: ${item.lotNumber}]`
                 })
             })
 
@@ -44,7 +50,7 @@ export default function CutExpiredModal({ open, item, onClose, onSuccess }: Prop
                 throw new Error(err.error || "เกิดข้อผิดพลาด")
             }
 
-            toast.success(`ตัดสินค้า [${item.lotNumber}] เรียบร้อยแล้ว`)
+            toast.success(`ตัด${isMaterial ? "วัตถุดิบ" : "สินค้า"} [${item.lotNumber}] เรียบร้อยแล้ว`)
             onSuccess()
             onClose()
         } catch (error: any) {
@@ -58,7 +64,6 @@ export default function CutExpiredModal({ open, item, onClose, onSuccess }: Prop
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-gray-900/40 p-4 animate-in fade-in duration-300">
             <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 border border-white/20 overflow-hidden relative">
 
-                {/* Decorative Background Blob (Optional, adds a soft glow behind the header) */}
                 <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-rose-50/80 to-transparent pointer-events-none"></div>
 
                 <div className="relative p-6 sm:p-8 space-y-6">
@@ -69,19 +74,23 @@ export default function CutExpiredModal({ open, item, onClose, onSuccess }: Prop
                                 <Trash2 className="w-6 h-6 text-white" />
                             </div>
                             <div>
-                                <h2 className="text-2xl font-black text-gray-900 tracking-tight">ตัดสินค้าหมดอายุ</h2>
-                                <p className="text-sm font-medium text-gray-500 mt-0.5">ยืนยันการนำสินค้าออกจากระบบคลัง</p>
+                                <h2 className="text-2xl font-black text-gray-900 tracking-tight">
+                                    ตัด{isMaterial ? "วัตถุดิบ" : "สินค้า"}หมดอายุ
+                                </h2>
+                                <p className="text-sm font-medium text-gray-500 mt-0.5">
+                                    ยืนยันการนำ{isMaterial ? "วัตถุดิบ" : "สินค้า"}ออกจากระบบคลัง
+                                </p>
                             </div>
                         </div>
-                        <button 
-                            onClick={onClose} 
+                        <button
+                            onClick={onClose}
                             className="bg-gray-50 hover:bg-gray-100 text-gray-400 hover:text-gray-700 p-2 rounded-xl transition-colors cursor-pointer"
                         >
                             <X className="w-5 h-5" />
                         </button>
                     </div>
 
-                    {/* Product Info */}
+                    {/* Info */}
                     <div className="bg-gray-50/80 rounded-2xl p-5 border border-gray-100/80 space-y-3 shadow-inner">
                         <div className="flex items-center gap-3 border-b border-gray-200/60 pb-3">
                             <div className="bg-white p-2 rounded-lg shadow-sm border border-gray-100">
@@ -99,7 +108,9 @@ export default function CutExpiredModal({ open, item, onClose, onSuccess }: Prop
                             <span className="text-gray-500 font-medium">จำนวนที่จะตัดทิ้ง</span>
                             <div className="flex items-center gap-1.5 bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-100">
                                 <span className="font-black text-rose-600 text-base">{item.stock}</span>
-                                <span className="text-rose-500 font-semibold text-xs">ชิ้น</span>
+                                <span className="text-rose-500 font-semibold text-xs">
+                                    {isMaterial ? "หน่วย" : "ชิ้น"}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -117,19 +128,19 @@ export default function CutExpiredModal({ open, item, onClose, onSuccess }: Prop
                         </div>
                     </div>
 
-                    {/* Note Input */}
+                    {/* Note */}
                     <div className="space-y-2.5">
                         <label className="block text-sm font-bold text-gray-700 ml-1">หมายเหตุ (ถ้ามี)</label>
                         <input
                             type="text"
                             value={note}
                             onChange={(e) => setNote(e.target.value)}
-                            placeholder={`ตัดสินค้าหมดอายุ [Lot: ${item.lotNumber}]`}
+                            placeholder={`ตัด${isMaterial ? "วัตถุดิบ" : "สินค้า"}หมดอายุ [Lot: ${item.lotNumber}]`}
                             className="w-full border border-gray-200 rounded-2xl px-5 py-3 text-sm outline-none focus:ring-4 focus:ring-rose-500/10 focus:border-rose-400 bg-gray-50 focus:bg-white transition-all font-medium shadow-sm"
                         />
                     </div>
 
-                    {/* Action Buttons */}
+                    {/* Buttons */}
                     <div className="flex gap-3 pt-2">
                         <button
                             onClick={onClose}

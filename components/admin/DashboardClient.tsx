@@ -49,7 +49,7 @@ export default function DashboardClient({
     <div className="space-y-8">
 
       {/* ── Stat Cards ─────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-3 md:grid-cols-3 gap-3 md:gap-5">
+      <div className="grid grid-cols-3 xl:grid-cols-3 gap-3 xl:gap-5">
         {[
           {
             label: "ยอดขายรวมทั้งหมด",
@@ -75,15 +75,15 @@ export default function DashboardClient({
             shadow: "shadow-amber-200",
           },
         ].map(card => (
-          <div key={card.label} className="bg-white rounded-2xl md:rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-3 md:p-6 flex flex-col md:flex-row items-center md:items-center gap-2 md:gap-5 group">
-            <div className={`bg-gradient-to-br ${card.gradient} rounded-xl md:rounded-2xl p-2.5 md:p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
+          <div key={card.label} className="bg-white rounded-2xl xl:rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 p-3 xl:p-6 flex flex-col xl:flex-row items-center xl:items-center gap-2 xl:gap-5 group">
+            <div className={`bg-gradient-to-br ${card.gradient} rounded-xl xl:rounded-2xl p-2.5 xl:p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
               {card.icon}
             </div>
-            <div className="text-center md:text-left">
-              <p className="text-[11px] md:text-sm text-gray-500 font-bold mt-1 mb-0.5 md:mb-1 leading-tight">{card.label}</p>
-              <p className="text-lg md:text-3xl font-black text-gray-900">
+            <div className="text-center xl:text-left">
+              <p className="text-[11px] xl:text-sm text-gray-500 font-bold mt-1 mb-0.5 xl:mb-1 leading-tight">{card.label}</p>
+              <p className="text-lg xl:text-3xl font-black text-gray-900">
                 {card.value}
-                {card.unit && <span className="text-xs md:text-base font-semibold text-gray-400 ml-1">{card.unit}</span>}
+                {card.unit && <span className="text-xs xl:text-base font-semibold text-gray-400 ml-1">{card.unit}</span>}
               </p>
             </div>
           </div>
@@ -94,7 +94,7 @@ export default function DashboardClient({
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
         {/* Sales Chart */}
-        <div className="xl:col-span-2 bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
+        <div className="xl:col-span-2 bg-white rounded-3xl border border-gray-100 shadow-sm p-6 xl:p-8">
           <div className="mb-6">
             <h3 className="text-xl font-black text-gray-900">ยอดขาย 7 วันย้อนหลัง</h3>
             <p className="text-sm text-gray-500 font-medium mt-1">แสดงแนวโน้มรายได้ย้อนหลังแบบรายวัน</p>
@@ -122,7 +122,7 @@ export default function DashboardClient({
         </div>
 
         {/* Low Stock */}
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 xl:p-8">
           <div className="flex items-center gap-3 mb-6">
             <div className="bg-gradient-to-br from-rose-500 to-red-600 p-2.5 rounded-xl text-white shadow-sm shadow-rose-200">
               <AlertTriangle className="w-4 h-4" />
@@ -157,7 +157,7 @@ export default function DashboardClient({
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
         {/* Top 5 สินค้าขายดี */}
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 xl:p-8">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="bg-gradient-to-br from-amber-400 to-orange-500 p-2.5 rounded-xl text-white shadow-sm shadow-amber-200">
@@ -172,7 +172,7 @@ export default function DashboardClient({
           <div className="space-y-3">
             {topProducts.length > 0 ? topProducts.map((item, i) => (
               <div key={i} className="flex items-center gap-3 p-3 rounded-2xl hover:bg-gray-50 transition-colors">
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black shrink-0 text-white shadow-md ${RANK_STYLE[i]}`}>
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black shrink-0 text-white shadow-xl ${RANK_STYLE[i]}`}>
                   {item.rank}
                 </div>
                 {item.image ? (
@@ -196,7 +196,7 @@ export default function DashboardClient({
         </div>
 
         {/* Recent Orders */}
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 xl:p-8">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-2.5 rounded-xl text-white shadow-sm shadow-indigo-200">
@@ -229,7 +229,7 @@ export default function DashboardClient({
         </div>
 
         {/* Near Expiry Materials */}
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 xl:p-8">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="bg-gradient-to-br from-orange-400 to-amber-500 p-2.5 rounded-xl text-white shadow-sm shadow-orange-200">

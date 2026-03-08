@@ -27,7 +27,11 @@ export default function ExpiredReportPage() {
             if (!historyRes.ok || !expiredRes.ok) throw new Error("Failed to fetch data")
             const hJson = await historyRes.json()
             const eJson = await expiredRes.json()
-            setHistoryData(hJson.data?.filter((item: any) => item.reason === "EXPIRED" || item.reason === "DAMAGED") || [])
+            setHistoryData(
+                hJson.data?.filter((item: any) =>
+                    item.reason === "EXPIRED" || item.reason === "DAMAGED"
+                ) || []
+            )
             setCurrentExpired(eJson.data || [])
         } catch (error) {
             setError("ไม่สามารถโหลดข้อมูลได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง")
@@ -246,7 +250,7 @@ export default function ExpiredReportPage() {
                                             <p className="font-black text-gray-900 text-sm">{item.name}</p>
                                             {/* mobile sub-info */}
                                             <p className="xl:hidden text-xs text-gray-400 font-medium mt-0.5">
-                                                Lot: {item.lotNumber || "-"} · {qty.toLocaleString()} ชิ้น
+                                                Lot: {item.lotNumber || "-"} · {qty.toLocaleString()} {item.unit || "ชิ้น"}
                                             </p>
                                         </td>
                                         <td className="px-4 py-3 hidden xl:table-cell">
@@ -256,7 +260,7 @@ export default function ExpiredReportPage() {
                                         </td>
                                         <td className="px-4 py-3 text-center hidden xl:table-cell">
                                             <span className="font-black text-gray-900 text-sm">{qty.toLocaleString()}</span>
-                                            <span className="text-gray-400 text-xs ml-1">ชิ้น</span>
+                                            <span className="text-gray-400 text-xs ml-1">{item.unit || "ชิ้น"}</span>
                                         </td>
                                         <td className="px-4 py-3 text-center">
                                             <span className={`font-black text-sm ${totalDamage > 0 ? "text-rose-600" : "text-gray-400"}`}>
@@ -267,7 +271,7 @@ export default function ExpiredReportPage() {
                                             {activeTab === "current" ? (
                                                 <button
                                                     onClick={() => setCutItem(item)}
-                                                    className="inline-flex items-center gap-1.5 bg-white border border-rose-200 text-rose-600 hover:bg-rose-500 hover:text-white hover:border-rose-500 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+                                                    className="inline-flex items-center gap-1.5 bg-white border border-rose-200 text-rose-600 hover:bg-rose-500 hover:text-white hover:border-rose-500 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer whitespace-nowrap"
                                                 >
                                                     <Trash2 className="w-3.5 h-3.5" />
                                                     <span className="hidden sm:inline">ตัดทิ้ง</span>
@@ -304,6 +308,7 @@ export default function ExpiredReportPage() {
 
             <CutExpiredModal
                 open={!!cutItem}
+                type={cutItem?.type === "MATERIAL" ? "material" : "product"}
                 item={cutItem}
                 onClose={() => setCutItem(null)}
                 onSuccess={() => { setCutItem(null); fetchData() }}

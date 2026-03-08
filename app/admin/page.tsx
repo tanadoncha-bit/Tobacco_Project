@@ -129,14 +129,14 @@ export default async function AdminDashboard() {
   })
 
   return (
-    <div className="p-4 md:p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div className="p-4 xl:p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-3 rounded-2xl shadow-lg shadow-purple-200">
             <ChartColumnIncreasing className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">Dashboard Overview</h1>
+            <h1 className="text-2xl xl:text-3xl font-black text-gray-900 tracking-tight">Dashboard Overview</h1>
             <p className="text-[16px] text-gray-500 font-medium mt-1">ภาพรวมรายได้ คำสั่งซื้อ และสถานะสต็อกของร้านค้า</p>
           </div>
         </div>
