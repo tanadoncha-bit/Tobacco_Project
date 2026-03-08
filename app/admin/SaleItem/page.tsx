@@ -49,34 +49,34 @@ export default async function OrdersPage() {
   const doneOrders     = formattedOrders.filter(o => o.status === "COMPLETED").length
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="p-4 xl:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
       {/* Header */}
       <div className="flex items-center gap-4">
-        <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-3 rounded-2xl shadow-lg shadow-purple-200">
+        <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-3 rounded-2xl shadow-xl shadow-purple-200">
           <SquareChartGantt className="w-6 h-6 text-white" />
         </div>
         <div>
-          <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">Orders Management</h1>
+          <h1 className="text-2xl xl:text-3xl font-black text-gray-900 tracking-tight">Orders Management</h1>
           <p className="text-[16px] text-gray-500 font-medium mt-1">จัดการรายการคำสั่งซื้อ สถานะ และตรวจสอบพัสดุที่ต้องจัดส่ง</p>
         </div>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         {[
-          { label: "ออเดอร์ทั้งหมด", value: totalOrders,    icon: <SquareChartGantt className="w-4 h-4 md:w-6 md:h-6" />, gradient: "from-indigo-500 to-purple-600", shadow: "shadow-purple-200" },
-          { label: "รอดำเนินการ",    value: pendingOrders,  icon: <Clock className="w-4 h-4 md:w-6 md:h-6" />,            gradient: "from-orange-400 to-amber-500",  shadow: "shadow-orange-200" },
-          { label: "กำลังจัดส่ง",    value: shippingOrders, icon: <Truck className="w-4 h-4 md:w-6 md:h-6" />,            gradient: "from-blue-400 to-indigo-500",   shadow: "shadow-blue-200"   },
-          { label: "เสร็จสิ้น",       value: doneOrders,     icon: <CheckCircle className="w-4 h-4 md:w-6 md:h-6" />,      gradient: "from-emerald-400 to-teal-500",  shadow: "shadow-emerald-200"},
+          { label: "ออเดอร์ทั้งหมด", value: totalOrders,    icon: <SquareChartGantt className="w-5 h-5 xl:w-6 xl:h-6" />, gradient: "from-indigo-500 to-purple-600", shadow: "shadow-purple-200" },
+          { label: "รอดำเนินการ",    value: pendingOrders,  icon: <Clock className="w-5 h-5 xl:w-6 xl:h-6" />,            gradient: "from-orange-400 to-amber-500",  shadow: "shadow-orange-200" },
+          { label: "กำลังจัดส่ง",    value: shippingOrders, icon: <Truck className="w-5 h-5 xl:w-6 xl:h-6" />,            gradient: "from-blue-400 to-indigo-500",   shadow: "shadow-blue-200"   },
+          { label: "เสร็จสิ้น",       value: doneOrders,     icon: <CheckCircle className="w-5 h-5 xl:w-6 xl:h-6" />,      gradient: "from-emerald-400 to-teal-500",  shadow: "shadow-emerald-200"},
         ].map(card => (
-          <div key={card.label} className="bg-white rounded-2xl md:rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-3 md:p-6 flex items-center gap-3 md:gap-5 group">
-            <div className={`bg-gradient-to-br ${card.gradient} rounded-xl md:rounded-2xl p-2.5 md:p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
+          <div key={card.label} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-4 xl:p-6 flex items-center gap-3 xl:gap-5 group">
+            <div className={`bg-gradient-to-br ${card.gradient} rounded-2xl p-3 xl:p-4 shadow-xl ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
               {card.icon}
             </div>
             <div>
-              <p className="text-[10px] md:text-sm text-gray-500 font-bold mb-0.5 md:mb-1 leading-tight">{card.label}</p>
-              <p className="text-xl md:text-3xl font-black text-gray-900">{card.value} <span className="text-xs md:text-base font-semibold text-gray-400">รายการ</span></p>
+              <p className="text-xs xl:text-sm text-gray-500 font-bold mb-1">{card.label}</p>
+              <p className="text-xl xl:text-3xl font-black text-gray-900">{card.value} <span className="text-xs xl:text-base font-semibold text-gray-400">รายการ</span></p>
             </div>
           </div>
         ))}

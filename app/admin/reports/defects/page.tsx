@@ -63,7 +63,7 @@ export default function ExpiredReportPage() {
     if (isLoading) return <GlobalLoading />
 
     return (
-        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="p-4 xl:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
             {error && (
                 <div className="bg-red-50/80 border-l-4 border-red-500 p-4 rounded-2xl flex items-start gap-3 shadow-sm">
@@ -78,13 +78,13 @@ export default function ExpiredReportPage() {
                     <AlertCircle className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                    <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">รายงานสินค้าหมดอายุ</h1>
+                    <h1 className="text-2xl xl:text-3xl font-black text-gray-900 tracking-tight">รายงานสินค้าหมดอายุ</h1>
                     <p className="text-[16px] text-gray-500 font-medium mt-1">วิเคราะห์และบริหารจัดการสินค้าเสื่อมสภาพ</p>
                 </div>
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-3 md:grid-cols-3 gap-3 md:gap-5">
+            <div className="grid grid-cols-3 xl:grid-cols-3 gap-3 xl:gap-5">
                 {[
                     {
                         label: "ค้างสต๊อกปัจจุบัน", value: currentExpired.length, unit: "รายการ",
@@ -104,15 +104,15 @@ export default function ExpiredReportPage() {
                         gradient: "from-rose-500 to-red-600", shadow: "shadow-rose-200",
                     },
                 ].map(card => (
-                    <div key={card.label} className="bg-white rounded-2xl md:rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-3 md:p-6 flex flex-col md:flex-row items-center md:items-center gap-2 md:gap-5 group">
-                        <div className={`bg-gradient-to-br ${card.gradient} rounded-xl md:rounded-2xl p-2.5 md:p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
+                    <div key={card.label} className="bg-white rounded-2xl xl:rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 p-3 xl:p-6 flex flex-col xl:flex-row items-center xl:items-center gap-2 xl:gap-5 group">
+                        <div className={`bg-gradient-to-br ${card.gradient} rounded-xl xl:rounded-2xl p-2.5 xl:p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
                             {card.icon}
                         </div>
-                        <div className="text-center md:text-left min-w-0">
-                            <p className="text-[11px] md:text-sm text-gray-500 font-bold mt-1 mb-0.5 md:mb-1 leading-tight">{card.label}</p>
-                            <p className="text-lg md:text-3xl font-black text-gray-900 truncate">
+                        <div className="text-center xl:text-left min-w-0">
+                            <p className="text-[11px] xl:text-sm text-gray-500 font-bold mt-1 mb-0.5 xl:mb-1 leading-tight">{card.label}</p>
+                            <p className="text-lg xl:text-3xl font-black text-gray-900 truncate">
                                 {card.value}
-                                {card.unit && <span className="text-xs md:text-base font-semibold text-gray-400 ml-1">{card.unit}</span>}
+                                {card.unit && <span className="text-xs xl:text-base font-semibold text-gray-400 ml-1">{card.unit}</span>}
                             </p>
                         </div>
                     </div>
@@ -123,10 +123,10 @@ export default function ExpiredReportPage() {
             <div className="bg-white rounded-3xl shadow-sm border border-gray-100">
 
                 {/* Toolbar */}
-                <div className="p-4 md:p-6 border-b border-gray-100 bg-gray-50/30 space-y-3">
+                <div className="p-4 xl:p-6 border-b border-gray-100 bg-gray-50/30 space-y-3">
 
                     {/* Mobile: search + tab dropdown */}
-                    <div className="flex gap-2 md:hidden">
+                    <div className="flex gap-2 xl:hidden">
                         <div className="relative flex-1 group">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-rose-500 transition-colors" />
                             <input
@@ -166,7 +166,7 @@ export default function ExpiredReportPage() {
                     </div>
 
                     {/* Desktop: search + tab buttons */}
-                    <div className="hidden md:flex items-center justify-between gap-3">
+                    <div className="hidden xl:flex items-center justify-between gap-3">
                         <div className="relative w-80 group">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-rose-500 transition-colors" />
                             <input
@@ -180,14 +180,14 @@ export default function ExpiredReportPage() {
                         <div className="inline-flex bg-gray-100/80 p-1.5 rounded-2xl items-center shadow-inner">
                             <button
                                 onClick={() => setActiveTab("current")}
-                                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-1.5 cursor-pointer ${activeTab === "current" ? "bg-gradient-to-r from-rose-400 to-red-500 text-white shadow-md" : "text-gray-500 hover:text-gray-800 hover:bg-gray-200/50"}`}
+                                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-1.5 cursor-pointer ${activeTab === "current" ? "bg-gradient-to-r from-rose-400 to-red-500 text-white shadow-xl" : "text-gray-500 hover:text-gray-800 hover:bg-gray-200/50"}`}
                             >
                                 <Package className="w-4 h-4" /> ค้างสต๊อก
                                 <span className={`py-0.5 px-2 rounded-full text-[10px] ${activeTab === "current" ? "bg-white/20 text-white" : "bg-gray-200 text-gray-500"}`}>{currentExpired.length}</span>
                             </button>
                             <button
                                 onClick={() => setActiveTab("history")}
-                                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-1.5 cursor-pointer ${activeTab === "history" ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md" : "text-gray-500 hover:text-gray-800 hover:bg-gray-200/50"}`}
+                                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-1.5 cursor-pointer ${activeTab === "history" ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-xl" : "text-gray-500 hover:text-gray-800 hover:bg-gray-200/50"}`}
                             >
                                 <History className="w-4 h-4" /> ประวัติ
                                 <span className={`py-0.5 px-2 rounded-full text-[10px] ${activeTab === "history" ? "bg-white/20 text-white" : "bg-gray-200 text-gray-500"}`}>{historyData.length}</span>
@@ -205,8 +205,8 @@ export default function ExpiredReportPage() {
                                     {activeTab === "current" ? "วันหมดอายุ" : "วันที่ตัดจ่าย"}
                                 </th>
                                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">ชื่อสินค้า</th>
-                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">หมายเลข Lot</th>
-                                <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">จำนวน</th>
+                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">หมายเลข Lot</th>
+                                <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">จำนวน</th>
                                 <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">มูลค่า</th>
                                 <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">จัดการ</th>
                             </tr>
@@ -245,16 +245,16 @@ export default function ExpiredReportPage() {
                                         <td className="px-4 py-3">
                                             <p className="font-black text-gray-900 text-sm">{item.name}</p>
                                             {/* mobile sub-info */}
-                                            <p className="md:hidden text-xs text-gray-400 font-medium mt-0.5">
+                                            <p className="xl:hidden text-xs text-gray-400 font-medium mt-0.5">
                                                 Lot: {item.lotNumber || "-"} · {qty.toLocaleString()} ชิ้น
                                             </p>
                                         </td>
-                                        <td className="px-4 py-3 hidden md:table-cell">
+                                        <td className="px-4 py-3 hidden xl:table-cell">
                                             <span className="font-mono text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded-xl">
                                                 {item.lotNumber || "ไม่มี Lot"}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 text-center hidden md:table-cell">
+                                        <td className="px-4 py-3 text-center hidden xl:table-cell">
                                             <span className="font-black text-gray-900 text-sm">{qty.toLocaleString()}</span>
                                             <span className="text-gray-400 text-xs ml-1">ชิ้น</span>
                                         </td>
@@ -288,11 +288,11 @@ export default function ExpiredReportPage() {
 
                 {/* Footer */}
                 {filteredData.length > 0 && (
-                    <div className="px-4 md:px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex flex-row justify-between items-center gap-3 rounded-b-3xl">
+                    <div className="px-4 xl:px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex flex-row justify-between items-center gap-3 rounded-b-3xl">
                         <span className="text-sm font-medium text-gray-500">
                             <strong className="text-gray-900">{filteredData.length}</strong> รายการ
                         </span>
-                        <div className="flex items-center gap-2 bg-white px-3 md:px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
+                        <div className="flex items-center gap-2 bg-white px-3 xl:px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
                             <span className="text-sm font-bold text-gray-600">มูลค่ารวม:</span>
                             <span className="text-base font-black text-rose-600">
                                 ฿{totalLossValue.toLocaleString("th-TH", { minimumFractionDigits: 2 })}

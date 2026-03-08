@@ -3,7 +3,7 @@
 import { useMemo, useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import {
-  Search, ChevronDown, PackagePlus, FileText, Edit, Plus, BookOpen,
+  Search, ChevronDown, FileText, Edit, Plus, BookOpen,
   PackageSearch, ArrowDownToLine, ArrowUpFromLine, Layers,
   Package, AlertTriangle, BoxesIcon, BarChart3
 } from "lucide-react"
@@ -13,7 +13,6 @@ import EditProductModal from "./EditProductModal"
 import ProductSlipModal from "./ProductSlipModal"
 import ProductRecipeModal from "./ProductRecipeModal"
 import AdjustStockModal from "./AdjustStockModal"
-import ReceiveProduceModal from "./ReceiveProduceModal"
 import ProductLotModal from "./ProductLotModal"
 import DispatchProductModal from "./DispatchProductModal"
 
@@ -43,6 +42,8 @@ const SORT_OPTIONS = [
 
 type SortValue = typeof SORT_OPTIONS[number]["value"]
 
+import { createPortal } from "react-dom"
+
 function ActionMenu({ canAdjustStock, onAdjust, onDispatch, onLot, onEdit, onSlip }: {
   canAdjustStock: boolean
   onAdjust: () => void
@@ -52,55 +53,80 @@ function ActionMenu({ canAdjustStock, onAdjust, onDispatch, onLot, onEdit, onSli
   onSlip: () => void
 }) {
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState({ top: 0, right: 0 })
+  const btnRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
+    const handler = () => setOpen(false)
     document.addEventListener("mousedown", handler)
     return () => document.removeEventListener("mousedown", handler)
   }, [])
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect()
+      const dropdownHeight = canAdjustStock ? 200 : 130
+      const spaceBelow = window.innerHeight - rect.bottom
+
+      const top = spaceBelow < dropdownHeight
+        ? rect.top - dropdownHeight - 6   // เปิดขึ้นบน
+        : rect.bottom + 6                  // เปิดลงล่าง
+
+      setPos({
+        top,
+        right: window.innerWidth - rect.right,
+      })
+    }
+    setOpen(prev => !prev)
+  }
+
+  const menu = open ? createPortal(
+    <div
+      className="fixed w-40 bg-white rounded-2xl shadow-xl border border-gray-100 z-[9999] animate-in fade-in slide-in-from-top-2 duration-150"
+      style={{ top: pos.top, right: pos.right }}
+      onMouseDown={e => e.stopPropagation()}
+    >
+      {canAdjustStock && (
+        <>
+          <button onClick={() => { onAdjust(); setOpen(false) }}
+            className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-emerald-700 hover:bg-emerald-50 cursor-pointer rounded-t-2xl">
+            <ArrowDownToLine className="w-3.5 h-3.5" /> รับเข้า
+          </button>
+          <button onClick={() => { onDispatch(); setOpen(false) }}
+            className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-rose-700 hover:bg-rose-50 cursor-pointer">
+            <ArrowUpFromLine className="w-3.5 h-3.5" /> เบิกออก
+          </button>
+        </>
+      )}
+      <button onClick={() => { onLot(); setOpen(false) }}
+        className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-purple-700 hover:bg-purple-50 cursor-pointer">
+        <Layers className="w-3.5 h-3.5" /> ล็อต
+      </button>
+      <button onClick={() => { onEdit(); setOpen(false) }}
+        className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-gray-50 cursor-pointer">
+        <Edit className="w-3.5 h-3.5" /> รายละเอียด
+      </button>
+      <button onClick={() => { onSlip(); setOpen(false) }}
+        className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-blue-700 hover:bg-blue-50 cursor-pointer rounded-b-2xl">
+        <FileText className="w-3.5 h-3.5" /> ประวัติ
+      </button>
+    </div>,
+    document.body
+  ) : null
+
   return (
-    <div className="relative" ref={ref}>
+    <>
       <button
-        onClick={() => setOpen(!open)}
+        ref={btnRef}
+        onClick={handleClick}
         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100 text-xs font-bold cursor-pointer transition-all"
       >
         <span className="hidden sm:inline">จัดการ</span>
         <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
       </button>
-
-      {open && (
-        <div className="absolute right-0 mt-1.5 w-40 bg-white rounded-2xl shadow-xl border border-gray-100 z-[100] animate-in fade-in slide-in-from-top-2 duration-150">
-          {canAdjustStock && (
-            <>
-              <button onClick={() => { onAdjust(); setOpen(false) }}
-                className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-emerald-700 hover:bg-emerald-50 cursor-pointer">
-                <ArrowDownToLine className="w-3.5 h-3.5" /> รับเข้า
-              </button>
-              <button onClick={() => { onDispatch(); setOpen(false) }}
-                className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-rose-700 hover:bg-rose-50 cursor-pointer">
-                <ArrowUpFromLine className="w-3.5 h-3.5" /> เบิกออก
-              </button>
-            </>
-          )}
-          <button onClick={() => { onLot(); setOpen(false) }}
-            className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-purple-700 hover:bg-purple-50 cursor-pointer">
-            <Layers className="w-3.5 h-3.5" /> ล็อต
-          </button>
-          <button onClick={() => { onEdit(); setOpen(false) }}
-            className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-gray-50 cursor-pointer">
-            <Edit className="w-3.5 h-3.5" /> รายละเอียด
-          </button>
-          <button onClick={() => { onSlip(); setOpen(false) }}
-            className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-blue-700 hover:bg-blue-50 cursor-pointer">
-            <FileText className="w-3.5 h-3.5" /> ประวัติ
-          </button>
-        </div>
-      )}
-    </div>
+      {menu}
+    </>
   )
 }
 
@@ -123,7 +149,6 @@ export default function StockTable({
 
   const [open, setOpen] = useState(false)
   const [recipeModalOpen, setRecipeModalOpen] = useState(false)
-  const [isReceiveProduceOpen, setIsReceiveProduceOpen] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [editProductId, setEditProductId] = useState<number | null>(null)
   const [slipModalOpen, setSlipModalOpen] = useState(false)
@@ -164,7 +189,7 @@ export default function StockTable({
   }, [data, search, sort])
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="p-4 xl:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
       {/* Header */}
       <div className="flex items-center gap-4">
@@ -172,27 +197,27 @@ export default function StockTable({
           <PackageSearch className="w-6 h-6 text-white" />
         </div>
         <div>
-          <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">Product Inventory</h1>
+          <h1 className="text-2xl xl:text-3xl font-black text-gray-900 tracking-tight">Product Inventory</h1>
           <p className="text-[16px] text-gray-500 font-medium mt-1">จัดการข้อมูลสินค้า สูตรการผลิต และตรวจสอบจำนวนคงเหลือ</p>
         </div>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         {[
-          { label: "สินค้าทั้งหมด", value: stats.totalProducts, unit: "รายการ", icon: <Package className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-indigo-500 to-purple-600", shadow: "shadow-purple-200" },
-          { label: "สต็อกรวม", value: stats.totalStock, unit: "ชิ้น", icon: <BoxesIcon className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-blue-400 to-indigo-500", shadow: "shadow-blue-200" },
-          { label: "สต็อกต่ำ (≤5)", value: stats.lowStock, unit: "รายการ", icon: <BarChart3 className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-orange-400 to-amber-500", shadow: "shadow-orange-200" },
-          { label: "หมดสต็อก", value: stats.outOfStock, unit: "รายการ", icon: <AlertTriangle className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-rose-500 to-red-600", shadow: "shadow-rose-200" },
+          { label: "สินค้าทั้งหมด", value: stats.totalProducts, unit: "รายการ", icon: <Package className="w-5 h-5 xl:w-6 xl:h-6" />, gradient: "from-indigo-500 to-purple-600", shadow: "shadow-purple-200" },
+          { label: "สต็อกรวม", value: stats.totalStock, unit: "ชิ้น", icon: <BoxesIcon className="w-5 h-5 xl:w-6 xl:h-6" />, gradient: "from-blue-400 to-indigo-500", shadow: "shadow-blue-200" },
+          { label: "สต็อกต่ำ (≤5)", value: stats.lowStock, unit: "รายการ", icon: <BarChart3 className="w-5 h-5 xl:w-6 xl:h-6" />, gradient: "from-orange-400 to-amber-500", shadow: "shadow-orange-200" },
+          { label: "หมดสต็อก", value: stats.outOfStock, unit: "รายการ", icon: <AlertTriangle className="w-5 h-5 xl:w-6 xl:h-6" />, gradient: "from-rose-500 to-red-600", shadow: "shadow-rose-200" },
         ].map(card => (
-          <div key={card.label} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-4 md:p-6 flex items-center gap-3 md:gap-5 group">
-            <div className={`bg-gradient-to-br ${card.gradient} rounded-2xl p-3 md:p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
+          <div key={card.label} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 p-4 xl:p-6 flex items-center gap-3 xl:gap-5 group">
+            <div className={`bg-gradient-to-br ${card.gradient} rounded-2xl p-3 xl:p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
               {card.icon}
             </div>
             <div>
-              <p className="text-xs md:text-sm text-gray-500 font-bold mb-1">{card.label}</p>
-              <p className="text-xl md:text-3xl font-black text-gray-900">
-                {card.value.toLocaleString()} <span className="text-xs md:text-base font-semibold text-gray-400">{card.unit}</span>
+              <p className="text-xs xl:text-sm text-gray-500 font-bold mb-1">{card.label}</p>
+              <p className="text-xl xl:text-3xl font-black text-gray-900">
+                {card.value.toLocaleString()} <span className="text-xs xl:text-base font-semibold text-gray-400">{card.unit}</span>
               </p>
             </div>
           </div>
@@ -203,9 +228,9 @@ export default function StockTable({
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100">
 
         {/* Toolbar */}
-        <div className="p-4 md:p-6 border-b border-gray-100 bg-gray-50/30 rounded-t-3xl">
+        <div className="p-4 xl:p-6 border-b border-gray-100 bg-gray-50/30 rounded-t-3xl">
           {/* Mobile: search แยกบน */}
-          <div className="md:hidden mb-3">
+          <div className="xl:hidden mb-3">
             <div className="relative w-full group">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-purple-500 transition-colors" />
               <input
@@ -222,7 +247,7 @@ export default function StockTable({
           <div className="flex items-center gap-2 flex-wrap">
 
             {/* Search — desktop only */}
-            <div className="relative hidden md:block group">
+            <div className="relative hidden xl:block group">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-purple-500 transition-colors" />
               <input
                 type="text"
@@ -265,22 +290,15 @@ export default function StockTable({
             <div className="flex-1" />
 
             <button
-              onClick={() => setIsReceiveProduceOpen(true)}
-              className="bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 px-3 py-2.5 rounded-2xl text-xs md:text-sm font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
-            >
-              <PackagePlus className="w-4 h-4" />
-              <span className="hidden sm:inline">รับเข้าผลิต</span>
-            </button>
-            <button
               onClick={() => setRecipeModalOpen(true)}
-              className="bg-white border border-gray-200 text-gray-700 hover:border-purple-300 hover:text-purple-700 hover:bg-purple-50 px-3 py-2.5 rounded-2xl text-xs md:text-sm font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+              className="bg-white border border-gray-200 text-gray-700 hover:border-purple-300 hover:text-purple-700 hover:bg-purple-50 px-3 py-2.5 rounded-2xl text-xs xl:text-sm font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
             >
               <BookOpen className="w-4 h-4" />
               <span className="hidden sm:inline">สูตรการผลิต</span>
             </button>
             <button
               onClick={() => setOpen(true)}
-              className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white px-3 py-2.5 rounded-2xl text-xs md:text-sm font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-1.5 cursor-pointer"
+              className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white px-3 py-2.5 rounded-2xl text-xs xl:text-sm font-bold transition-all shadow-xl hover:shadow-lg flex items-center gap-1.5 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">เพิ่มสินค้าใหม่</span>
@@ -289,8 +307,8 @@ export default function StockTable({
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-center">
+        <div className="overflow-x-auto overflow-y-visible">
+          <table className="w-full text-sm text-center relative">
             <thead>
               <tr className="bg-gray-50/80 border-b border-gray-100">
                 <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">รูปภาพ</th>
@@ -300,7 +318,7 @@ export default function StockTable({
                 <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">จัดการ</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-50 relative">
               {filteredAndSorted.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-24 text-center">
@@ -376,7 +394,6 @@ export default function StockTable({
       <EditProductModal open={editModalOpen} productId={editProductId} onClose={() => { setEditModalOpen(false); setEditProductId(null) }} onSuccess={() => router.refresh()} />
       <ProductRecipeModal open={recipeModalOpen} onClose={() => setRecipeModalOpen(false)} />
       <AdjustStockModal open={adjustStockOpen} productId={adjustProductId} onClose={() => { setAdjustStockOpen(false); setAdjustProductId(null) }} onSuccess={() => router.refresh()} />
-      <ReceiveProduceModal open={isReceiveProduceOpen} onSuccess={() => router.refresh()} onClose={() => setIsReceiveProduceOpen(false)} />
       <ProductLotModal open={lotModalOpen} productCode={selectedLotProductCode} productId={selectedLotProductId} productName={selectedLotProductName} unit="ชิ้น" onClose={() => { setLotModalOpen(false); setSelectedLotProductId(null) }} />
       {dispatchOpen && dispatchProductId && (
         <DispatchProductModal open={dispatchOpen} productId={dispatchProductId} productName={dispatchProductName} onClose={() => { setDispatchOpen(false); setDispatchProductId(null) }} onSuccess={() => router.refresh()} />

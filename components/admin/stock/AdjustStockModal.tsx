@@ -77,8 +77,7 @@ function CustomDatePicker({ value, onChange }: { value: string; onChange: (val: 
                   new Date(value).getFullYear() === currentDate.getFullYear()
                 return (
                   <button key={day} type="button" onClick={() => handleSelectDate(day)}
-                    className={`w-8 h-8 flex items-center justify-center rounded-full text-xs transition-all mx-auto cursor-pointer ${isSelected ? "bg-emerald-500 text-white font-bold" : "text-gray-700 hover:bg-emerald-50 hover:text-emerald-700"
-                      }`}>
+                    className={`w-8 h-8 flex items-center justify-center rounded-full text-xs transition-all mx-auto cursor-pointer ${isSelected ? "bg-emerald-500 text-white font-bold" : "text-gray-700 hover:bg-emerald-50 hover:text-emerald-700"}`}>
                     {day}
                   </button>
                 )
@@ -135,14 +134,22 @@ export default function AdjustStockModal({ open, productId, onClose, onSuccess }
   const [isAuditLotOpen, setIsAuditLotOpen] = useState(false)
   const auditLotRef = useRef<HTMLDivElement>(null)
 
+  // Production order
+  const [pendingProductions, setPendingProductions] = useState<any[]>([])
+  const [selectedDocNo, setSelectedDocNo] = useState("")
+  const [isDocOpen, setIsDocOpen] = useState(false)
+  const [isFetchingDocs, setIsFetchingDocs] = useState(false)
+  const docRef = useRef<HTMLDivElement>(null)
+
   const REASON_OPTIONS = [
     { value: "NEW_PURCHASE", label: "รับเข้าสินค้าใหม่ (ซื้อมาขายไป)" },
     { value: "PRODUCTION", label: "รับเข้าจากการผลิต (Manual)" },
+    { value: "PRODUCTION_ORDER", label: "รับเข้าจากใบสั่งผลิต" },
     { value: "RETURN", label: "คืนสินค้า (เบิกขาย)" },
     { value: "AUDIT", label: "ปรับยอดสต๊อก (นับแล้วเจอของเกิน)" },
   ]
 
-  const showLotSection = reason === "NEW_PURCHASE" || reason === "PRODUCTION"
+  const showLotSection = reason === "NEW_PURCHASE" || reason === "PRODUCTION" || reason === "PRODUCTION_ORDER"
 
   useEffect(() => {
     if (!showLotSection) {
@@ -189,6 +196,9 @@ export default function AdjustStockModal({ open, productId, onClose, onSuccess }
       setAuditLots([])
       setSelectedAuditLotId("")
       setIsAuditLotOpen(false)
+      setPendingProductions([])
+      setSelectedDocNo("")
+      setIsDocOpen(false)
     }
   }, [open, productId])
 
@@ -206,6 +216,7 @@ export default function AdjustStockModal({ open, productId, onClose, onSuccess }
     }
   }, [reason, productId])
 
+  // fetch audit lots เมื่อเลือก AUDIT
   useEffect(() => {
     if (reason === "AUDIT" && productId) {
       fetch(`/api/products/${productId}/lots`)
@@ -232,54 +243,88 @@ export default function AdjustStockModal({ open, productId, onClose, onSuccess }
     }
   }, [reason, productId])
 
+  // fetch pending production orders เมื่อเลือก PRODUCTION_ORDER
+  useEffect(() => {
+    if (reason === "PRODUCTION_ORDER" && productId) {
+      setIsFetchingDocs(true)
+      fetch("/api/productions/pending")
+        .then(res => res.json())
+        .then(data => Array.isArray(data) ? setPendingProductions(data) : setPendingProductions([]))
+        .catch(() => setPendingProductions([]))
+        .finally(() => setIsFetchingDocs(false))
+      setSelectedDocNo("")
+    } else {
+      setPendingProductions([])
+      setSelectedDocNo("")
+    }
+  }, [reason, productId])
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (variantRef.current && !variantRef.current.contains(event.target as Node)) setIsVariantOpen(false)
       if (reasonRef.current && !reasonRef.current.contains(event.target as Node)) setIsReasonOpen(false)
       if (returnLotRef.current && !returnLotRef.current.contains(event.target as Node)) setIsReturnLotOpen(false)
       if (auditLotRef.current && !auditLotRef.current.contains(event.target as Node)) setIsAuditLotOpen(false)
+      if (docRef.current && !docRef.current.contains(event.target as Node)) setIsDocOpen(false)
     }
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
   const handleSave = async () => {
-    if (!selectedVariantId) return toast.error("กรุณาเลือกตัวเลือกสินค้า")
+    if (reason !== "PRODUCTION_ORDER" && !selectedVariantId) return toast.error("กรุณาเลือกตัวเลือกสินค้า")
     if (!amount || Number(amount) <= 0) return toast.error("กรุณาระบุจำนวนให้ถูกต้อง")
     if (showLotSection && !noExpire && !expireDate) return toast.error("กรุณาระบุวันหมดอายุ หรือเลือก 'ไม่มีวันหมดอายุ'")
     if (reason === "NEW_PURCHASE" && (!totalCost || Number(totalCost) <= 0)) return toast.error("กรุณาระบุราคารวมทั้งล็อต")
     if (reason === "RETURN" && !selectedReturnLotId) return toast.error("กรุณาเลือก Lot ที่ต้องการคืน")
     if (reason === "AUDIT" && !selectedAuditLotId) return toast.error("กรุณาเลือก Lot ที่ต้องการปรับยอด")
+    if (reason === "PRODUCTION_ORDER" && !selectedDocNo) return toast.error("กรุณาเลือกใบสั่งผลิต")
 
     setIsLoading(true)
     try {
-      const res = await fetch("/api/products/adjust-stock", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          variantId: Number(selectedVariantId),
-          amount: Number(amount),
-          type: "IN",
-          reason: reason,
-          lotNumber: showLotSection ? (lotNumber || undefined) : undefined,
-          expireDate: showLotSection ? (noExpire ? null : (expireDate || null)) : null,
-          unitCost: reason === "NEW_PURCHASE" && totalCost && Number(amount) > 0
-            ? Number(totalCost) / Number(amount)
-            : undefined,
-          variantLotId: reason === "RETURN" && selectedReturnLotId
-            ? Number(selectedReturnLotId)
-            : reason === "AUDIT" && selectedAuditLotId
-              ? Number(selectedAuditLotId)
-              : undefined,
+      // PRODUCTION_ORDER ใช้ API ของ ReceiveProduceModal
+      if (reason === "PRODUCTION_ORDER") {
+        const res = await fetch("/api/productions/receive", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            docNo: selectedDocNo,
+            receivedAmount: Number(amount),
+            expireDate: noExpire ? null : (expireDate || null),
+            note: "",
+          })
         })
-      })
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}))
-        throw new Error(errorData.error || errorData.message || "เกิดข้อผิดพลาดในการปรับสต๊อก")
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || data.message || "เกิดข้อผิดพลาด")
+        toast.success(`รับเข้าสินค้าบิล ${selectedDocNo} เรียบร้อยแล้ว`)
+      } else {
+        const res = await fetch("/api/products/adjust-stock", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            variantId: Number(selectedVariantId),
+            amount: Number(amount),
+            type: "IN",
+            reason,
+            lotNumber: showLotSection ? (lotNumber || undefined) : undefined,
+            expireDate: showLotSection ? (noExpire ? null : (expireDate || null)) : null,
+            unitCost: reason === "NEW_PURCHASE" && totalCost && Number(amount) > 0
+              ? Number(totalCost) / Number(amount)
+              : undefined,
+            variantLotId: reason === "RETURN" && selectedReturnLotId
+              ? Number(selectedReturnLotId)
+              : reason === "AUDIT" && selectedAuditLotId
+                ? Number(selectedAuditLotId)
+                : undefined,
+          })
+        })
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}))
+          throw new Error(errorData.error || errorData.message || "เกิดข้อผิดพลาดในการปรับสต๊อก")
+        }
+        toast.success("เพิ่มสต๊อกเรียบร้อยแล้ว")
       }
 
-      toast.success("เพิ่มสต๊อกเรียบร้อยแล้ว")
       onSuccess()
       onClose()
     } catch (error: any) {
@@ -311,50 +356,13 @@ export default function AdjustStockModal({ open, productId, onClose, onSuccess }
           </button>
         </div>
 
-        <div className="p-6 pb-4 space-y-5 flex-1">
+        <div className="p-6 pb-4 space-y-5 flex-1 overflow-y-auto">
           {isFetching ? (
             <div className="text-center py-8 text-gray-400 font-medium">กำลังโหลดข้อมูลสินค้า...</div>
           ) : (
             <>
-              {/* Variant Selector */}
-              <div className={`space-y-2 relative ${isVariantOpen ? "z-50" : "z-20"}`} ref={variantRef}>
-                <label className="block text-sm font-bold text-gray-700">เลือกตัวเลือก (Variant)</label>
-                <button
-                  type="button"
-                  onClick={() => setIsVariantOpen(!isVariantOpen)}
-                  className={`w-full flex items-center justify-between border ${isVariantOpen ? "ring-2 ring-emerald-500" : "border-gray-200 hover:border-emerald-300"} rounded-xl px-4 py-2.5 text-sm bg-gray-50 transition-all cursor-pointer text-left`}
-                >
-                  <span className={selectedVariantId ? "text-gray-800 font-bold" : "text-gray-400 font-medium"}>{selectedLabel}</span>
-                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isVariantOpen ? "rotate-180 text-emerald-500" : ""}`} />
-                </button>
-                {isVariantOpen && (
-                  <div className="absolute left-0 right-0 mt-2 max-h-48 overflow-y-auto bg-white rounded-xl shadow-lg border border-gray-100 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="py-1.5">
-                      {variants.length === 0 ? (
-                        <div className="px-4 py-3 text-sm text-gray-500 text-center">ไม่มีตัวเลือกสินค้า</div>
-                      ) : variants.map((v: any) => {
-                        const optionName = v.values?.map((val: any) => val.optionValue.value).join(" / ") || "ค่าเริ่มต้น"
-                        const isSelected = selectedVariantId === v.id.toString()
-                        return (
-                          <button key={v.id} type="button"
-                            onClick={() => { setSelectedVariantId(v.id.toString()); setIsVariantOpen(false) }}
-                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer flex justify-between items-center ${isSelected ? "bg-emerald-50 text-emerald-700 font-bold border-l-4 border-emerald-500" : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent font-medium"
-                              }`}
-                          >
-                            <span>{optionName}</span>
-                            <span className={`text-xs px-2.5 py-1 rounded-full font-bold ${isSelected ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-500"}`}>
-                              เหลือ {v.stock}
-                            </span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-
               {/* Reason Selector */}
-              <div className={`space-y-2 relative ${isReasonOpen ? "z-40" : "z-10"}`} ref={reasonRef}>
+              <div className={`space-y-2 relative ${isReasonOpen ? "z-50" : "z-20"}`} ref={reasonRef}>
                 <label className="block text-sm font-bold text-gray-700">สาเหตุการรับเข้า <span className="text-red-500">*</span></label>
                 <button
                   type="button"
@@ -370,8 +378,7 @@ export default function AdjustStockModal({ open, productId, onClose, onSuccess }
                       {REASON_OPTIONS.map(opt => (
                         <button key={opt.value} type="button"
                           onClick={() => { setReason(opt.value); setIsReasonOpen(false) }}
-                          className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer ${reason === opt.value ? "bg-emerald-50 text-emerald-700 font-bold border-l-4 border-emerald-500" : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent font-medium"
-                            }`}
+                          className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer ${reason === opt.value ? "bg-emerald-50 text-emerald-700 font-bold border-l-4 border-emerald-500" : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent font-medium"}`}
                         >
                           {opt.label}
                         </button>
@@ -381,18 +388,123 @@ export default function AdjustStockModal({ open, productId, onClose, onSuccess }
                 )}
               </div>
 
+              {/* Production Order Selector */}
+              {reason === "PRODUCTION_ORDER" && (
+                <div className={`space-y-2 relative ${isDocOpen ? "z-40" : "z-10"} animate-in fade-in slide-in-from-top-2 duration-300`} ref={docRef}>
+                  <label className="block text-sm font-bold text-gray-700">เลือกใบสั่งผลิต <span className="text-red-500">*</span></label>
+                  <button
+                    type="button"
+                    onClick={() => !isFetchingDocs && setIsDocOpen(!isDocOpen)}
+                    disabled={isFetchingDocs}
+                    className={`w-full flex items-center justify-between border ${isDocOpen ? "ring-2 ring-emerald-500" : "border-gray-200 hover:border-emerald-300"} rounded-xl px-4 py-2.5 text-sm bg-gray-50 transition-all cursor-pointer text-left disabled:opacity-50`}
+                  >
+                    <span className={selectedDocNo ? "text-gray-800 font-bold" : "text-gray-400 font-medium"}>
+                      {isFetchingDocs
+                        ? "กำลังโหลด..."
+                        : selectedDocNo
+                          ? `${selectedDocNo} - ${pendingProductions.find(p => p.docNo === selectedDocNo)?.productName}`
+                          : "-- เลือกเลขที่เอกสาร --"}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isDocOpen ? "rotate-180 text-emerald-500" : ""}`} />
+                  </button>
+                  {isDocOpen && !isFetchingDocs && (
+                    <div className="absolute left-0 right-0 mt-2 max-h-48 overflow-y-auto bg-white rounded-xl shadow-lg border border-gray-100 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="py-1.5">
+                        {pendingProductions.length === 0 ? (
+                          <div className="px-4 py-3 text-sm text-gray-500 text-center">ไม่มีรายการค้างรับเข้า</div>
+                        ) : pendingProductions.map(doc => (
+                          <button
+                            key={doc.docNo}
+                            type="button"
+                            onClick={() => {
+                              setSelectedDocNo(doc.docNo)
+                              setAmount(doc.amount.toString())
+                              setIsDocOpen(false)
+                            }}
+                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer flex justify-between items-center ${selectedDocNo === doc.docNo
+                              ? "bg-emerald-50 text-emerald-700 font-bold border-l-4 border-emerald-500"
+                              : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent font-medium"
+                            }`}
+                          >
+                            <span>{doc.docNo} - {doc.productName}</span>
+                            <span className={`text-xs px-2.5 py-1 rounded-full font-bold whitespace-nowrap ${selectedDocNo === doc.docNo ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-500"}`}>
+                              {doc.amount} ชิ้น
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Variant Selector — ซ่อนเมื่อเป็น PRODUCTION_ORDER */}
+              {reason !== "PRODUCTION_ORDER" && (
+                <div className={`space-y-2 relative ${isVariantOpen ? "z-40" : "z-10"}`} ref={variantRef}>
+                  <label className="block text-sm font-bold text-gray-700">เลือกตัวเลือก (Variant)</label>
+                  <button
+                    type="button"
+                    onClick={() => setIsVariantOpen(!isVariantOpen)}
+                    className={`w-full flex items-center justify-between border ${isVariantOpen ? "ring-2 ring-emerald-500" : "border-gray-200 hover:border-emerald-300"} rounded-xl px-4 py-2.5 text-sm bg-gray-50 transition-all cursor-pointer text-left`}
+                  >
+                    <span className={selectedVariantId ? "text-gray-800 font-bold" : "text-gray-400 font-medium"}>{selectedLabel}</span>
+                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isVariantOpen ? "rotate-180 text-emerald-500" : ""}`} />
+                  </button>
+                  {isVariantOpen && (
+                    <div className="absolute left-0 right-0 mt-2 max-h-48 overflow-y-auto bg-white rounded-xl shadow-lg border border-gray-100 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="py-1.5">
+                        {variants.length === 0 ? (
+                          <div className="px-4 py-3 text-sm text-gray-500 text-center">ไม่มีตัวเลือกสินค้า</div>
+                        ) : variants.map((v: any) => {
+                          const optionName = v.values?.map((val: any) => val.optionValue.value).join(" / ") || "ค่าเริ่มต้น"
+                          const isSelected = selectedVariantId === v.id.toString()
+                          return (
+                            <button key={v.id} type="button"
+                              onClick={() => { setSelectedVariantId(v.id.toString()); setIsVariantOpen(false) }}
+                              className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer flex justify-between items-center ${isSelected ? "bg-emerald-50 text-emerald-700 font-bold border-l-4 border-emerald-500" : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent font-medium"}`}
+                            >
+                              <span>{optionName}</span>
+                              <span className={`text-xs px-2.5 py-1 rounded-full font-bold ${isSelected ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-500"}`}>
+                                เหลือ {v.stock}
+                              </span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Amount */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">จำนวนที่ต้องการเพิ่ม (ชิ้น)</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  {reason === "PRODUCTION_ORDER" ? "จำนวนที่ผลิตได้จริง (ชิ้น)" : "จำนวนที่ต้องการเพิ่ม (ชิ้น)"}
+                  {reason === "PRODUCTION_ORDER" && selectedDocNo && (
+                    <span className="ml-2 text-emerald-600 font-normal">
+                      (ยอดสั่ง: {pendingProductions.find(p => p.docNo === selectedDocNo)?.amount})
+                    </span>
+                  )}
+                </label>
                 <input
                   type="number" min="1" value={amount}
                   onChange={e => setAmount(e.target.value)}
                   placeholder="เช่น 10, 50"
                   className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white bg-gray-50 transition-all font-medium"
                 />
+                {reason === "PRODUCTION_ORDER" && selectedDocNo && amount && (
+                  (() => {
+                    const ordered = pendingProductions.find(p => p.docNo === selectedDocNo)?.amount ?? 0
+                    return Number(amount) < ordered ? (
+                      <p className="text-[11px] text-red-500 mt-1 font-bold">
+                        * น้อยกว่ายอดสั่งผลิต {ordered - Number(amount)} ชิ้น (วัตถุดิบที่เบิกไปแล้วจะไม่คืนสต๊อก)
+                      </p>
+                    ) : null
+                  })()
+                )}
               </div>
 
-              {/* Lot section — NEW_PURCHASE / PRODUCTION */}
+              {/* Lot section — NEW_PURCHASE / PRODUCTION / PRODUCTION_ORDER */}
               {showLotSection && (
                 <div className="p-4 bg-emerald-50/50 border border-emerald-100 rounded-xl space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                   {reason === "NEW_PURCHASE" && (
@@ -416,18 +528,22 @@ export default function AdjustStockModal({ open, productId, onClose, onSuccess }
                       )}
                     </div>
                   )}
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">
-                      หมายเลข Lot <span className="text-gray-400 font-normal">(ไม่บังคับ)</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder={reason === "PRODUCTION" ? "เช่น LOT-PROD-001" : "เช่น LOT-BUY-001"}
-                      value={lotNumber}
-                      onChange={e => setLotNumber(e.target.value)}
-                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-white transition-all font-medium placeholder:text-gray-400"
-                    />
-                  </div>
+
+                  {reason !== "PRODUCTION_ORDER" && (
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">
+                        หมายเลข Lot <span className="text-gray-400 font-normal">(ไม่บังคับ)</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder={reason === "PRODUCTION" ? "เช่น LOT-PROD-001" : "เช่น LOT-BUY-001"}
+                        value={lotNumber}
+                        onChange={e => setLotNumber(e.target.value)}
+                        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-white transition-all font-medium placeholder:text-gray-400"
+                      />
+                    </div>
+                  )}
+
                   <div>
                     <div className="flex justify-between items-center mb-2">
                       <label className="text-sm font-bold text-gray-700">วันหมดอายุ</label>
@@ -495,9 +611,9 @@ export default function AdjustStockModal({ open, productId, onClose, onSuccess }
                                 setIsReturnLotOpen(false)
                               }}
                               className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer flex justify-between items-center ${selectedReturnLotId === String(lot.id)
-                                  ? "bg-emerald-50 text-emerald-700 font-bold border-l-4 border-emerald-500"
-                                  : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent font-medium"
-                                }`}
+                                ? "bg-emerald-50 text-emerald-700 font-bold border-l-4 border-emerald-500"
+                                : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent font-medium"
+                              }`}
                             >
                               <div>
                                 <p className="font-bold">{lot.lotNumber}</p>
@@ -552,9 +668,9 @@ export default function AdjustStockModal({ open, productId, onClose, onSuccess }
                                 setIsAuditLotOpen(false)
                               }}
                               className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer flex justify-between items-center ${selectedAuditLotId === String(lot.id)
-                                  ? "bg-emerald-50 text-emerald-700 font-bold border-l-4 border-emerald-500"
-                                  : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent font-medium"
-                                }`}
+                                ? "bg-emerald-50 text-emerald-700 font-bold border-l-4 border-emerald-500"
+                                : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent font-medium"
+                              }`}
                             >
                               <div>
                                 <p className="font-bold">{lot.lotNumber}</p>

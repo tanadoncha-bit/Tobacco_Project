@@ -284,34 +284,34 @@ export default function MaterialTable({
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="p-4 xl:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
       <div className="flex items-center gap-4">
         <div className="bg-gradient-to-br from-emerald-500 to-teal-600 p-3 rounded-2xl shadow-lg shadow-emerald-200">
           <FlaskConical className="w-6 h-6 text-white" />
         </div>
         <div>
-          <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">Materials Inventory</h1>
+          <h1 className="text-2xl xl:text-3xl font-black text-gray-900 tracking-tight">Materials Inventory</h1>
           <p className="text-[16px] text-gray-500 font-medium mt-1">จัดการข้อมูลวัตถุดิบ การเบิกใช้ และตรวจสอบจำนวนคงเหลือ</p>
         </div>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         {[
-          { label: "วัตถุดิบทั้งหมด", value: stats.totalMaterials, unit: "รายการ", icon: <FlaskConical className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-emerald-500 to-teal-600", shadow: "shadow-emerald-200" },
-          { label: "สต็อกต่ำ (≤10)", value: stats.lowStock, unit: "รายการ", icon: <AlertTriangle className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-orange-400 to-amber-500", shadow: "shadow-orange-200" },
-          { label: "หมดสต็อก", value: stats.outOfStock, unit: "รายการ", icon: <PackageX className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-rose-500 to-red-600", shadow: "shadow-rose-200" },
-          { label: "ใกล้หมดอายุ (30 วัน)", value: stats.nearExpiry, unit: "รายการ", icon: <Timer className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-purple-500 to-indigo-600", shadow: "shadow-purple-200" },
+          { label: "วัตถุดิบทั้งหมด", value: stats.totalMaterials, unit: "รายการ", icon: <FlaskConical className="w-5 h-5 xl:w-6 xl:h-6" />, gradient: "from-emerald-500 to-teal-600", shadow: "shadow-emerald-200" },
+          { label: "สต็อกต่ำ (≤10)", value: stats.lowStock, unit: "รายการ", icon: <AlertTriangle className="w-5 h-5 xl:w-6 xl:h-6" />, gradient: "from-orange-400 to-amber-500", shadow: "shadow-orange-200" },
+          { label: "หมดสต็อก", value: stats.outOfStock, unit: "รายการ", icon: <PackageX className="w-5 h-5 xl:w-6 xl:h-6" />, gradient: "from-rose-500 to-red-600", shadow: "shadow-rose-200" },
+          { label: "ใกล้หมดอายุ (30 วัน)", value: stats.nearExpiry, unit: "รายการ", icon: <Timer className="w-5 h-5 xl:w-6 xl:h-6" />, gradient: "from-purple-500 to-indigo-600", shadow: "shadow-purple-200" },
         ].map(card => (
-          <div key={card.label} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-4 md:p-6 flex items-center gap-3 md:gap-5 group">
-            <div className={`bg-gradient-to-br ${card.gradient} rounded-2xl p-3 md:p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
+          <div key={card.label} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 p-4 xl:p-6 flex items-center gap-3 xl:gap-5 group">
+            <div className={`bg-gradient-to-br ${card.gradient} rounded-2xl p-3 xl:p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
               {card.icon}
             </div>
             <div>
-              <p className="text-xs md:text-sm text-gray-500 font-bold mb-1">{card.label}</p>
-              <p className="text-xl md:text-3xl font-black text-gray-900">
-                {card.value} <span className="text-xs md:text-base font-semibold text-gray-400">{card.unit}</span>
+              <p className="text-xs xl:text-sm text-gray-500 font-bold mb-1">{card.label}</p>
+              <p className="text-xl xl:text-3xl font-black text-gray-900">
+                {card.value} <span className="text-xs xl:text-base font-semibold text-gray-400">{card.unit}</span>
               </p>
             </div>
           </div>
@@ -321,9 +321,9 @@ export default function MaterialTable({
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100">
 
         {/* Toolbar */}
-        <div className="p-4 md:p-6 border-b border-gray-100 bg-gray-50/30 rounded-t-3xl">
+        <div className="p-4 xl:p-6 border-b border-gray-100 bg-gray-50/30 rounded-t-3xl">
           {/* Mobile: search แยกบน */}
-          <div className="md:hidden mb-3">
+          <div className="xl:hidden mb-3">
             <div className="relative w-full group">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-emerald-500 transition-colors" />
               <input
@@ -340,7 +340,7 @@ export default function MaterialTable({
           <div className="flex items-center gap-2 flex-wrap">
 
             {/* Search — desktop only */}
-            <div className="relative hidden md:block group">
+            <div className="relative hidden xl:block group">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-emerald-500 transition-colors" />
               <input
                 type="text"
@@ -384,14 +384,14 @@ export default function MaterialTable({
 
             <button
               onClick={() => setIsProduceOpen(true)}
-              className="bg-orange-50 border border-orange-200 text-orange-700 hover:bg-orange-100 px-3 py-2.5 rounded-2xl text-xs md:text-sm font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+              className="bg-orange-50 border border-orange-200 text-orange-700 hover:bg-orange-100 px-3 py-2.5 rounded-2xl text-xs xl:text-sm font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
             >
               <Hammer className="w-4 h-4" />
               <span className="hidden sm:inline">เบิกผลิตสินค้า</span>
             </button>
             <button
               onClick={() => setIsAddOpen(true)}
-              className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-3 py-2.5 rounded-2xl text-xs md:text-sm font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-1.5 cursor-pointer"
+              className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-3 py-2.5 rounded-2xl text-xs xl:text-sm font-bold transition-all shadow-xl hover:shadow-lg flex items-center gap-1.5 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">เพิ่มวัตถุดิบ</span>
@@ -407,8 +407,8 @@ export default function MaterialTable({
                 <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">รหัส</th>
                 <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">ชื่อวัตถุดิบ</th>
                 <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">คงเหลือ</th>
-                <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">หน่วย</th>
-                <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">ต้นทุน/หน่วย</th>
+                <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">หน่วย</th>
+                <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">ต้นทุน/หน่วย</th>
                 <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">จัดการ</th>
               </tr>
             </thead>
@@ -435,7 +435,7 @@ export default function MaterialTable({
                   <td className="px-4 py-2">
                     <p className="font-black text-gray-900 text-sm group-hover:text-teal-700 transition-colors">{mat.name}</p>
                     {/* แสดง หน่วย + ต้นทุน บนมือถือ */}
-                    <p className="md:hidden text-xs text-gray-400 font-medium mt-0.5">
+                    <p className="xl:hidden text-xs text-gray-400 font-medium mt-0.5">
                       {mat.unit} · ฿{(mat.costPerUnit ?? 0).toFixed(2)}/หน่วย
                     </p>
                   </td>
@@ -447,10 +447,10 @@ export default function MaterialTable({
                       {(mat.totalStock ?? 0).toLocaleString()} {mat.unit}
                     </span>
                   </td>
-                  <td className="px-4 py-2 hidden md:table-cell">
+                  <td className="px-4 py-2 hidden xl:table-cell">
                     <span className="text-sm text-gray-500 font-medium">{mat.unit}</span>
                   </td>
-                  <td className="px-4 py-2 hidden md:table-cell">
+                  <td className="px-4 py-2 hidden xl:table-cell">
                     <span className="text-sm font-bold text-gray-700">฿{(mat.costPerUnit ?? 0).toFixed(2)}</span>
                   </td>
                   <td className="px-4 py-2">

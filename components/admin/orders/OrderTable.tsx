@@ -174,7 +174,7 @@ export default function OrderTable({ initialOrders }: { initialOrders: Order[] }
             </div>
 
             {/* Filter dropdown — mobile */}
-            <div className="md:hidden relative" ref={filterRef}>
+            <div className="xl:hidden relative" ref={filterRef}>
               <button
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
                 className={`flex items-center gap-2 px-3 py-3 rounded-2xl text-sm font-bold border shadow-sm cursor-pointer transition-all whitespace-nowrap ${filterStatus !== "ALL"
@@ -213,7 +213,7 @@ export default function OrderTable({ initialOrders }: { initialOrders: Order[] }
             </div>
 
             {/* Filter tabs — desktop */}
-            <div className="hidden md:flex bg-gray-100/80 p-1.5 rounded-2xl items-center shadow-inner gap-1">
+            <div className="hidden xl:flex bg-gray-100/80 p-1.5 rounded-2xl items-center shadow-inner gap-1">
               {FILTER_TABS.map(tab => {
                 const isActive = filterStatus === tab.value
                 return (

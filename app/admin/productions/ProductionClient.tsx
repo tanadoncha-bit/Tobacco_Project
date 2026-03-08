@@ -64,7 +64,7 @@ export default function ProductionClient({ orders }: { orders: Order[] }) {
     const currentLabel = FILTER_OPTIONS.find(f => f.value === filter)!.label
 
     return (
-        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="p-4 xl:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
             {/* Header */}
             <div className="flex items-center gap-4">
@@ -72,27 +72,27 @@ export default function ProductionClient({ orders }: { orders: Order[] }) {
                     <Factory className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                    <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">ใบสั่งผลิต</h1>
+                    <h1 className="text-2xl xl:text-3xl font-black text-gray-900 tracking-tight">ใบสั่งผลิต</h1>
                     <p className="text-[16px] text-gray-500 font-medium mt-1">ประวัติและรายละเอียดการสั่งผลิตสินค้าทั้งหมด</p>
                 </div>
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
                 {[
-                    { label: "ทั้งหมด", value: orders.length, unit: "ใบ", icon: <ClipboardList className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-blue-500 to-indigo-600", shadow: "shadow-blue-200" },
-                    { label: "กำลังผลิต", value: orders.filter(o => o.status === "PENDING").length, unit: "ใบ", icon: <Factory className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-orange-400 to-amber-500", shadow: "shadow-orange-200" },
-                    { label: "เสร็จแล้ว", value: orders.filter(o => o.status === "COMPLETED").length, unit: "ใบ", icon: <Package className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-emerald-400 to-teal-500", shadow: "shadow-emerald-200" },
-                    { label: "ยกเลิก", value: orders.filter(o => o.status === "CANCELLED").length, unit: "ใบ", icon: <X className="w-5 h-5 md:w-6 md:h-6" />, gradient: "from-rose-500 to-red-600", shadow: "shadow-rose-200" },
+                    { label: "ทั้งหมด", value: orders.length, unit: "ใบ", icon: <ClipboardList className="w-5 h-5 xl:w-6 xl:h-6" />, gradient: "from-blue-500 to-indigo-600", shadow: "shadow-blue-200" },
+                    { label: "กำลังผลิต", value: orders.filter(o => o.status === "PENDING").length, unit: "ใบ", icon: <Factory className="w-5 h-5 xl:w-6 xl:h-6" />, gradient: "from-orange-400 to-amber-500", shadow: "shadow-orange-200" },
+                    { label: "เสร็จแล้ว", value: orders.filter(o => o.status === "COMPLETED").length, unit: "ใบ", icon: <Package className="w-5 h-5 xl:w-6 xl:h-6" />, gradient: "from-emerald-400 to-teal-500", shadow: "shadow-emerald-200" },
+                    { label: "ยกเลิก", value: orders.filter(o => o.status === "CANCELLED").length, unit: "ใบ", icon: <X className="w-5 h-5 xl:w-6 xl:h-6" />, gradient: "from-rose-500 to-red-600", shadow: "shadow-rose-200" },
                 ].map(card => (
-                    <div key={card.label} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-4 md:p-6 flex items-center gap-3 md:gap-5 group">
-                        <div className={`bg-gradient-to-br ${card.gradient} rounded-2xl p-3 md:p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
+                    <div key={card.label} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 p-4 xl:p-6 flex items-center gap-3 xl:gap-5 group">
+                        <div className={`bg-gradient-to-br ${card.gradient} rounded-2xl p-3 xl:p-4 shadow-lg ${card.shadow} text-white group-hover:scale-110 transition-transform duration-300 shrink-0`}>
                             {card.icon}
                         </div>
                         <div>
-                            <p className="text-xs md:text-sm text-gray-500 font-bold mb-1">{card.label}</p>
-                            <p className="text-xl md:text-3xl font-black text-gray-900">
-                                {card.value} <span className="text-xs md:text-base font-semibold text-gray-400">{card.unit}</span>
+                            <p className="text-xs xl:text-sm text-gray-500 font-bold mb-1">{card.label}</p>
+                            <p className="text-xl xl:text-3xl font-black text-gray-900">
+                                {card.value} <span className="text-xs xl:text-base font-semibold text-gray-400">{card.unit}</span>
                             </p>
                         </div>
                     </div>
@@ -103,10 +103,10 @@ export default function ProductionClient({ orders }: { orders: Order[] }) {
             <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
 
                 {/* Toolbar */}
-                <div className="p-4 md:p-6 border-b border-gray-100 bg-gray-50/30 space-y-3">
+                <div className="p-4 xl:p-6 border-b border-gray-100 bg-gray-50/30 space-y-3">
 
                     {/* Mobile: search + filter dropdown */}
-                    <div className="flex gap-2 md:hidden">
+                    <div className="flex gap-2 xl:hidden">
                         <div className="relative flex-1 group">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-purple-500 transition-colors" />
                             <input
@@ -144,7 +144,7 @@ export default function ProductionClient({ orders }: { orders: Order[] }) {
                     </div>
 
                     {/* Desktop: search + tab filter */}
-                    <div className="hidden md:flex items-center justify-between gap-3">
+                    <div className="hidden xl:flex items-center justify-between gap-3">
                         <div className="relative w-80 group">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-purple-500 transition-colors" />
                             <input
@@ -160,10 +160,10 @@ export default function ProductionClient({ orders }: { orders: Order[] }) {
                                 const isActive = filter === opt.value
                                 let activeClass = "text-gray-500 hover:text-gray-800 hover:bg-gray-200/50"
                                 if (isActive) {
-                                    if (opt.value === "ALL") activeClass = "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md"
-                                    else if (opt.value === "PENDING") activeClass = "bg-gradient-to-r from-orange-400 to-amber-500 text-white shadow-md"
-                                    else if (opt.value === "COMPLETED") activeClass = "bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-md"
-                                    else if (opt.value === "CANCELLED") activeClass = "bg-gradient-to-r from-rose-400 to-red-500 text-white shadow-md"
+                                    if (opt.value === "ALL") activeClass = "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-xl"
+                                    else if (opt.value === "PENDING") activeClass = "bg-gradient-to-r from-orange-400 to-amber-500 text-white shadow-xl"
+                                    else if (opt.value === "COMPLETED") activeClass = "bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-xl"
+                                    else if (opt.value === "CANCELLED") activeClass = "bg-gradient-to-r from-rose-400 to-red-500 text-white shadow-xl"
                                 }
                                 return (
                                     <button
@@ -189,10 +189,10 @@ export default function ProductionClient({ orders }: { orders: Order[] }) {
                             <tr className="bg-gray-50/80 border-b border-gray-100">
                                 <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">เลขใบสั่งผลิต</th>
                                 <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">สินค้า</th>
-                                <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">จำนวน</th>
-                                <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">ต้นทุน</th>
+                                <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">จำนวน</th>
+                                <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">ต้นทุน</th>
                                 <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">สถานะ</th>
-                                <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">วันที่</th>
+                                <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">วันที่</th>
                                 <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">จัดการ</th>
                             </tr>
                         </thead>
@@ -220,19 +220,19 @@ export default function ProductionClient({ orders }: { orders: Order[] }) {
                                     </td>
                                     <td className="px-4 py-3">
                                         <p className="font-black text-gray-900 text-sm group-hover:text-indigo-700 transition-colors">
-                                            <span className="md:hidden">{order.productName.replace(/\s*\(.*?\)/g, "")}</span>
-                                            <span className="hidden md:inline">{order.productName}</span>
+                                            <span className="xl:hidden">{order.productName.replace(/\s*\(.*?\)/g, "")}</span>
+                                            <span className="hidden xl:inline">{order.productName}</span>
                                         </p>
                                         {/* mobile sub-info */}
-                                        <p className="md:hidden text-xs text-gray-400 font-medium mt-0.5">
+                                        <p className="xl:hidden text-xs text-gray-400 font-medium mt-0.5">
                                             {new Date(order.createdAt).toLocaleDateString("th-TH", { day: "2-digit", month: "short", year: "numeric" })}
                                         </p>
                                     </td>
-                                    <td className="px-4 py-3 text-center hidden md:table-cell">
+                                    <td className="px-4 py-3 text-center hidden xl:table-cell">
                                         <span className="font-black text-gray-900 text-sm">{order.amount.toLocaleString()}</span>
                                         <span className="text-gray-400 text-xs ml-1">ชิ้น</span>
                                     </td>
-                                    <td className="px-4 py-3 text-center hidden md:table-cell">
+                                    <td className="px-4 py-3 text-center hidden xl:table-cell">
                                         <span className={`font-black text-sm ${order.totalCost > 0 ? "text-indigo-600" : "text-gray-400"}`}>
                                             ฿{order.totalCost.toLocaleString("th-TH", { minimumFractionDigits: 2 })}
                                         </span>
@@ -242,7 +242,7 @@ export default function ProductionClient({ orders }: { orders: Order[] }) {
                                             {STATUS_MAP[order.status]?.label}
                                         </span>
                                     </td>
-                                    <td className="px-4 py-3 text-center text-gray-500 text-xs font-medium whitespace-nowrap hidden md:table-cell">
+                                    <td className="px-4 py-3 text-center text-gray-500 text-xs font-medium whitespace-nowrap hidden xl:table-cell">
                                         {new Date(order.createdAt).toLocaleDateString("th-TH", { day: "2-digit", month: "short", year: "numeric" })}
                                     </td>
                                     <td className="px-2 py-3 text-center whitespace-nowrap">
@@ -262,7 +262,7 @@ export default function ProductionClient({ orders }: { orders: Order[] }) {
 
                 {/* Footer */}
                 {filtered.length > 0 && (
-                    <div className="px-4 md:px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex flex-wrap justify-between items-center gap-3 rounded-b-3xl">
+                    <div className="px-4 xl:px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex flex-wrap justify-between items-center gap-3 rounded-b-3xl">
                         <span className="text-sm font-medium text-gray-500">
                             แสดงผล <strong className="text-gray-900">{filtered.length}</strong> รายการ
                         </span>
@@ -282,7 +282,7 @@ export default function ProductionClient({ orders }: { orders: Order[] }) {
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col overflow-hidden">
                         <div className="px-6 py-5 bg-gradient-to-r from-indigo-600 to-purple-600 flex justify-between items-center shrink-0">
                             <div className="flex items-center gap-3 text-white">
-                                <div className="bg-white/20 p-2 rounded-xl backdrop-blur-md">
+                                <div className="bg-white/20 p-2 rounded-xl backdrop-blur-xl">
                                     <Factory className="w-5 h-5" />
                                 </div>
                                 <div>
@@ -295,8 +295,8 @@ export default function ProductionClient({ orders }: { orders: Order[] }) {
                             </button>
                         </div>
 
-                        <div className="p-4 md:p-6 space-y-5 overflow-y-auto bg-slate-50/50">
-                            <div className="bg-white border border-gray-100 shadow-sm rounded-xl p-4 md:p-5 space-y-3">
+                        <div className="p-4 xl:p-6 space-y-5 overflow-y-auto bg-slate-50/50">
+                            <div className="bg-white border border-gray-100 shadow-sm rounded-xl p-4 xl:p-5 space-y-3">
                                 {[
                                     { label: "สินค้า", value: <span className="text-sm font-black text-gray-800 bg-gray-100 px-3 py-1 rounded-lg">{selected.productName}</span> },
                                     { label: "จำนวนผลิต", value: <span className="text-sm font-bold text-gray-800">{selected.amount.toLocaleString()} <span className="text-xs text-gray-400">ชิ้น</span></span> },
@@ -338,17 +338,17 @@ export default function ProductionClient({ orders }: { orders: Order[] }) {
                                         <table className="w-full text-sm">
                                             <thead className="bg-slate-50 border-b border-gray-100">
                                                 <tr>
-                                                    <th className="px-3 md:px-4 py-3 text-left text-xs font-bold text-gray-500">วัตถุดิบ</th>
-                                                    <th className="px-3 md:px-4 py-3 text-center text-xs font-bold text-gray-500">จำนวน</th>
-                                                    <th className="px-3 md:px-4 py-3 text-right text-xs font-bold text-gray-500">ต้นทุน</th>
+                                                    <th className="px-3 xl:px-4 py-3 text-left text-xs font-bold text-gray-500">วัตถุดิบ</th>
+                                                    <th className="px-3 xl:px-4 py-3 text-center text-xs font-bold text-gray-500">จำนวน</th>
+                                                    <th className="px-3 xl:px-4 py-3 text-right text-xs font-bold text-gray-500">ต้นทุน</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-gray-50">
                                                 {selected.materials.map((mat, i) => (
                                                     <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                                                        <td className="px-3 md:px-4 py-2.5 font-bold text-gray-700 text-xs md:text-sm">{mat.name}</td>
-                                                        <td className="px-3 md:px-4 py-2.5 text-center text-gray-500 font-medium text-xs">{mat.amount} {mat.unit}</td>
-                                                        <td className="px-3 md:px-4 py-2.5 text-right font-black text-indigo-600 text-xs md:text-sm">฿{mat.totalCost.toLocaleString("th-TH", { minimumFractionDigits: 2 })}</td>
+                                                        <td className="px-3 xl:px-4 py-2.5 font-bold text-gray-700 text-xs xl:text-sm">{mat.name}</td>
+                                                        <td className="px-3 xl:px-4 py-2.5 text-center text-gray-500 font-medium text-xs">{mat.amount} {mat.unit}</td>
+                                                        <td className="px-3 xl:px-4 py-2.5 text-right font-black text-indigo-600 text-xs xl:text-sm">฿{mat.totalCost.toLocaleString("th-TH", { minimumFractionDigits: 2 })}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -357,12 +357,12 @@ export default function ProductionClient({ orders }: { orders: Order[] }) {
                                 </div>
                             )}
 
-                            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-purple-100 rounded-2xl px-4 md:px-6 py-4 md:py-5 flex justify-between items-center shadow-inner">
+                            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-purple-100 rounded-2xl px-4 xl:px-6 py-4 xl:py-5 flex justify-between items-center shadow-inner">
                                 <div className="flex flex-col">
                                     <span className="text-xs font-bold text-indigo-500 uppercase tracking-wider">ต้นทุนวัตถุดิบรวม</span>
                                     <span className="text-sm text-gray-500">ทั้งหมด {selected.materials.length} รายการ</span>
                                 </div>
-                                <span className="text-xl md:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-700">
+                                <span className="text-xl xl:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-700">
                                     ฿{selected.totalCost.toLocaleString("th-TH", { minimumFractionDigits: 2 })}
                                 </span>
                             </div>
