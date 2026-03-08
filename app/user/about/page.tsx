@@ -36,7 +36,7 @@ const ADVISOR: Advisor = {
     title: "ผู้ช่วยศาสตราจารย์",
     dept: "สาขาวิชาวิทยาการคอมพิวเตอร์",
     university: "มหาวิทยาลัยขอนแก่น",
-    image: "https://api.computing.kku.ac.th//storage/images/1661876218-pusadeeseresangtakul1_1.png",
+    image: "https://res.cloudinary.com/djda6blnw/image/upload/v1772957115/1661876218-pusadeeseresangtakul1_1_sejjrr.png",
     email: "pusadee@kku.ac.th",
     ig: "",
     fb: "",
